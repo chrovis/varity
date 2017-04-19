@@ -1,0 +1,10 @@
+language: clojure
+lein: 2.7.1
+cache:
+  directories:
+    - $HOME/.m2
+jdk:
+  - oraclejdk8
+  - openjdk7
+script:
+  - lein with-profile +dev:+1.9 test
