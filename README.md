@@ -16,7 +16,7 @@ Variant translation library for Clojure.
 With Leiningen/Boot:
 
 ```clojure
-[varity "0.2.0-SNAPSHOT]
+[varity "0.2.0"]
 ```
 
 ## Usage
