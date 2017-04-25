@@ -1,6 +1,7 @@
 (ns varity.vcf-to-hgvs
   "Functions to convert a VCF-style variant into HGVS."
   (:require [cljam.fasta :as fa]
+            [cljam.util.chromosome :refer [normalize-chromosome-key]]
             [varity.ref-gene :as rg]
             [varity.vcf-to-hgvs.cdna :as cdna]
             [varity.vcf-to-hgvs.common :refer [normalize-variant]]
@@ -30,19 +31,20 @@
 
 (defmethod vcf-variant->cdna-hgvs cljam.fasta.reader.FASTAReader
   [ref-fa ref-gene chr pos ref alt]
-  (if (valid-ref? ref-fa chr pos ref)
-    (let [rgidx (if (map? ref-gene)
-                  ref-gene
-                  (rg/index (rg/load-ref-genes ref-gene)))]
-      (->> (rg/ref-genes chr pos rgidx)
-           (map (fn [rg]
-                  (assoc (normalize-variant {:chr chr, :pos pos, :ref ref, :alt alt}
-                                            ref-fa rg)
-                         :rg rg)))
-           (map (fn [{:keys [rg chr pos ref alt]}]
-                  (cdna/rg->hgvs ref-fa rg pos ref alt)))
-           distinct))
-    (throw (Exception. (format "\"%s\" is not found on %s:%d" ref chr pos)))))
+  (let [chr (normalize-chromosome-key chr)]
+    (if (valid-ref? ref-fa chr pos ref)
+      (let [rgidx (if (map? ref-gene)
+                    ref-gene
+                    (rg/index (rg/load-ref-genes ref-gene)))]
+        (->> (rg/ref-genes chr pos rgidx)
+             (map (fn [rg]
+                    (assoc (normalize-variant {:chr chr, :pos pos, :ref ref, :alt alt}
+                                              ref-fa rg)
+                           :rg rg)))
+             (map (fn [{:keys [rg chr pos ref alt]}]
+                    (cdna/rg->hgvs ref-fa rg pos ref alt)))
+             distinct))
+      (throw (Exception. (format "\"%s\" is not found on %s:%d" ref chr pos))))))
 
 ;;; -> protein HGVS
 
@@ -64,20 +66,21 @@
 
 (defmethod vcf-variant->protein-hgvs cljam.fasta.reader.FASTAReader
   [ref-fa ref-gene chr pos ref alt]
-  (if (valid-ref? ref-fa chr pos ref)
-    (let [rgidx (if (map? ref-gene)
-                  ref-gene
-                  (rg/index (rg/load-ref-genes ref-gene)))]
-      (->> (rg/ref-genes chr pos rgidx)
-           (map (fn [rg]
-                  (assoc (normalize-variant {:chr chr, :pos pos, :ref ref, :alt alt}
-                                            ref-fa rg)
-                         :rg rg)))
-           (filter #(rg/in-cds? pos (:rg %)))
-           (keep (fn [{:keys [rg chr pos ref alt]}]
-                   (prot/rg->hgvs ref-fa rg pos ref alt)))
-           distinct))
-    (throw (Exception. (format "\"%s\" is not found on %s:%d" ref chr pos)))))
+  (let [chr (normalize-chromosome-key chr)]
+    (if (valid-ref? ref-fa chr pos ref)
+      (let [rgidx (if (map? ref-gene)
+                    ref-gene
+                    (rg/index (rg/load-ref-genes ref-gene)))]
+        (->> (rg/ref-genes chr pos rgidx)
+             (map (fn [rg]
+                    (assoc (normalize-variant {:chr chr, :pos pos, :ref ref, :alt alt}
+                                              ref-fa rg)
+                           :rg rg)))
+             (filter #(rg/in-cds? pos (:rg %)))
+             (keep (fn [{:keys [rg chr pos ref alt]}]
+                     (prot/rg->hgvs ref-fa rg pos ref alt)))
+             distinct))
+      (throw (Exception. (format "\"%s\" is not found on %s:%d" ref chr pos))))))
 
 ;;; -> Multiple HGVS
 
@@ -99,18 +102,19 @@
 
 (defmethod vcf-variant->hgvs cljam.fasta.reader.FASTAReader
   [ref-fa ref-gene chr pos ref alt]
-  (if (valid-ref? ref-fa chr pos ref)
-    (let [rgidx (if (map? ref-gene)
-                  ref-gene
-                  (rg/index (rg/load-ref-genes ref-gene)))]
-      (->> (rg/ref-genes chr pos rgidx)
-           (map (fn [rg]
-                  (assoc (normalize-variant {:chr chr, :pos pos, :ref ref, :alt alt}
-                                            ref-fa rg)
-                         :rg rg)))
-           (map (fn [{:keys [rg chr pos ref alt]}]
-                  {:cdna (cdna/rg->hgvs ref-fa rg pos ref alt)
-                   :protein (if (rg/in-cds? pos rg)
-                              (prot/rg->hgvs ref-fa rg pos ref alt))}))
-           distinct))
-    (throw (Exception. (format "\"%s\" is not found on %s:%d" ref chr pos)))))
+  (let [chr (normalize-chromosome-key chr)]
+    (if (valid-ref? ref-fa chr pos ref)
+      (let [rgidx (if (map? ref-gene)
+                    ref-gene
+                    (rg/index (rg/load-ref-genes ref-gene)))]
+        (->> (rg/ref-genes chr pos rgidx)
+             (map (fn [rg]
+                    (assoc (normalize-variant {:chr chr, :pos pos, :ref ref, :alt alt}
+                                              ref-fa rg)
+                           :rg rg)))
+             (map (fn [{:keys [rg chr pos ref alt]}]
+                    {:cdna (cdna/rg->hgvs ref-fa rg pos ref alt)
+                     :protein (if (rg/in-cds? pos rg)
+                                (prot/rg->hgvs ref-fa rg pos ref alt))}))
+             distinct))
+      (throw (Exception. (format "\"%s\" is not found on %s:%d" ref chr pos))))))
