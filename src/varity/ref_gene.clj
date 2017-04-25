@@ -94,11 +94,12 @@
   [rgs]
   (group-by :name2 rgs))
 
+(defrecord RefGeneIndex [locus gene])
+
 (defn index
   "Creates refGene index for search."
   [rgs]
-  {:locus (locus-index rgs)
-   :gene (gene-index rgs)})
+  (RefGeneIndex. (locus-index rgs) (gene-index rgs)))
 
 (defn ref-genes
   "Searches for refGene entries with gene or (chr, pos) using index, returning
