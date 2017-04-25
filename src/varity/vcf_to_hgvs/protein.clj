@@ -33,15 +33,15 @@
 
 (defn- read-sequence-info
   [fa-rdr rg pos ref alt]
-  (let [{:keys [chrom tx-start tx-end cds-start cds-end exon-ranges strand]} rg
-        ref-exon-seq1 (read-exon-sequence fa-rdr chrom cds-start cds-end exon-ranges)
-        ref-up-exon-seq1 (->> (read-exon-sequence fa-rdr chrom tx-start (dec cds-start) exon-ranges)
+  (let [{:keys [chr tx-start tx-end cds-start cds-end exon-ranges strand]} rg
+        ref-exon-seq1 (read-exon-sequence fa-rdr chr cds-start cds-end exon-ranges)
+        ref-up-exon-seq1 (->> (read-exon-sequence fa-rdr chr tx-start (dec cds-start) exon-ranges)
                               reverse
                               (partition 3)
                               flatten
                               reverse
                               (apply str))
-        ref-down-exon-seq1 (->> (read-exon-sequence fa-rdr chrom (inc cds-end) tx-end exon-ranges)
+        ref-down-exon-seq1 (->> (read-exon-sequence fa-rdr chr (inc cds-end) tx-end exon-ranges)
                                 reverse
                                 (partition 3)
                                 flatten

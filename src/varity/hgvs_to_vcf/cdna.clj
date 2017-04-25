@@ -6,10 +6,10 @@
   (:import [clj_hgvs.mutation DNASubstitution]))
 
 (defn- vcf-variant
-  [fa-rdr {:keys [chrom strand] :as rg} mut*]
+  [fa-rdr {:keys [chr strand] :as rg} mut*]
   (if (instance? DNASubstitution mut*)
     (if-let [pos (rg/cds-coord->genomic-pos (:coord mut*) rg)]
-      {:chr chrom
+      {:chr chr
        :pos pos
        :ref (cond-> (:ref mut*)
               (= strand "-") (revcomp-bases))

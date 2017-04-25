@@ -21,12 +21,12 @@
           (assoc (vec alt-seq) pos nil))))
 
 (defn- vcf-variants
-  [fa-rdr {:keys [chrom strand] :as rg} mut*]
+  [fa-rdr {:keys [chr strand] :as rg} mut*]
   (if (instance? ProteinSubstitution mut*)
     (let [pos-cands (pos-candidates (:coord mut*) rg)]
       (if (seq pos-cands)
         (let [ref-codon1 (->> pos-cands
-                              (map #(fa/read-sequence fa-rdr {:chr chrom, :start %, :end %}))
+                              (map #(fa/read-sequence fa-rdr {:chr chr, :start %, :end %}))
                               (apply str))
               ref-codon (cond-> ref-codon1 (= strand "-") revcomp-bases)
               palt (mut/->short-amino-acid (:alt mut*))
@@ -37,7 +37,7 @@
                            (map-indexed
                             (fn [idx pos]
                               (if (one-character-substituted? ref-codon codon* idx)
-                                {:chr chrom
+                                {:chr chr
                                  :pos pos
                                  :ref (cond-> (str (nth ref-codon idx))
                                         (= strand "-") revcomp-bases)
@@ -53,12 +53,12 @@
     (vcf-variants fa-rdr rg mut*)))
 
 (defn- vcf-variants-with-cdna-hgvs
-  [fa-rdr {:keys [chrom strand] :as rg} mut*]
+  [fa-rdr {:keys [chr strand] :as rg} mut*]
   (if (instance? ProteinSubstitution mut*)
     (let [pos-cands (pos-candidates (:coord mut*) rg)]
       (if (seq pos-cands)
         (let [ref-codon1 (->> pos-cands
-                              (map #(fa/read-sequence fa-rdr {:chr chrom, :start %, :end %}))
+                              (map #(fa/read-sequence fa-rdr {:chr chr, :start %, :end %}))
                               (apply str))
               ref-codon (cond-> ref-codon1 (= strand "-") revcomp-bases)
               palt (mut/->short-amino-acid (:alt mut*))
@@ -71,7 +71,7 @@
                               (if (one-character-substituted? ref-codon codon* idx)
                                 (let [ref (str (nth ref-codon idx))
                                       alt (str (nth codon* idx))]
-                                 {:vcf {:chr chrom
+                                 {:vcf {:chr chr
                                         :pos pos
                                         :ref (cond-> ref (= strand "-") revcomp-bases)
                                         :alt (cond-> alt (= strand "-") revcomp-bases)}

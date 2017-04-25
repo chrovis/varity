@@ -33,12 +33,12 @@
 
 (defn- parse-ref-gene-line
   [s]
-  (as-> (zipmap [:bin :name :chrom :strand :tx-start :tx-end :cds-start :cds-end
+  (as-> (zipmap [:bin :name :chr :strand :tx-start :tx-end :cds-start :cds-end
                  :exon-count :exon-start :exon-end :score :name2 :cds-start-stat
                  :cds-end-stat :exon-frames]
                 (string/split s #"\t")) m
         (update m :bin as-long)
-        (update m :chrom normalize-chromosome-key)
+        (update m :chr normalize-chromosome-key)
         (update m :tx-start (comp inc as-long))
         (update m :tx-end as-long)
         (update m :cds-start (comp inc as-long))
@@ -74,7 +74,7 @@
 
 (defn- locus-index
   [rgs]
-  (->> (group-by :chrom rgs)
+  (->> (group-by :chr rgs)
        (map (fn [[chr sub-rgs]]
               (let [fs (round-int (apply min (map :tx-start sub-rgs))
                                   pos-index-block)

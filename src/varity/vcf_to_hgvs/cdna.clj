@@ -8,7 +8,7 @@
 (defn- repeat-info-forward
   [fa-rdr rg pos ins]
   (->> (common/read-sequence-stepwise-backward
-        fa-rdr {:chr (:chrom rg), :start (:tx-start rg), :end (dec pos)} 100)
+        fa-rdr {:chr (:chr rg), :start (:tx-start rg), :end (dec pos)} 100)
        (map (fn [seq*]
               (let [nseq* (count seq*)]
                 (if-let [[unit ref-repeat ins-repeat :as ri] (common/repeat-info seq* (inc nseq*) ins)]
@@ -22,7 +22,7 @@
 (defn- repeat-info-backward
   [fa-rdr rg pos ins]
   (->> (common/read-sequence-stepwise
-        fa-rdr {:chr (:chrom rg), :start pos, :end (:tx-end rg)} 100)
+        fa-rdr {:chr (:chr rg), :start pos, :end (:tx-end rg)} 100)
        (map (fn [seq*]
               (let [nseq* (count seq*)]
                 (if-let [[unit ref-repeat ins-repeat :as ri] (common/repeat-info (revcomp-bases seq*)
