@@ -23,10 +23,10 @@
                 new-pos)}))))
 
 (defn convert-coord
-  "Converts chr:pos between differenct assemblies, returning a new {:chr :pos}.
-  The last argument, chain, must be a path to srcToDest.over.chain(.gz) or chain
-  index."
-  [chr pos chain]
+  "Converts {:chr :pos} between different assemblies, returning a new
+  {:chr :pos}. The last argument, chain, must be a path to
+  srcToDest.over.chain(.gz) or chain index."
+  [{:keys [chr pos]} chain]
   (let [chidx (if (map? chain)
                 chain
                 (ch/index (ch/load-chain chain)))]
