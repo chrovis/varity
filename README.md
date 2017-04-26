@@ -46,8 +46,8 @@ The returned HGVS is data structure of [clj-hgvs](https://github.com/chrovis/clj
 ```clojure
 (require '[varity.vcf-to-hgvs :as v2h])
 
-(v2h/vcf-variant->hgvs "path/to/hg38.fa" "path/to/refGene.txt.gz"
-                       "chr7" 55191822 "T" "G")
+(v2h/vcf-variant->hgvs {:chr "chr7", :pos 55191822, :ref "T", :alt "G"}
+                       "path/to/hg38.fa" "path/to/refGene.txt.gz")
 ;;=> ({:cdna {:kind :cdna,
 ;;            :mutations (#clj_hgvs.mutation.DNASubstitution
 ;;                        {:alt "G",
@@ -70,9 +70,8 @@ Use `clj-hgvs.core/format` to obtain HGVS text.
 ```clojure
 (require '[clj-hgvs.core :as hgvs])
 
-(def l858r (-> (v2h/vcf-variant->protein-hgvs "path/to/hg38.fa"
-                                              "path/to/refGene.txt.gz"
-                                              "chr7" 55191822 "T" "G")
+(def l858r (-> (v2h/vcf-variant->protein-hgvs {:chr "chr7", :pos 55191822, :ref "T", :alt "G"
+                                              "path/to/hg38.fa" "path/to/refGene.txt.gz")
                first))
 
 (hgvs/format l858r {:amino-acid-format :short})
@@ -87,10 +86,10 @@ Use `clj-hgvs.core/format` to obtain HGVS text.
 (require '[varity.hgvs-to-vcf :as h2v]
          '[clj-hgvs.core :as hgvs])
 
-(h2v/hgvs->vcf-variants "path/to/hg38.fa" "path/to/refGene.txt.gz" (hgvs/parse "c.2573T>G") "EGFR")
+(h2v/hgvs->vcf-variants (hgvs/parse "c.2573T>G") "EGFR" "path/to/hg38.fa" "path/to/refGene.txt.gz")
 ;;=> ({:chr "chr7", :pos 55191822, :ref "T", :alt "G"})
 
-(h2v/hgvs->vcf-variants "path/to/hg38.fa" "path/to/refGene.txt.gz" (hgvs/parse "p.A222V") "MTHFR")
+(h2v/hgvs->vcf-variants (hgvs/parse "p.A222V") "MTHFR" "path/to/hg38.fa" "path/to/refGene.txt.gz")
 ;;=> ({:chr "chr1", :pos 11796321, :ref "G", :alt "A"})
 ```
 
