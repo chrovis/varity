@@ -17,7 +17,7 @@
               (= strand "-") (revcomp-bases))})
     (throw (IllegalArgumentException. "Unsupported mutation"))))
 
-(defn rg->vcf-variant
-  [fa-rdr rg hgvs]
+(defn ->vcf-variant
+  [hgvs fa-rdr rg]
   (let [mut* (first (:mutations hgvs))]
     (vcf-variant fa-rdr rg mut*)))

@@ -47,8 +47,8 @@
                (flatten)))))
     (throw (IllegalArgumentException. "Unsupported mutation"))))
 
-(defn rg->vcf-variants
-  [fa-rdr rg hgvs]
+(defn ->vcf-variants
+  [hgvs fa-rdr rg]
   (let [mut* (first (:mutations hgvs))]
     (vcf-variants fa-rdr rg mut*)))
 
@@ -83,6 +83,6 @@
                (flatten)))))
     (throw (IllegalArgumentException. "Unsupported mutation"))))
 
-(defn rg->vcf-variants-with-cdna-hgvs
-  [fa-rdr rg hgvs]
+(defn ->vcf-variants-with-cdna-hgvs
+  [hgvs fa-rdr rg]
   (vcf-variants-with-cdna-hgvs fa-rdr rg (first (:mutations hgvs))))

@@ -240,7 +240,7 @@
         :frame-shift (protein-frame-shift ppos pref palt seq-info)
         :extension (protein-extension ppos pref palt seq-info)))))
 
-(defn rg->hgvs
-  [fa-rdr rg pos ref alt]
+(defn ->hgvs
+  [{:keys [pos ref alt]} fa-rdr rg]
   (if-let [mutation (mutation fa-rdr rg pos ref alt)]
     (hgvs/hgvs nil :protein mutation)))

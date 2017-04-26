@@ -176,8 +176,8 @@
     :indel (dna-indel rg pos ref alt)
     :repeated-seqs (dna-repeated-seqs fa-rdr rg pos ref alt)))
 
-(defn rg->hgvs
-  [fa-rdr rg pos ref alt]
+(defn ->hgvs
+  [{:keys [pos ref alt]} fa-rdr rg]
   (hgvs/hgvs (:name rg)
              :cdna
              (mutation fa-rdr rg pos ref alt)))
