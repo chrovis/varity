@@ -90,22 +90,30 @@
                          ret))])))
        (into {})))
 
+(defn- ref-seq-index
+  [rgs]
+  (group-by :name rgs))
+
 (defn- gene-index
   [rgs]
   (group-by :name2 rgs))
 
-(defrecord RefGeneIndex [locus gene])
+(defrecord RefGeneIndex [locus ref-seq gene])
 
 (defn index
   "Creates refGene index for search."
   [rgs]
-  (RefGeneIndex. (locus-index rgs) (gene-index rgs)))
+  (RefGeneIndex. (locus-index rgs)
+                 (ref-seq-index rgs)
+                 (gene-index rgs)))
 
 (defn ref-genes
-  "Searches for refGene entries with gene or (chr, pos) using index, returning
-  results as sequence. See also varity.ref-gene/index."
-  ([gene rgidx]
-   (get-in rgidx [:gene gene]))
+  "Searches for refGene entries with ref-seq, gene or (chr, pos) using index,
+  returning results as sequence. See also varity.ref-gene/index."
+  ([s rgidx]
+   (get-in rgidx (if (re-find #"^(NC|LRG|NG|NM|NR|NP)_" s)
+                   [:ref-seq s]
+                   [:gene s])))
   ([chr pos rgidx]
    (let [pos-r (round-int pos pos-index-block)]
      (->> (get-in rgidx [:locus
