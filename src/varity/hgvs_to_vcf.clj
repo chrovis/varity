@@ -18,11 +18,11 @@
 
 (defn- cdna-hgvs->vcf-variants
   [hgvs ref-fa rgs]
-  (keep #(cdna/->vcf-variant hgvs ref-fa %) rgs))
+  (distinct (keep #(cdna/->vcf-variant hgvs ref-fa %) rgs)))
 
 (defn- protein-hgvs->vcf-variants
   [hgvs ref-fa rgs]
-  (apply concat (keep #(prot/->vcf-variants hgvs ref-fa %) rgs)))
+  (distinct (apply concat (keep #(prot/->vcf-variants hgvs ref-fa %) rgs))))
 
 (defmulti hgvs->vcf-variants
   "Converts cDNA/protein HGVS into possible VCF-style variants. ref-fa must be a
