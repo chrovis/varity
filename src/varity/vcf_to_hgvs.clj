@@ -63,7 +63,7 @@
   (if (valid-ref? fa-rdr chr pos ref)
     (let [nv (normalize-variant {:chr chr, :pos pos, :ref ref, :alt alt}
                                 fa-rdr rg)]
-      (cdna/->hgvs (assoc nv :rg rg) fa-rdr))
+      (cdna/->hgvs (assoc nv :rg rg) fa-rdr rg))
     (throw (Exception. (format "\"%s\" is not found on %s:%d" ref chr pos)))))
 
 ;;; -> protein HGVS
@@ -109,7 +109,7 @@
     (let [{:keys [pos] :as nv} (normalize-variant {:chr chr, :pos pos, :ref ref, :alt alt}
                                                    fa-rdr rg)]
       (if (rg/in-cds? pos rg)
-        (prot/->hgvs (assoc nv :rg rg) fa-rdr)))
+        (prot/->hgvs (assoc nv :rg rg) fa-rdr rg)))
     (throw (Exception. (format "\"%s\" is not found on %s:%d" ref chr pos)))))
 
 ;;; -> Multiple HGVS
