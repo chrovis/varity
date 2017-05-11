@@ -138,7 +138,7 @@
   (->> exon-ranges
        (map (fn [[s e]] [[s (- pos s)] [e (- pos e)]]))
        (apply concat)
-       (sort-by (fn [[e o]]
+       (sort-by (fn [[e ^long o]]
                   [(Math/abs o) (case strand
                                   "+" e
                                   "-" (- e))]))

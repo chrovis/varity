@@ -80,15 +80,15 @@
   [pos {:keys [header data]}]
   (let [rpos (- pos (:t-start header))]
     (and (>= rpos 0)
-         (loop [[m & r] data, s 0]
-           (let [e (+ s (:size m))]
+         (loop [[{:keys [^long size ^long dt] :as m} & r] data, s 0]
+           (let [e (+ s size)]
              (if (< rpos s)
                false
                (if (< rpos e)
                  true
-                 (if (nil? (:dt m))
+                 (if (nil? dt)
                    false
-                   (recur r (+ e (:dt m)))))))))))
+                   (recur r (+ e dt))))))))))
 
 (defn search-chains
   [chr pos chain-idx]

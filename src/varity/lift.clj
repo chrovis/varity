@@ -4,13 +4,13 @@
 
 (defn- calc-diff
   [rpos data]
-  (loop [[m & r] data, s 0, d 0]
-    (let [e (+ s (:size m))]
+  (loop [[{:keys [^long size ^long dt ^long dq]} & r] data, s 0, d 0]
+    (let [e (+ s size)]
       (if-not (< rpos s)
         (if (< rpos e)
           d
-          (if (some? (:dt m))
-            (recur r (+ e (:dt m)) (+ d (- (:dq m) (:dt m))))))))))
+          (if (some? dt)
+            (recur r (+ e dt) (+ d (- dq dt)))))))))
 
 (defn- convert-coord*
   [pos {:keys [header data]}]
