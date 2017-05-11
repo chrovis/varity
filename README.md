@@ -70,7 +70,7 @@ Use `clj-hgvs.core/format` to obtain HGVS text.
 ```clojure
 (require '[clj-hgvs.core :as hgvs])
 
-(def l858r (-> (v2h/vcf-variant->protein-hgvs {:chr "chr7", :pos 55191822, :ref "T", :alt "G"
+(def l858r (-> (v2h/vcf-variant->protein-hgvs {:chr "chr7", :pos 55191822, :ref "T", :alt "G"}
                                               "path/to/hg38.fa" "path/to/refGene.txt.gz")
                first))
 
@@ -85,6 +85,9 @@ Use `clj-hgvs.core/format` to obtain HGVS text.
 ```clojure
 (require '[varity.hgvs-to-vcf :as h2v]
          '[clj-hgvs.core :as hgvs])
+
+(h2v/hgvs->vcf-variants (hgvs/parse "NM_005228:c.2573T>G") "path/to/hg38.fa" "path/to/refGene.txt.gz")
+;;=> ({:chr "chr7", :pos 55191822, :ref "T", :alt "G"})
 
 (h2v/hgvs->vcf-variants (hgvs/parse "c.2573T>G") "EGFR" "path/to/hg38.fa" "path/to/refGene.txt.gz")
 ;;=> ({:chr "chr7", :pos 55191822, :ref "T", :alt "G"})
