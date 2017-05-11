@@ -100,7 +100,7 @@ To convert a genome coordinate between assemblies,
 ```clojure
 (require '[varity.lift :as lift])
 
-(lift/convert-coord "chr1" 743267 "path/to/hg19ToHg38.over.chain.gz")
+(lift/convert-coord {:chr "chr1", :pos 743267} "path/to/hg19ToHg38.over.chain.gz")
 ;;=> {:chr "chr1", :pos 807887}
 ```
 
