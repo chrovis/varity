@@ -8,3 +8,13 @@ jdk:
   - openjdk7
 script:
   - lein with-profile +dev:+1.9 test
+jobs:
+  include:
+    - stage: deploy
+      jdk: oraclejdk8
+      script: skip
+      deploy:
+        provider: script
+        script: ./deploy-snapshot.sh
+        on:
+          branch: master

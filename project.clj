@@ -13,4 +13,7 @@
                    :slow :slow
                    :all (constantly true)}
   :profiles {:dev {:dependencies [[cavia "0.4.0"]]}
-             :1.9 {:dependencies [[org.clojure/clojure "1.9.0-alpha15"]]}})
+             :1.9 {:dependencies [[org.clojure/clojure "1.9.0-alpha15"]]}}
+  :deploy-repositories [["snapshots" {:url "https://clojars.org/repo/"
+                                      :username [:env/clojars_username :gpg]
+                                      :password [:env/clojars_password :gpg]}]])
