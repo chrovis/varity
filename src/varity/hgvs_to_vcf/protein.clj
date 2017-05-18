@@ -49,8 +49,7 @@
 
 (defn ->vcf-variants
   [hgvs fa-rdr rg]
-  (let [mut* (first (:mutations hgvs))]
-    (vcf-variants fa-rdr rg mut*)))
+  (vcf-variants fa-rdr rg (:mutation hgvs)))
 
 (defn- vcf-variants-with-cdna-hgvs
   [fa-rdr {:keys [chr strand] :as rg} mut*]
@@ -85,4 +84,4 @@
 
 (defn ->vcf-variants-with-cdna-hgvs
   [hgvs fa-rdr rg]
-  (vcf-variants-with-cdna-hgvs fa-rdr rg (first (:mutations hgvs))))
+  (vcf-variants-with-cdna-hgvs fa-rdr rg (:mutation hgvs)))

@@ -150,5 +150,4 @@
 
 (defn ->vcf-variant
   [hgvs fa-rdr rg]
-  (let [mut* (first (:mutations hgvs))]
-    (vcf-variant mut* fa-rdr rg)))
+  (vcf-variant (:mutation hgvs) fa-rdr rg))
