@@ -178,8 +178,7 @@
                                (coord/protein-coordinate start)
                                (if (< start end) (mut/->long-amino-acid (last ins)))
                                (if (< start end) (coord/protein-coordinate end))
-                               (+ ref-repeat ins-repeat)
-                               nil)))
+                               (+ ref-repeat ins-repeat))))
 
 (defn- protein-frame-shift
   [ppos pref palt seq-info]
