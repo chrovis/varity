@@ -9,22 +9,62 @@
             [varity.util :refer [revcomp-bases]]
             [varity.vcf-to-hgvs.common :refer [diff-bases] :as common]))
 
-(defn- exon-sequence
-  [sequence* start end exon-ranges]
-  (let [limit (+ (count sequence*) start -1)]
+(defn- alt-sequence
+  "Returns sequence a variant applied."
+  [ref-seq seq-start pos ref alt]
+  (let [pos* (inc (- pos seq-start))]
+    (str (subs ref-seq 0 (dec pos*))
+         alt
+         (subs ref-seq (+ (dec pos*) (count ref))))))
+
+(defn- alt-exon-ranges
+  "Returns exon ranges a variant applied."
+  [exon-ranges pos ref alt]
+  (let [nref (count ref)
+        nalt (count alt)
+        typ (cond
+              (< nref nalt) :ins
+              (> nref nalt) :del
+              :else :same)
+        tpos (+ pos (min nref nalt))
+        d (Math/abs (- nref nalt))]
     (->> exon-ranges
          (keep (fn [[s e]]
-                 (cond
-                   (< limit s) nil
-                   (< e start) nil
-                   (< end s) nil
-                   (and (<= start s) (<= e end)) [s (min e limit)]
-                   (and (< s start) (< end e)) [start (min end limit)]
-                   (<= s start) [start (min e limit)]
-                   (<= end e) [s (min end limit)])))
-         (map (fn [[s e]]
-                (subs sequence* (- s start) (inc (- e start)))))
-         (apply str))))
+                 (case typ
+                   :ins (cond
+                          (< tpos s) [(+ s d) (+ e d)]
+                          (<= s tpos e) [s (+ e d)]
+                          :else [s e])
+                   :del (let [dels tpos
+                              dele (+ tpos d)]
+                          (cond
+                            (< dele s) [(- s d) (- e d)]
+                            (<= dels s) (if (< dele e) [dels (- e d)])
+                            (<= dels e) (if (< dele e)
+                                          [s (- e d)]
+                                          [s (dec dels)])
+                            :else [s e]))
+                   :same [s e])))
+         vec)))
+
+(defn- exon-sequence
+  ([sequence* start exon-ranges]
+   (exon-sequence sequence* start (+ start (count sequence*)) exon-ranges))
+  ([sequence* start end exon-ranges]
+   (let [limit (+ (count sequence*) start -1)]
+     (->> exon-ranges
+          (keep (fn [[s e]]
+                  (cond
+                    (< limit s) nil
+                    (< e start) nil
+                    (< end s) nil
+                    (and (<= start s) (<= e end)) [s (min e limit)]
+                    (and (< s start) (< end e)) [start (min end limit)]
+                    (<= s start) [start (min e limit)]
+                    (<= end e) [s (min end limit)])))
+          (map (fn [[s e]]
+                 (subs sequence* (- s start) (inc (- e start)))))
+          (apply str)))))
 
 (defn- read-exon-sequence
   [fa-rdr chr start end exon-ranges]
@@ -34,7 +74,10 @@
 (defn- read-sequence-info
   [fa-rdr rg pos ref alt]
   (let [{:keys [chr tx-start tx-end cds-start cds-end exon-ranges strand]} rg
-        ref-exon-seq1 (read-exon-sequence fa-rdr chr cds-start cds-end exon-ranges)
+        ref-seq (fa/read-sequence fa-rdr {:chr chr, :start cds-start, :end cds-end})
+        alt-seq (alt-sequence ref-seq cds-start pos ref alt)
+        alt-exon-ranges* (alt-exon-ranges exon-ranges pos ref alt)
+        ref-exon-seq1 (exon-sequence ref-seq cds-start exon-ranges)
         ref-up-exon-seq1 (->> (read-exon-sequence fa-rdr chr tx-start (dec cds-start) exon-ranges)
                               reverse
                               (partition 3)
@@ -47,15 +90,7 @@
                                 flatten
                                 reverse
                                 (apply str))
-        cds-coord (rg/cds-coord pos rg)
-        position+ (case strand
-                    "+" (:position cds-coord)
-                    "-" (inc (- (count ref-exon-seq1) (:position cds-coord))))
-        alt-exon-seq1 (if (coord/in-exon? cds-coord)
-                        (str (subs ref-exon-seq1 0 (dec position+))
-                             alt
-                             (subs ref-exon-seq1 (+ (dec position+) (count ref))))
-                        ref-exon-seq1)]
+        alt-exon-seq1 (exon-sequence alt-seq cds-start alt-exon-ranges*)]
     {:ref-prot-seq (codon/amino-acid-sequence (cond-> ref-exon-seq1
                                              (= strand "-") revcomp-bases))
      :alt-prot-seq (codon/amino-acid-sequence (cond-> alt-exon-seq1
