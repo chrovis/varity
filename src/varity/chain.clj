@@ -80,7 +80,7 @@
   [pos {:keys [header data]}]
   (let [rpos (- pos (:t-start header))]
     (and (>= rpos 0)
-         (loop [[{:keys [^long size ^long dt] :as m} & r] data, s 0]
+         (loop [[{:keys [^long size ^long dt]} & r] data, s 0]
            (let [e (+ s size)]
              (if (< rpos s)
                false

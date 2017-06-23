@@ -198,7 +198,7 @@
        :downstream (nth downstream-poss (dec cds-pos) nil)))))
 
 (defn cds-coord->genomic-pos
-  [coord {:keys [strand cds-start cds-end exon-ranges] :as rg}]
+  [coord {:keys [strand] :as rg}]
   (if-let [base-pos (cds->genomic-pos (:position coord) (:region coord) rg)]
     (+ base-pos (cond-> (:offset coord) (= strand "-") (-)))))
 

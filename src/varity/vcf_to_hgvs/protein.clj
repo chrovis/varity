@@ -226,7 +226,7 @@
                                 ((fn [[i [r a]]]
                                    [(+ ppos i) (str r) (str a)])))
                            [ppos pref palt])
-        [del ins offset _] (diff-bases pref palt)
+        [_ _ offset _] (diff-bases pref palt)
         ref (nth (:ref-prot-seq seq-info) (dec (+ ppos offset)))
         alt (nth (:alt-prot-seq seq-info) (dec (+ ppos offset)))
         ter-site (-> (:alt-prot-seq seq-info)

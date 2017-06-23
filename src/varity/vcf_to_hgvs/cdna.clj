@@ -11,7 +11,7 @@
         fa-rdr {:chr (:chr rg), :start (:tx-start rg), :end (dec pos)} 100)
        (map (fn [seq*]
               (let [nseq* (count seq*)]
-                (if-let [[unit ref-repeat ins-repeat :as ri] (common/repeat-info seq* (inc nseq*) ins)]
+                (if-let [[unit ref-repeat :as ri] (common/repeat-info seq* (inc nseq*) ins)]
                   (let [nunit (count unit)]
                     (if (> (* nunit ref-repeat) (- nseq* nunit))
                       false
@@ -25,9 +25,9 @@
         fa-rdr {:chr (:chr rg), :start pos, :end (:tx-end rg)} 100)
        (map (fn [seq*]
               (let [nseq* (count seq*)]
-                (if-let [[unit ref-repeat ins-repeat :as ri] (common/repeat-info (revcomp-bases seq*)
-                                                                                 (inc nseq*)
-                                                                                 (revcomp-bases ins))]
+                (if-let [[unit ref-repeat :as ri] (common/repeat-info (revcomp-bases seq*)
+                                                                      (inc nseq*)
+                                                                      (revcomp-bases ins))]
                   (let [nunit (count unit)]
                     (if (> (* nunit ref-repeat) (- nseq* nunit))
                       false
@@ -102,7 +102,7 @@
 
 (defn- dna-insertion
   [rg pos ref alt]
-  (let [{:keys [strand cds-start cds-end exon-ranges]} rg
+  (let [{:keys [strand]} rg
         [_ ins offset _] (diff-bases ref alt)
         start (cond-> (+ pos offset) (= strand "+") dec)
         end (cond-> (+ pos offset) (= strand "-") dec)]

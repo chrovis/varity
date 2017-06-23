@@ -1,5 +1,5 @@
 (ns varity.hgvs-to-vcf.cdna
-  (:require [clj-hgvs.mutation :as mut]
+  (:require clj-hgvs.mutation
             [cljam.fasta :as fa]
             [varity.ref-gene :as rg]
             [varity.util :refer [revcomp-bases]]))
