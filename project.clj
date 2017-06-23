@@ -9,6 +9,7 @@
                  [cljam "0.3.1"]
                  [org.apache.commons/commons-compress "1.14"]
                  [proton "0.1.1"]]
+  :plugins [[lein-cloverage "1.0.9"]]
   :test-selectors {:default (complement :slow)
                    :slow :slow
                    :all (constantly true)}

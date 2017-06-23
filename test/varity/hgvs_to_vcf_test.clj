@@ -5,7 +5,7 @@
             [varity.hgvs-to-vcf :refer :all]
             [varity.t-common :refer :all]))
 
-(deftest ^:slow hgvs->vcf-variants-test
+(defslowtest hgvs->vcf-variants-test
   (cavia-testing "cDNA HGVS to vcf variants"
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
       (are [hgvs* e]

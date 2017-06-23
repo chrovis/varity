@@ -1,7 +1,16 @@
 (ns varity.t-common
   (:require [clojure.java.io :as io]
-            [clojure.test :refer [testing]]
+            [clojure.test :refer [deftest testing]]
             [cavia.core :as cavia :refer [defprofile with-profile]]))
+
+(defn- in-cloverage? []
+  (some? (resolve 'cloverage.coverage/*covered*)))
+
+(defmacro defslowtest
+  [name & body]
+  (if-not (in-cloverage?)
+    `(deftest ~(vary-meta name assoc :slow true)
+       ~@body)))
 
 (defprofile prof
   {:resources [{:id "test.fa"

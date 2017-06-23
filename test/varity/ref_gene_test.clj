@@ -4,7 +4,7 @@
             [varity.ref-gene :as rg]
             [varity.t-common :refer :all]))
 
-(deftest ^:slow in-any-exon?-test
+(defslowtest in-any-exon?-test
   (cavia-testing "in-any-exon? (slow)"
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
       (is (true? (rg/in-any-exon? "chr7" 55191822 rgidx)))
@@ -55,7 +55,7 @@
        (map #(rg/cds-coord pos %))
        (map coord/format)))
 
-(deftest ^:slow cds-coord-slow-test
+(defslowtest cds-coord-slow-test
   (cavia-testing "cds-coord (slow)"
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
       (are [c p r] (= (cds-coord c p rgidx) r)

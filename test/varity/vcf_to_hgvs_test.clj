@@ -12,7 +12,7 @@
                         :range-format :coord})
        (vcf-variant->cdna-hgvs variant fa-rdr rgidx)))
 
-(deftest ^:slow vcf-variant->cdna-hgvs-test
+(defslowtest vcf-variant->cdna-hgvs-test
   (cavia-testing "returns cDNA HGVS strings"
     (with-open [fa-rdr (fa/reader test-fa-file)]
       (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
@@ -84,7 +84,7 @@
                         :ter-format :short})
        (vcf-variant->protein-hgvs variant fa-rdr rgidx)))
 
-(deftest ^:slow vcf-variant->protein-hgvs-test
+(defslowtest vcf-variant->protein-hgvs-test
   (cavia-testing "returns protein HGVS strings"
     (with-open [fa-rdr (fa/reader test-fa-file)]
       (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
