@@ -23,3 +23,10 @@
     6 "XXX" "X" [[2 4] [7 9]]
     3 "XXX" "X" [[2 3] [6 9]]
     1 "XXXXX" "X" [[4 7]]))
+
+(def exon-sequence #'varity.vcf-to-hgvs.protein/exon-sequence)
+
+(deftest exon-sequence-test
+  ;; A  C G T  A C G  T A C  G   T  A  C  G
+  ;; 1 [2 3 4] 5 6 7 [8 9 10 11] 12 13 14 15
+  (is (= (exon-sequence "ACGTACGTACGTACG" 1 [[2 4] [8 11]])) "CGTTACG"))

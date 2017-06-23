@@ -48,6 +48,8 @@
          vec)))
 
 (defn- exon-sequence
+  "Extracts bases in exon from supplied sequence, returning the sequence of
+  bases as string."
   ([sequence* start exon-ranges]
    (exon-sequence sequence* start (+ start (count sequence*)) exon-ranges))
   ([sequence* start end exon-ranges]
