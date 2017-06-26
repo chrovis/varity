@@ -79,7 +79,7 @@
   e.g.
     (genes->codon \"TCA\") => \"S\"
     (genes->codon \"tca\") => \"S\"
-    (genes->codon \"GAA\") => \"*\"
+    (genes->codon \"TAA\") => \"*\"
     (genes->codon \"TCAG\") => AssertionError"
   [s]
   {:pre [(= (count s) 3)]}
@@ -100,6 +100,7 @@
 (defn amino-acid-sequence
   "Converts nucleotide sequence into amino acid sequence."
   [s]
+  {:pre [(string? s)]}
   (->> (partition 3 s)
        (map #(apply str %))
        (map codon->amino-acid)
