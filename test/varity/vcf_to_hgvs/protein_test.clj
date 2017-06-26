@@ -29,4 +29,4 @@
 (deftest exon-sequence-test
   ;; A  C G T  A C G  T A C  G   T  A  C  G
   ;; 1 [2 3 4] 5 6 7 [8 9 10 11] 12 13 14 15
-  (is (= (exon-sequence "ACGTACGTACGTACG" 1 [[2 4] [8 11]])) "CGTTACG"))
+  (is (= (exon-sequence "ACGTACGTACGTACG" 1 [[2 4] [8 11]]) "CGTTACG")))
