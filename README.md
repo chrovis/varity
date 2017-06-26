@@ -50,19 +50,19 @@ The returned HGVS is data structure of [clj-hgvs](https://github.com/chrovis/clj
 (v2h/vcf-variant->hgvs {:chr "chr7", :pos 55191822, :ref "T", :alt "G"}
                        "path/to/hg38.fa" "path/to/refGene.txt.gz")
 ;;=> ({:cdna {:kind :cdna,
-;;            :mutations (#clj_hgvs.mutation.DNASubstitution
-;;                        {:alt "G",
-;;                         :coord #clj_hgvs.coordinate.CDNACoordinate
-;;                          {:offset 0, :position 2573, :region nil},
-;;                         :ref "T",
-;;                         :type ">"}),
+;;            :mutation #clj_hgvs.mutation.DNASubstitution
+;;            {:alt "G",
+;;             :coord #clj_hgvs.coordinate.CDNACoordinate
+;;             {:offset 0, :position 2573, :region nil},
+;;             :ref "T",
+;;             :type ">"},
 ;;            :transcript "NM_005228"},
 ;;     :protein {:kind :protein,
-;;               :mutations (#clj_hgvs.mutation.ProteinSubstitution
-;;                           {:alt "Arg",
-;;                            :coord #clj_hgvs.coordinate.ProteinCoordinate
-;;                             {:position 858},
-;;                            :ref "Leu"}),
+;;               :mutation #clj_hgvs.mutation.ProteinSubstitution
+;;               {:alt "Arg",
+;;                :coord #clj_hgvs.coordinate.ProteinCoordinate
+;;                {:position 858},
+;;                :ref "Leu"},
 ;;               :transcript nil}})
 ```
 
