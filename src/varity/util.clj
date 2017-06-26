@@ -15,6 +15,7 @@
 (defn revcomp-bases
   "Returns reverse complementary bases string."
   [s]
+  {:pre [(string? s)]}
   (->> (reverse s)
        (map (partial get comp-base-map))
        (apply str)))
