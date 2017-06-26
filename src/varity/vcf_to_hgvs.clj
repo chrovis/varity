@@ -87,7 +87,7 @@
 (defmethod vcf-variant->protein-hgvs :ref-gene-path
   [variant fa-rdr ref-gene]
   (let [rgidx (rg/index (rg/load-ref-genes ref-gene))]
-    (vcf-variant->cdna-hgvs variant fa-rdr rgidx)))
+    (vcf-variant->protein-hgvs variant fa-rdr rgidx)))
 
 (defmethod vcf-variant->protein-hgvs :ref-gene-index
   [{:keys [chr pos ref alt]} fa-rdr rgidx]
