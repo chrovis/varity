@@ -41,6 +41,12 @@
       "AGGGGGGT" 7 "A"
       "" 7 "A")))
 
+(deftest repeat-info-test
+  (are [s p i e] (= (repeat-info s p i) e)
+    "XXXCAGTCXXX" 8 "AGT" ["AGT" 1 1]
+    "XXXCAGTCXXX" 8 "AGTAGT" ["AGT" 1 2]
+    "XXXCAGTAGTCXXX" 11 "AGTAGT" ["AGT" 2 2]))
+
 (def normalize-variant* #'varity.vcf-to-hgvs.common/normalize-variant*)
 
 (deftest normalize-variant*-test
