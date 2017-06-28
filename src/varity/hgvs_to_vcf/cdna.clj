@@ -1,6 +1,6 @@
 (ns varity.hgvs-to-vcf.cdna
   (:require clj-hgvs.mutation
-            [cljam.fasta :as fa]
+            [cljam.io.sequence :as cseq]
             [varity.ref-gene :as rg]
             [varity.util :refer [revcomp-bases]]))
 
@@ -39,7 +39,7 @@
                                          "-" (:coord-start mut*))
                                        rg)]
     (if (and start end)
-      (let [ref (fa/read-sequence fa-rdr {:chr chr, :start (dec start), :end end})]
+      (let [ref (cseq/read-sequence fa-rdr {:chr chr, :start (dec start), :end end})]
         {:chr chr
          :pos (dec start)
          :ref ref
@@ -57,10 +57,10 @@
                                          "-" (:coord-start mut*))
                                        rg)]
     (if (and start end)
-      (let [dup (fa/read-sequence fa-rdr {:chr chr, :start start, :end end})
+      (let [dup (cseq/read-sequence fa-rdr {:chr chr, :start start, :end end})
             base (case strand
                    "+" (subs dup (dec (count dup)))
-                   "-" (fa/read-sequence fa-rdr {:chr chr, :start (dec start), :end (dec start)}))]
+                   "-" (cseq/read-sequence fa-rdr {:chr chr, :start (dec start), :end (dec start)}))]
         {:chr chr
          :pos (case strand
                 "+" end
@@ -74,7 +74,7 @@
                                               "+" (:coord-start mut*)
                                               "-" (:coord-end mut*))
                                             rg)]
-    (let [ref (fa/read-sequence fa-rdr {:chr chr, :start start, :end start})]
+    (let [ref (cseq/read-sequence fa-rdr {:chr chr, :start start, :end start})]
       {:chr chr
        :pos start
        :ref ref
@@ -92,7 +92,7 @@
                                          "-" (:coord-start mut*))
                                        rg)]
     (if (and start end)
-      (let [ref (fa/read-sequence fa-rdr {:chr chr, :start (dec start), :end end})]
+      (let [ref (cseq/read-sequence fa-rdr {:chr chr, :start (dec start), :end end})]
         {:chr chr
          :pos (dec start)
          :ref ref
@@ -110,7 +110,7 @@
                                          "-" (:coord-start mut*))
                                        rg)]
     (if (and start end)
-      (let [ref (fa/read-sequence fa-rdr {:chr chr, :start (dec start), :end end})]
+      (let [ref (cseq/read-sequence fa-rdr {:chr chr, :start (dec start), :end end})]
         (if (or (nil? (:ref mut*))
                 (= (subs ref 1) (cond-> (:ref mut*)
                                   (= strand "-") (revcomp-bases))))
@@ -129,15 +129,15 @@
                :else start*)]
     (if (and start* end*)
       (let [[start end] (cond-> [start* end*] (= strand "-") reverse)
-            dup (fa/read-sequence fa-rdr {:chr chr, :start start, :end end})]
+            dup (cseq/read-sequence fa-rdr {:chr chr, :start start, :end end})]
         (if (= (count (repeat-units dup)) 1)
           (let [base (case strand
                        "+" (subs dup (dec (count dup)))
-                       "-" (fa/read-sequence fa-rdr {:chr chr, :start (dec start), :end (dec start)}))
+                       "-" (cseq/read-sequence fa-rdr {:chr chr, :start (dec start), :end (dec start)}))
                 nunit (inc (- end start))
                 rep (case strand
-                      "+" (fa/read-sequence fa-rdr {:chr chr, :start start, :end (dec (+ start (* nunit (:ncopy mut*))))})
-                      "-" (fa/read-sequence fa-rdr {:chr chr, :start (inc (- start (* nunit (:ncopy mut*)))), :end end}))
+                      "+" (cseq/read-sequence fa-rdr {:chr chr, :start start, :end (dec (+ start (* nunit (:ncopy mut*))))})
+                      "-" (cseq/read-sequence fa-rdr {:chr chr, :start (inc (- start (* nunit (:ncopy mut*)))), :end end}))
                 m (case strand
                     "+" (count (filter #(= (apply str %) dup) (partition nunit rep)))
                     "-" (count (filter #(= % (reverse dup)) (partition nunit (reverse rep)))))]

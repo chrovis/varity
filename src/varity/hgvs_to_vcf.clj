@@ -1,7 +1,7 @@
 (ns varity.hgvs-to-vcf
   "Functions to convert HGVS into VCF-style variants."
   (:require [clojure.string :as string]
-            [cljam.fasta :as fa]
+            [cljam.io.sequence :as cseq]
             [varity.hgvs-to-vcf.cdna :as cdna]
             [varity.hgvs-to-vcf.protein :as prot]
             [varity.ref-gene :as rg]))
@@ -11,7 +11,7 @@
   (cond
     (string? ref-fa) :fasta-path
 
-    (instance? cljam.fasta.reader.FASTAReader ref-fa)
+    (instance? cljam.io.fasta.reader.FASTAReader ref-fa)
     (cond
       (string? ref-gene) :ref-gene-path
       (instance? varity.ref_gene.RefGeneIndex ref-gene) :ref-gene-index
@@ -29,7 +29,7 @@
   "Converts cDNA/protein hgvs into possible VCF-style variants. ref-seq of hgvs
   (e.g. NM_005228) is used for ref-genes search. Alternatively, gene (e.g. EGFR)
   can be used if ref-seq does not exist. ref-fa must be a path to reference
-  FASTA or cljam.fasta.reader.FASTAReader. ref-gene must be a path to
+  FASTA or cljam.io.fasta.reader.FASTAReader. ref-gene must be a path to
   refGene.txt(.gz), ref-gene index, or a ref-gene entity. A returned sequence
   consists of {:chr :pos :ref :alt}."
   {:arglists '([hgvs ref-fa ref-gene] [hgvs gene ref-fa ref-gene])}
@@ -39,7 +39,7 @@
 (defmethod hgvs->vcf-variants :fasta-path
   ([hgvs ref-fa ref-gene] (hgvs->vcf-variants hgvs nil ref-fa ref-gene))
   ([hgvs gene ref-fa ref-gene]
-   (with-open [fa-rdr (fa/reader ref-fa)]
+   (with-open [fa-rdr (cseq/reader ref-fa)]
      (doall (hgvs->vcf-variants hgvs gene fa-rdr ref-gene)))))
 
 (defmethod hgvs->vcf-variants :ref-gene-path
@@ -73,7 +73,7 @@
   "Converts protein HGVS into possible VCF-style variants and cDNA HGVS. ref-seq
   of hgvs (e.g. NM_005228) is used for ref-genes search. Alternatively, gene
   (e.g. EGFR) can be used if ref-seq does not exist. ref-fa must be a path to
-  reference FASTA or cljam.fasta.reader.FASTAReader. ref-gene must be a path to
+  reference FASTA or cljam.io.fasta.reader.FASTAReader. ref-gene must be a path to
   refGene.txt(.gz), ref-gene index, or a ref-gene entity. A returned sequence
   consists of {:vcf :cdna}."
   {:arglists '([hgvs ref-fa ref-gene] [hgvs gene ref-fa ref-gene])}
@@ -83,7 +83,7 @@
 (defmethod protein-hgvs->vcf-variants-with-cdna-hgvs :fasta-path
   ([hgvs ref-fa ref-gene] (protein-hgvs->vcf-variants-with-cdna-hgvs nil ref-fa ref-gene))
   ([hgvs gene ref-fa ref-gene]
-   (with-open [fa-rdr (fa/reader ref-fa)]
+   (with-open [fa-rdr (cseq/reader ref-fa)]
      (doall (protein-hgvs->vcf-variants-with-cdna-hgvs hgvs gene fa-rdr ref-gene)))))
 
 (defmethod protein-hgvs->vcf-variants-with-cdna-hgvs :ref-gene-path

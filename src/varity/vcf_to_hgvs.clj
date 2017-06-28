@@ -1,6 +1,6 @@
 (ns varity.vcf-to-hgvs
   "Functions to convert a VCF-style variant into HGVS."
-  (:require [cljam.fasta :as fa]
+  (:require [cljam.io.sequence :as cseq]
             [cljam.util.chromosome :refer [normalize-chromosome-key]]
             [varity.ref-gene :as rg]
             [varity.vcf-to-hgvs.cdna :as cdna]
@@ -9,14 +9,14 @@
 
 (defn- valid-ref?
   [fa-rdr chr pos ref]
-  (= (fa/read-sequence fa-rdr {:chr chr, :start pos, :end (+ pos (count ref) -1)}) ref))
+  (= (cseq/read-sequence fa-rdr {:chr chr, :start pos, :end (+ pos (count ref) -1)}) ref))
 
 (defn- dispatch
   [ref-fa ref-gene]
   (cond
     (string? ref-fa) :fasta-path
 
-    (instance? cljam.fasta.reader.FASTAReader ref-fa)
+    (instance? cljam.io.fasta.reader.FASTAReader ref-fa)
     (cond
       (string? ref-gene) :ref-gene-path
       (instance? varity.ref_gene.RefGeneIndex ref-gene) :ref-gene-index
@@ -28,7 +28,7 @@
   "Converts a VCF-style variant (:chr, :pos, :ref, and :alt) into cDNA HGVS. alt
   must be a single alternation such as \"TG\". \"TG,T\", for example, is not
   allowed. ref-fa must be a path to reference FASTA or
-  cljam.fasta.reader.FASTAReader. ref-gene must be a path to refGene.txt(.gz),
+  cljam.io.fasta.reader.FASTAReader. ref-gene must be a path to refGene.txt(.gz),
   ref-gene index, or a ref-gene entity. A returned sequence consists of cDNA
   HGVS defined in clj-hgvs."
   {:arglists '([variant ref-fa ref-gene])}
@@ -37,7 +37,7 @@
 
 (defmethod vcf-variant->cdna-hgvs :fasta-path
   [variant ref-fa ref-gene]
-  (with-open [fa-rdr (fa/reader ref-fa)]
+  (with-open [fa-rdr (cseq/reader ref-fa)]
     (doall (vcf-variant->cdna-hgvs variant fa-rdr ref-gene))))
 
 (defmethod vcf-variant->cdna-hgvs :ref-gene-path
@@ -72,7 +72,7 @@
   "Converts a VCF-style variant (:chr, :pos, :ref, and :alt) into protein HGVS.
   alt must be a single alternation such as \"TG\". \"TG,T\", for example, is not
   allowed. ref-fa must be a path to reference FASTA or
-  cljam.fasta.reader.FASTAReader. ref-gene must be a path to refGene.txt(.gz),
+  cljam.io.fasta.reader.FASTAReader. ref-gene must be a path to refGene.txt(.gz),
   ref-gene index, or a ref-gene entity. A returned sequence consists of protein
   HGVS defined in clj-hgvs."
   {:arglists '([variant ref-fa ref-gene])}
@@ -81,7 +81,7 @@
 
 (defmethod vcf-variant->protein-hgvs :fasta-path
   [variant ref-fa ref-gene]
-  (with-open [fa-rdr (fa/reader ref-fa)]
+  (with-open [fa-rdr (cseq/reader ref-fa)]
     (doall (vcf-variant->protein-hgvs variant fa-rdr ref-gene))))
 
 (defmethod vcf-variant->protein-hgvs :ref-gene-path
@@ -117,7 +117,7 @@
 (defmulti vcf-variant->hgvs
   "Converts a VCF-style variant (:chr, :pos, :ref, and :alt) into HGVS. alt must
   be a single alternation such as \"TG\". \"TG,T\", for example, is not allowed.
-  ref-fa must be a path to reference FASTA or cljam.fasta.reader.FASTAReader.
+  ref-fa must be a path to reference FASTA or cljam.io.fasta.reader.FASTAReader.
   ref-gene must be a path to refGene.txt(.gz), ref-gene index, or a ref-gene
   entity. A returned sequence consists of maps, each having :cdna and :protein
   HGVS defined in clj-hgvs."
@@ -127,7 +127,7 @@
 
 (defmethod vcf-variant->hgvs :fasta-path
   [variant ref-fa ref-gene]
-  (with-open [fa-rdr (fa/reader ref-fa)]
+  (with-open [fa-rdr (cseq/reader ref-fa)]
     (doall (vcf-variant->hgvs variant fa-rdr ref-gene))))
 
 (defmethod vcf-variant->hgvs :ref-gene-path

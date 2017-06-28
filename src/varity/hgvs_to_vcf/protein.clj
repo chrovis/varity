@@ -1,7 +1,7 @@
 (ns varity.hgvs-to-vcf.protein
   (:require [clj-hgvs.core :as hgvs]
             [clj-hgvs.mutation :as mut]
-            [cljam.fasta :as fa]
+            [cljam.io.sequence :as cseq]
             [varity.codon :as codon]
             [varity.ref-gene :as rg]
             [varity.util :refer [revcomp-bases]])
@@ -26,7 +26,7 @@
     (let [pos-cands (pos-candidates (:coord mut*) rg)]
       (if (seq pos-cands)
         (let [ref-codon1 (->> pos-cands
-                              (map #(fa/read-sequence fa-rdr {:chr chr, :start %, :end %}))
+                              (map #(cseq/read-sequence fa-rdr {:chr chr, :start %, :end %}))
                               (apply str))
               ref-codon (cond-> ref-codon1 (= strand "-") revcomp-bases)
               palt (mut/->short-amino-acid (:alt mut*))
@@ -57,7 +57,7 @@
     (let [pos-cands (pos-candidates (:coord mut*) rg)]
       (if (seq pos-cands)
         (let [ref-codon1 (->> pos-cands
-                              (map #(fa/read-sequence fa-rdr {:chr chr, :start %, :end %}))
+                              (map #(cseq/read-sequence fa-rdr {:chr chr, :start %, :end %}))
                               (apply str))
               ref-codon (cond-> ref-codon1 (= strand "-") revcomp-bases)
               palt (mut/->short-amino-acid (:alt mut*))

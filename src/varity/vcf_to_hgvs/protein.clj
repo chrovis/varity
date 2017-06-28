@@ -3,7 +3,7 @@
             [clj-hgvs.coordinate :as coord]
             [clj-hgvs.core :as hgvs]
             [clj-hgvs.mutation :as mut]
-            [cljam.fasta :as fa]
+            [cljam.io.sequence :as cseq]
             [varity.codon :as codon]
             [varity.ref-gene :as rg]
             [varity.util :refer [revcomp-bases]]
@@ -70,13 +70,13 @@
 
 (defn- read-exon-sequence
   [fa-rdr chr start end exon-ranges]
-  (exon-sequence (fa/read-sequence fa-rdr {:chr chr, :start start, :end end})
+  (exon-sequence (cseq/read-sequence fa-rdr {:chr chr, :start start, :end end})
                  start end exon-ranges))
 
 (defn- read-sequence-info
   [fa-rdr rg pos ref alt]
   (let [{:keys [chr tx-start tx-end cds-start cds-end exon-ranges strand]} rg
-        ref-seq (fa/read-sequence fa-rdr {:chr chr, :start cds-start, :end cds-end})
+        ref-seq (cseq/read-sequence fa-rdr {:chr chr, :start cds-start, :end cds-end})
         alt-seq (alt-sequence ref-seq cds-start pos ref alt)
         alt-exon-ranges* (alt-exon-ranges exon-ranges pos ref alt)
         ref-exon-seq1 (exon-sequence ref-seq cds-start exon-ranges)

@@ -1,6 +1,6 @@
 (ns varity.vcf-to-hgvs.common
   (:require [clojure.string :as string]
-            [cljam.fasta :as fa]))
+            [cljam.io.sequence :as cseq]))
 
 (defn- left-common-len
   "Returns the number of common characters on the left side of s1 and s2."
@@ -95,7 +95,7 @@
               (let [start* (+ start (* i step))
                     end* (min (dec (+ start* step)) end)]
                 (if (<= start* end)
-                  (fa/read-sequence fa-rdr {:chr chr, :start start, :end end*})))))
+                  (cseq/read-sequence fa-rdr {:chr chr, :start start, :end end*})))))
        (take-while some?)))
 
 ;; ("AGT" "CTGAGT" "AAACTGAGT" ...)
@@ -106,7 +106,7 @@
               (let [end* (- end (* i step))
                     start* (max (inc (- end* step)) start)]
                 (if (>= end* start)
-                  (fa/read-sequence fa-rdr {:chr chr, :start start*, :end end})))))
+                  (cseq/read-sequence fa-rdr {:chr chr, :start start*, :end end})))))
        (take-while some?)))
 
 
