@@ -6,10 +6,10 @@
             [varity.t-common :refer :all]))
 
 (defn- vcf-variant->cdna-hgvs-texts
-  [variant fa-rdr rgidx]
+  [variant seq-rdr rgidx]
   (map #(hgvs/format % {:show-bases? true
                         :range-format :coord})
-       (vcf-variant->cdna-hgvs variant fa-rdr rgidx)))
+       (vcf-variant->cdna-hgvs variant seq-rdr rgidx)))
 
 (defslowtest vcf-variant->cdna-hgvs-test
   (cavia-testing "returns cDNA HGVS strings"
@@ -77,10 +77,10 @@
                                            test-fa-file rgidx))))))
 
 (defn- vcf-variant->protein-hgvs-texts
-  [variant fa-rdr rgidx]
+  [variant seq-rdr rgidx]
   (map #(hgvs/format % {:amino-acid-format :short
                         :ter-format :short})
-       (vcf-variant->protein-hgvs variant fa-rdr rgidx)))
+       (vcf-variant->protein-hgvs variant seq-rdr rgidx)))
 
 (defslowtest vcf-variant->protein-hgvs-test
   (cavia-testing "returns protein HGVS strings"

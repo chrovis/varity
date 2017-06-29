@@ -89,26 +89,25 @@
 
 ;; ("AGT" "AGTCTG" "AGTCTGAAA" ...)
 (defn read-sequence-stepwise
-  [fa-rdr {:keys [chr start end]} step]
+  [seq-rdr {:keys [chr start end]} step]
   (->> (range)
        (map (fn [i]
               (let [start* (+ start (* i step))
                     end* (min (dec (+ start* step)) end)]
                 (if (<= start* end)
-                  (cseq/read-sequence fa-rdr {:chr chr, :start start, :end end*})))))
+                  (cseq/read-sequence seq-rdr {:chr chr, :start start, :end end*})))))
        (take-while some?)))
 
 ;; ("AGT" "CTGAGT" "AAACTGAGT" ...)
 (defn read-sequence-stepwise-backward
-  [fa-rdr {:keys [chr start end]} step]
+  [seq-rdr {:keys [chr start end]} step]
   (->> (range)
        (map (fn [i]
               (let [end* (- end (* i step))
                     start* (max (inc (- end* step)) start)]
                 (if (>= end* start)
-                  (cseq/read-sequence fa-rdr {:chr chr, :start start*, :end end})))))
+                  (cseq/read-sequence seq-rdr {:chr chr, :start start*, :end end})))))
        (take-while some?)))
-
 
 ;; + ...CAGTAGTAGTC... 7 T TAGT => 13 T TAGT
 ;; + ...CAGTAGTAGTC... 7 TAGT T => 10 TAGT T
@@ -136,8 +135,8 @@
       var)))
 
 (defn- normalize-variant-forward
-  [{:keys [chr pos ref alt]} fa-rdr rg]
-  (->> (read-sequence-stepwise fa-rdr
+  [{:keys [chr pos ref alt]} seq-rdr rg]
+  (->> (read-sequence-stepwise seq-rdr
                                {:chr chr, :start pos, :end (:tx-end rg)}
                                100)
        (keep (fn [seq*]
@@ -149,8 +148,8 @@
        (first)))
 
 (defn- normalize-variant-backward
-  [{:keys [chr pos ref alt]} fa-rdr rg]
-  (->> (read-sequence-stepwise-backward fa-rdr
+  [{:keys [chr pos ref alt]} seq-rdr rg]
+  (->> (read-sequence-stepwise-backward seq-rdr
                                         {:chr chr, :start (:tx-start rg), :end (+ pos (count ref) -1)}
                                         100)
        (keep (fn [seq*]
@@ -167,7 +166,7 @@
   {:pos 7, :ref T, :alt TAGT} on ...CAGTAGTAGTC... is equivalent to
   {:pos 13, :ref T, :alt TAGT}. The latter is normalized.
   e.g.  ...CAGTAGTAGTC... 7 T TAGT => 13 T TAGT"
-  [variant fa-rdr rg]
+  [variant seq-rdr rg]
   (case (:strand rg)
-    "+" (normalize-variant-forward variant fa-rdr rg)
-    "-" (normalize-variant-backward variant fa-rdr rg)))
+    "+" (normalize-variant-forward variant seq-rdr rg)
+    "-" (normalize-variant-backward variant seq-rdr rg)))

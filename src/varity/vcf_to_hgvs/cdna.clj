@@ -6,9 +6,9 @@
             [varity.vcf-to-hgvs.common :refer [diff-bases] :as common]))
 
 (defn- repeat-info-forward
-  [fa-rdr rg pos ins]
+  [seq-rdr rg pos ins]
   (->> (common/read-sequence-stepwise-backward
-        fa-rdr {:chr (:chr rg), :start (:tx-start rg), :end (dec pos)} 100)
+        seq-rdr {:chr (:chr rg), :start (:tx-start rg), :end (dec pos)} 100)
        (map (fn [seq*]
               (let [nseq* (count seq*)]
                 (if-let [[unit ref-repeat :as ri] (common/repeat-info seq* (inc nseq*) ins)]
@@ -20,9 +20,9 @@
        (first)))
 
 (defn- repeat-info-backward
-  [fa-rdr rg pos ins]
+  [seq-rdr rg pos ins]
   (->> (common/read-sequence-stepwise
-        fa-rdr {:chr (:chr rg), :start pos, :end (:tx-end rg)} 100)
+        seq-rdr {:chr (:chr rg), :start pos, :end (:tx-end rg)} 100)
        (map (fn [seq*]
               (let [nseq* (count seq*)]
                 (if-let [[unit ref-repeat :as ri] (common/repeat-info (revcomp-bases seq*)
@@ -36,18 +36,18 @@
        (first)))
 
 (defn- repeat-info*
-  [fa-rdr rg pos ins]
+  [seq-rdr rg pos ins]
   (case (:strand rg)
-    "+" (repeat-info-forward fa-rdr rg pos ins)
-    "-" (repeat-info-backward fa-rdr rg pos ins)))
+    "+" (repeat-info-forward seq-rdr rg pos ins)
+    "-" (repeat-info-backward seq-rdr rg pos ins)))
 
 (defn- mutation-type
-  [fa-rdr rg pos ref alt]
+  [seq-rdr rg pos ref alt]
   (if (re-matches #"[acgntACGNT]*" alt)
     (let [[ref-only alt-only offset _] (diff-bases ref alt)
           nrefo (count ref-only)
           nalto (count alt-only)
-          [unit ref-repeat ins-repeat] (repeat-info* fa-rdr rg (+ pos offset) alt-only)]
+          [unit ref-repeat ins-repeat] (repeat-info* seq-rdr rg (+ pos offset) alt-only)]
       (cond
         (and (= nrefo 1) (= nalto 1)) :substitution
         (= ref-only (revcomp-bases alt-only)) :inversion
@@ -149,10 +149,10 @@
                    (cond-> ins (= strand "-") revcomp-bases))))
 
 (defn- dna-repeated-seqs
-  [fa-rdr rg pos ref alt]
+  [seq-rdr rg pos ref alt]
   (let [{:keys [strand]} rg
         [_ ins offset _] (diff-bases ref alt)
-        [unit ref-repeat ins-repeat] (repeat-info* fa-rdr rg (+ pos offset) ins)
+        [unit ref-repeat ins-repeat] (repeat-info* seq-rdr rg (+ pos offset) ins)
         nunit (count unit)
         start (case strand
                 "+" (+ pos offset (- (* nunit ref-repeat)))
@@ -166,18 +166,18 @@
                            (+ ref-repeat ins-repeat))))
 
 (defn- mutation
-  [fa-rdr rg pos ref alt]
-  (case (mutation-type fa-rdr rg pos ref alt)
+  [seq-rdr rg pos ref alt]
+  (case (mutation-type seq-rdr rg pos ref alt)
     :substitution (dna-substitution rg pos ref alt)
     :deletion (dna-deletion rg pos ref alt)
     :duplication (dna-duplication rg pos ref alt)
     :insertion (dna-insertion rg pos ref alt)
     :inversion (dna-inversion rg pos ref alt)
     :indel (dna-indel rg pos ref alt)
-    :repeated-seqs (dna-repeated-seqs fa-rdr rg pos ref alt)))
+    :repeated-seqs (dna-repeated-seqs seq-rdr rg pos ref alt)))
 
 (defn ->hgvs
-  [{:keys [pos ref alt]} fa-rdr rg]
+  [{:keys [pos ref alt]} seq-rdr rg]
   (hgvs/hgvs (:name rg)
              :cdna
-             (mutation fa-rdr rg pos ref alt)))
+             (mutation seq-rdr rg pos ref alt)))

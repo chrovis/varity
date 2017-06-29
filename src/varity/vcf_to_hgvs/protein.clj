@@ -69,24 +69,24 @@
           (apply str)))))
 
 (defn- read-exon-sequence
-  [fa-rdr chr start end exon-ranges]
-  (exon-sequence (cseq/read-sequence fa-rdr {:chr chr, :start start, :end end})
+  [seq-rdr chr start end exon-ranges]
+  (exon-sequence (cseq/read-sequence seq-rdr {:chr chr, :start start, :end end})
                  start end exon-ranges))
 
 (defn- read-sequence-info
-  [fa-rdr rg pos ref alt]
+  [seq-rdr rg pos ref alt]
   (let [{:keys [chr tx-start tx-end cds-start cds-end exon-ranges strand]} rg
-        ref-seq (cseq/read-sequence fa-rdr {:chr chr, :start cds-start, :end cds-end})
+        ref-seq (cseq/read-sequence seq-rdr {:chr chr, :start cds-start, :end cds-end})
         alt-seq (alt-sequence ref-seq cds-start pos ref alt)
         alt-exon-ranges* (alt-exon-ranges exon-ranges pos ref alt)
         ref-exon-seq1 (exon-sequence ref-seq cds-start exon-ranges)
-        ref-up-exon-seq1 (->> (read-exon-sequence fa-rdr chr tx-start (dec cds-start) exon-ranges)
+        ref-up-exon-seq1 (->> (read-exon-sequence seq-rdr chr tx-start (dec cds-start) exon-ranges)
                               reverse
                               (partition 3)
                               flatten
                               reverse
                               (apply str))
-        ref-down-exon-seq1 (->> (read-exon-sequence fa-rdr chr (inc cds-end) tx-end exon-ranges)
+        ref-down-exon-seq1 (->> (read-exon-sequence seq-rdr chr (inc cds-end) tx-end exon-ranges)
                                 reverse
                                 (partition 3)
                                 flatten
@@ -262,8 +262,8 @@
                              (coord/unknown-coordinate)))))
 
 (defn- mutation
-  [fa-rdr rg pos ref alt]
-  (let [seq-info (read-sequence-info fa-rdr rg pos ref alt)]
+  [seq-rdr rg pos ref alt]
+  (let [seq-info (read-sequence-info seq-rdr rg pos ref alt)]
     (if-let [{mut-type :type, ppos :pos, pref :ref, palt :alt}
              (->protein-variant rg pos ref alt seq-info)]
       (case mut-type
@@ -277,6 +277,6 @@
         :extension (protein-extension ppos pref palt seq-info)))))
 
 (defn ->hgvs
-  [{:keys [pos ref alt]} fa-rdr rg]
-  (if-let [mutation (mutation fa-rdr rg pos ref alt)]
+  [{:keys [pos ref alt]} seq-rdr rg]
+  (if-let [mutation (mutation seq-rdr rg pos ref alt)]
     (hgvs/hgvs nil :protein mutation)))

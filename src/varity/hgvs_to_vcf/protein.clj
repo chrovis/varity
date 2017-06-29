@@ -21,12 +21,12 @@
           (assoc (vec alt-seq) pos nil))))
 
 (defn- vcf-variants
-  [fa-rdr {:keys [chr strand] :as rg} mut*]
+  [seq-rdr {:keys [chr strand] :as rg} mut*]
   (if (instance? ProteinSubstitution mut*)
     (let [pos-cands (pos-candidates (:coord mut*) rg)]
       (if (seq pos-cands)
         (let [ref-codon1 (->> pos-cands
-                              (map #(cseq/read-sequence fa-rdr {:chr chr, :start %, :end %}))
+                              (map #(cseq/read-sequence seq-rdr {:chr chr, :start %, :end %}))
                               (apply str))
               ref-codon (cond-> ref-codon1 (= strand "-") revcomp-bases)
               palt (mut/->short-amino-acid (:alt mut*))
@@ -48,16 +48,16 @@
     (throw (IllegalArgumentException. "Unsupported mutation"))))
 
 (defn ->vcf-variants
-  [hgvs fa-rdr rg]
-  (vcf-variants fa-rdr rg (:mutation hgvs)))
+  [hgvs seq-rdr rg]
+  (vcf-variants seq-rdr rg (:mutation hgvs)))
 
 (defn- vcf-variants-with-cdna-hgvs
-  [fa-rdr {:keys [chr strand] :as rg} mut*]
+  [seq-rdr {:keys [chr strand] :as rg} mut*]
   (if (instance? ProteinSubstitution mut*)
     (let [pos-cands (pos-candidates (:coord mut*) rg)]
       (if (seq pos-cands)
         (let [ref-codon1 (->> pos-cands
-                              (map #(cseq/read-sequence fa-rdr {:chr chr, :start %, :end %}))
+                              (map #(cseq/read-sequence seq-rdr {:chr chr, :start %, :end %}))
                               (apply str))
               ref-codon (cond-> ref-codon1 (= strand "-") revcomp-bases)
               palt (mut/->short-amino-acid (:alt mut*))
@@ -83,5 +83,5 @@
     (throw (IllegalArgumentException. "Unsupported mutation"))))
 
 (defn ->vcf-variants-with-cdna-hgvs
-  [hgvs fa-rdr rg]
-  (vcf-variants-with-cdna-hgvs fa-rdr rg (:mutation hgvs)))
+  [hgvs seq-rdr rg]
+  (vcf-variants-with-cdna-hgvs seq-rdr rg (:mutation hgvs)))
