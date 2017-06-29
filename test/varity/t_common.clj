@@ -13,13 +13,9 @@
        ~@body)))
 
 (defprofile prof
-  {:resources [{:id "test.fa"
-                :url "https://test.chrov.is/data/varity/hg38.fa.gz"
-                :md5 "b2aee9f885accc00531e59c4736bee63"
-                :packed :gzip}
-               {:id "test.fa.fai"
-                :url "https://test.chrov.is/data/varity/hg38.fa.fai"
-                :sha1 "cfd5f7326d2e23e4e13fc2e2da21f7086b47e545"}
+  {:resources [{:id "test.2bit"
+                :url "https://test.chrov.is/data/varity/hg38.2bit"
+                :sha1 "6fb20ba4de0b49247b78e08c2394d0c4f8594148"}
                {:id "test-refGene.txt.gz"
                 :url "https://test.chrov.is/data/varity/hg38-refGene.txt.gz"
                 :sha1 "941d514e57f4e842743f5c9269a0279906a072a0"}]})
@@ -34,7 +30,7 @@
      (prepare-cavia!)
      ~@body))
 
-(def test-fa-file (cavia/resource prof "test.fa"))
+(def test-ref-seq-file (cavia/resource prof "test.2bit"))
 (def test-ref-gene-file (cavia/resource prof "test-refGene.txt.gz"))
 
 (def test-chain-file (io/resource "hg19ToHg38.over.chain.gz"))

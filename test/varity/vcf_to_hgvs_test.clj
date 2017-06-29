@@ -16,7 +16,7 @@
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
       (are [chr pos ref alt e]
           (= (vcf-variant->cdna-hgvs-texts {:chr chr, :pos pos, :ref ref, :alt alt}
-                                           test-fa-file rgidx) e)
+                                           test-ref-seq-file rgidx) e)
         ;; Substitution
         "chr7" 55191822 "T" "G" '("NM_005228:c.2573T>G") ; cf. rs121434568 (+)
         "chr1" 11796321 "G" "A" '("NM_005957:c.665C>T") ; cf. rs1801133 (-)
@@ -74,7 +74,7 @@
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
       (is (thrown? Exception
                    (vcf-variant->cdna-hgvs {:chr "chr7", :pos 55191823, :ref "T", :alt "G"}
-                                           test-fa-file rgidx))))))
+                                           test-ref-seq-file rgidx))))))
 
 (defn- vcf-variant->protein-hgvs-texts
   [variant seq-rdr rgidx]
@@ -87,7 +87,7 @@
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
       (are [chr pos ref alt e]
           (= (vcf-variant->protein-hgvs-texts {:chr chr, :pos pos, :ref ref, :alt alt}
-                                              test-fa-file rgidx) e)
+                                              test-ref-seq-file rgidx) e)
         ;; Substitution
         "chr7" 55191822 "T" "G" '("p.L858R") ; cf. rs121434568
         "chr1" 11796321 "G" "A" '("p.A222V") ; cf. rs1801133
@@ -127,4 +127,4 @@
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
       (is (thrown? Exception
                    (vcf-variant->protein-hgvs {:chr "chr7", :pos 55191823, :ref "T", :alt "G"}
-                                              test-fa-file rgidx))))))
+                                              test-ref-seq-file rgidx))))))
