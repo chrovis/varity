@@ -201,26 +201,3 @@
   [coord {:keys [strand] :as rg}]
   (if-let [base-pos (cds->genomic-pos (:position coord) (:region coord) rg)]
     (+ base-pos (cond-> (:offset coord) (= strand "-") (-)))))
-
-;; Searching variant genes
-;; -----------------------
-
-(defn variant-genes
-  "Returns genes that their part of nucleotides are variant as a map. The
-  returned map additionally includes a nucleotide numbering."
-  [chr pos ref-genes-idx]
-  (->> (ref-genes chr pos ref-genes-idx)
-       (filter (fn [{:keys [cds-start cds-end]}]
-                 (<= cds-start pos cds-end)))
-       (map (fn [m]
-              (assoc m :nucleotide-numbering (:position (cds-coord pos m)))))))
-
-(defn position-by-coord
-  [coord ref-gene]
-  (->> (:exon-ranges ref-gene)
-       (map (fn [[s e]] (range s (inc e))))
-       (apply concat)
-       (remove #(or (< % (:cds-start ref-gene))
-                    (< (:cds-end ref-gene) %)))
-       (#(cond-> % (= (:strand ref-gene) "-") reverse))
-       (#(nth % (dec coord) nil))))
