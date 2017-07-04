@@ -22,6 +22,10 @@ With Leiningen/Boot:
 
 ## Usage
 
+### Documentation
+
+[API Reference](https://chrovis.github.io/varity/)
+
 ### Notice
 
 All positions are represented as one-based number, and all ranges are
