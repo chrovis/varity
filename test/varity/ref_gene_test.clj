@@ -4,6 +4,26 @@
             [varity.ref-gene :as rg]
             [varity.t-common :refer :all]))
 
+(def parse-ref-gene-line #'varity.ref-gene/parse-ref-gene-line)
+
+(deftest parse-ref-gene-line-test
+  (is (= (parse-ref-gene-line "592\tNM_001291366\tchr1\t-\t975198\t982117\t976171\t981029\t4\t975198,976498,978880,982064,\t976269,976624,981047,982117,\t0\tPERM1\tcmpl\tcmpl\t1,1,0,-1,")
+         {:bin 592
+          :name "NM_001291366"
+          :chr "chr1"
+          :strand "-"
+          :tx-start 975199
+          :tx-end 982117
+          :cds-start 976172
+          :cds-end 981029
+          :exon-count 4
+          :exon-ranges [[975199 976269] [976499 976624] [978881 981047] [982065 982117]]
+          :score "0"
+          :name2 "PERM1"
+          :cds-start-stat :cmpl
+          :cds-end-stat :cmpl
+          :exon-frames "1,1,0,-1,"})))
+
 (defslowtest in-any-exon?-test
   (cavia-testing "in-any-exon? (slow)"
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
