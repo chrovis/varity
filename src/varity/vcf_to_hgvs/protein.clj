@@ -15,7 +15,8 @@
   (let [pos* (inc (- pos seq-start))]
     (str (subs ref-seq 0 (dec pos*))
          alt
-         (subs ref-seq (+ (dec pos*) (count ref))))))
+         (subs ref-seq (min (count ref-seq)
+                            (+ (dec pos*) (count ref)))))))
 
 (defn- alt-exon-ranges
   "Returns exon ranges a variant applied."
@@ -108,9 +109,11 @@
 (defn- protein-position
   ([pos rg] (protein-position pos 0 rg))
   ([pos offset rg]
-   (let [cds-coord (rg/cds-coord pos rg)]
+   (let [cds-coord (rg/cds-coord pos rg)
+         ppos-end (inc (quot (dec (:position (rg/cds-coord (:cds-end rg) rg))) 3))]
      (if (coord/in-exon? cds-coord)
-       (inc (quot (dec (+ (:position cds-coord) offset)) 3))))))
+       (min ppos-end
+            (inc (quot (dec (+ (:position cds-coord) offset)) 3)))))))
 
 (defn- ->protein-variant
   [rg pos ref alt seq-info]

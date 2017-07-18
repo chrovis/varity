@@ -141,7 +141,7 @@
                                100)
        (keep (fn [seq*]
                (let [nvar (normalize-variant* {:pos 1, :ref ref, :alt alt} seq* "+")]
-                 (if (< (:pos nvar) (- (count seq*) (max (count ref) (count alt))))
+                 (if (<= (dec (:pos nvar)) (- (count seq*) (max (count ref) (count alt))))
                    (-> nvar
                        (assoc :chr chr)
                        (update :pos + pos -1))))))
