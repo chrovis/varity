@@ -1,5 +1,7 @@
 (ns varity.vcf-to-hgvs.common-test
   (:require [clojure.test :refer :all]
+            [clojure.java.io :as io]
+            [cljam.io.sequence :as cseq]
             [varity.vcf-to-hgvs.common :refer :all]))
 
 (deftest diff-bases-test
@@ -56,3 +58,13 @@
       {:pos 7, :ref "TAGT", :alt "T"} "+" {:pos 10, :ref "TAGT", :alt "T"}
       {:pos 7, :ref "T", :alt "TAGT"} "-" {:pos 4, :ref "C", :alt "CAGT"}
       {:pos 7, :ref "TAGT", :alt "T"} "-" {:pos 4, :ref "CAGT", :alt "C"})))
+
+
+(def rg1 {:strand "+" :tx-start 5 :tx-end 42})
+(def rg2 {:strand "-" :tx-start 3 :tx-end 32})
+
+(deftest normalize-variant-test
+  (testing "normalize-variant"
+    (with-open [seq-rdr (cseq/reader (.getAbsolutePath (io/file (io/resource "test.fa"))))]
+      (are [v rg ret] (= (normalize-variant v seq-rdr rg) ret)
+        {:chr "ref1" :pos 38 :ref "AGCGC" :alt "A"} rg1 {:chr "ref1" :pos 38 :ref "AGCGC" :alt "A"}))))

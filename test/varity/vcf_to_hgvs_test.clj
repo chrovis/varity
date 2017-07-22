@@ -20,11 +20,14 @@
         ;; Substitution
         "chr7" 55191822 "T" "G" '("NM_005228:c.2573T>G") ; cf. rs121434568 (+)
         "chr1" 11796321 "G" "A" '("NM_005957:c.665C>T") ; cf. rs1801133 (-)
+        "chr12" 25245350 "C" "A" '("NM_004985:c.35G>T"
+                                   "NM_033360:c.35G>T") ; cf. rs121913529 (-)
 
         ;; Deletion
         "chr1" 963222 "GCG" "G" '("NM_198317:c.1157_1158delCG")
         "chr3" 116193879 "ACAC" "A" '("NM_001318915:c.156-107326_156-107324delGTG"
                                       "NM_002338:c.156-107326_156-107324delGTG") ; cf. rs17358
+        "chr16" 282999 "GTCTC" "G" '("NM_001176:c.*186_*189delTCTC") ; cf. rs28365940 (deletion in UTR)
 
         ;; Duplication
         "chr2" 47806842 "T" "TGACT" '("NM_000179:c.4062_4065dupGACT"
@@ -91,6 +94,7 @@
         ;; Substitution
         "chr7" 55191822 "T" "G" '("p.L858R") ; cf. rs121434568
         "chr1" 11796321 "G" "A" '("p.A222V") ; cf. rs1801133
+        "chr12" 25245350 "C" "A" '("p.G12V") ; cf. rs121913529 (-)
 
         ;; deletion
         "chr1" 1286041 "CCTT" "C" '("p.F227del")
