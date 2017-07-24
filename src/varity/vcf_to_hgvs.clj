@@ -23,6 +23,14 @@
       (instance? varity.ref_gene.RefGeneIndex ref-gene) :ref-gene-index
       (map? ref-gene) :ref-gene-entity)))
 
+(defn select-variant
+  [var seq-rdr rg]
+  (let [nvar (normalize-variant var seq-rdr rg)
+        nvar-cds-coord (rg/cds-coord (+ (:pos nvar) (max (count (:ref nvar)) (count (:alt nvar)))) rg)]
+    (if (nil? (:region nvar-cds-coord))
+      nvar
+      var)))
+
 ;;; -> cDNA HGVS
 
 (defmulti vcf-variant->cdna-hgvs
@@ -52,8 +60,8 @@
     (if (valid-ref? seq-rdr chr pos ref)
       (->> (rg/ref-genes chr pos rgidx)
            (map (fn [rg]
-                  (assoc (normalize-variant {:chr chr, :pos pos, :ref ref, :alt alt}
-                                            seq-rdr rg)
+                  (assoc (select-variant {:chr chr, :pos pos, :ref ref, :alt alt}
+                                         seq-rdr rg)
                          :rg rg)))
            (map #(cdna/->hgvs % seq-rdr (:rg %)))
            distinct)
@@ -62,8 +70,8 @@
 (defmethod vcf-variant->cdna-hgvs :ref-gene-entity
   [{:keys [pos ref alt]} seq-rdr {:keys [chr] :as rg}]
   (if (valid-ref? seq-rdr chr pos ref)
-    (let [nv (normalize-variant {:chr chr, :pos pos, :ref ref, :alt alt}
-                                seq-rdr rg)]
+    (let [nv (select-variant {:chr chr, :pos pos, :ref ref, :alt alt}
+                             seq-rdr rg)]
       (cdna/->hgvs (assoc nv :rg rg) seq-rdr rg))
     (throw (Exception. (format "\"%s\" is not found on %s:%d" ref chr pos)))))
 
@@ -96,8 +104,8 @@
     (if (valid-ref? seq-rdr chr pos ref)
       (->> (rg/ref-genes chr pos rgidx)
            (map (fn [rg]
-                  (assoc (normalize-variant {:chr chr, :pos pos, :ref ref, :alt alt}
-                                            seq-rdr rg)
+                  (assoc (select-variant {:chr chr, :pos pos, :ref ref, :alt alt}
+                                         seq-rdr rg)
                          :rg rg)))
            (filter #(rg/in-cds? (:pos %) (:rg %)))
            (keep #(prot/->hgvs % seq-rdr (:rg %)))
@@ -107,8 +115,8 @@
 (defmethod vcf-variant->protein-hgvs :ref-gene-entity
   [{:keys [pos ref alt]} seq-rdr {:keys [chr] :as rg}]
   (if (valid-ref? seq-rdr chr pos ref)
-    (let [{:keys [pos] :as nv} (normalize-variant {:chr chr, :pos pos, :ref ref, :alt alt}
-                                                   seq-rdr rg)]
+    (let [{:keys [pos] :as nv} (select-variant {:chr chr, :pos pos, :ref ref, :alt alt}
+                                               seq-rdr rg)]
       (if (rg/in-cds? pos rg)
         (prot/->hgvs (assoc nv :rg rg) seq-rdr rg)))
     (throw (Exception. (format "\"%s\" is not found on %s:%d" ref chr pos)))))
@@ -142,8 +150,8 @@
     (if (valid-ref? seq-rdr chr pos ref)
       (->> (rg/ref-genes chr pos rgidx)
            (map (fn [rg]
-                  (assoc (normalize-variant {:chr chr, :pos pos, :ref ref, :alt alt}
-                                            seq-rdr rg)
+                  (assoc (select-variant {:chr chr, :pos pos, :ref ref, :alt alt}
+                                         seq-rdr rg)
                          :rg rg)))
            (map (fn [{:keys [pos rg] :as m}]
                   {:cdna (cdna/->hgvs m seq-rdr rg)
@@ -155,8 +163,8 @@
 (defmethod vcf-variant->hgvs :ref-gene-entity
   [{:keys [pos ref alt]} seq-rdr {:keys [chr] :as rg}]
   (if (valid-ref? seq-rdr chr pos ref)
-    (let [{:keys [pos] :as nv} (normalize-variant {:chr chr, :pos pos, :ref ref, :alt alt}
-                                                  seq-rdr rg)]
+    (let [{:keys [pos] :as nv} (select-variant {:chr chr, :pos pos, :ref ref, :alt alt}
+                                               seq-rdr rg)]
       {:cdna (cdna/->hgvs nv seq-rdr rg)
        :protein (if (rg/in-cds? pos rg)
                   (prot/->hgvs nv seq-rdr rg))})

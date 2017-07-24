@@ -109,17 +109,29 @@
 (defn- protein-position
   ([pos rg] (protein-position pos 0 rg))
   ([pos offset rg]
-   (let [cds-coord (rg/cds-coord pos rg)
-         ppos-end (inc (quot (dec (:position (rg/cds-coord (:cds-end rg) rg))) 3))]
-     (if (coord/in-exon? cds-coord)
-       (min ppos-end
-            (inc (quot (dec (+ (:position cds-coord) offset)) 3)))))))
+   (let [->protein-coord #(inc (quot (dec %) 3))
+         cds-coord (rg/cds-coord pos rg)
+         ppos (->protein-coord (+ (:position cds-coord) offset))]
+     (if (and (nil? (:region cds-coord))
+              (coord/in-exon? cds-coord))
+       ppos))))
+
+(defn format-alt-prot-seq
+  [{:keys [ref-prot-seq alt-prot-seq alt-tx-prot-seq ini-offset] :as seq-info}]
+  (if (= \* (last alt-prot-seq))
+    alt-prot-seq
+    (let [s (subs alt-tx-prot-seq
+                  ini-offset)]
+      (if-let [end (string/index-of s \*)]
+        (subs s 0 (inc end))
+        s))))
 
 (defn- ->protein-variant
   [rg pos ref alt seq-info]
   (if-let [ppos (protein-position pos rg)]
     (let [{:keys [strand]} rg
           {:keys [ref-prot-seq alt-prot-seq]} seq-info
+          alt-prot-seq* (format-alt-prot-seq seq-info)
           base-ppos (case strand
                       "+" ppos
                       "-" (protein-position pos (- (count ref)) rg))
@@ -128,7 +140,7 @@
                      (case strand
                        "+" (protein-position pos (dec (count ref)) rg)
                        "-" ppos))
-          palt (subs alt-prot-seq
+          palt (subs alt-prot-seq*
                      (dec base-ppos)
                      (case strand
                        "+" (protein-position pos (dec (count alt)) rg)
@@ -141,7 +153,7 @@
                (or (= (+ base-ppos offset) 1)
                    (= (+ base-ppos offset) (count ref-prot-seq))) :extension
                (not= (subs ref-prot-seq (+ base-ppos (count pref) -1))
-                     (subs alt-prot-seq (+ base-ppos (count palt) -1))) :frame-shift
+                     (subs alt-prot-seq* (+ base-ppos (count palt) -1))) :frame-shift
                (or (and (zero? nprefo) (zero? npalto))
                    (and (= nprefo 1) (= npalto 1))) :substitution
                (and (pos? nprefo) (zero? npalto)) :deletion
@@ -159,10 +171,14 @@
 
 (defn- protein-substitution
   [ppos pref palt]
-  (let [[_ _ offset _] (diff-bases pref palt)]
-    (mut/protein-substitution (mut/->long-amino-acid (last pref))
-                              (coord/protein-coordinate (+ ppos offset))
-                              (mut/->long-amino-acid (last palt)))))
+  (let [[s-ref s-alt offset _] (diff-bases pref palt)]
+    (if (and (empty? s-ref) (empty? s-alt))
+      (mut/protein-substitution (mut/->long-amino-acid (last pref))
+                                (coord/protein-coordinate ppos)
+                                (mut/->long-amino-acid (last palt)))
+      (mut/protein-substitution (mut/->long-amino-acid (last pref))
+                                (coord/protein-coordinate (+ ppos offset))
+                                (mut/->long-amino-acid (last palt))))))
 
 (defn- protein-deletion
   [ppos pref palt]

@@ -22,12 +22,22 @@
         "chr1" 11796321 "G" "A" '("NM_005957:c.665C>T") ; cf. rs1801133 (-)
         "chr12" 25245350 "C" "A" '("NM_004985:c.35G>T"
                                    "NM_033360:c.35G>T") ; cf. rs121913529 (-)
+        "chr17" 7676147 "G" "A" '("NM_000546:c.222C>T"
+                                  "NM_001126112:c.222C>T"
+                                  "NM_001126113:c.222C>T"
+                                  "NM_001126114:c.222C>T"
+                                  "NM_001126118:c.105C>T"
+                                  "NM_001276695:c.105C>T"
+                                  "NM_001276696:c.105C>T"
+                                  "NM_001276760:c.105C>T"
+                                  "NM_001276761:c.105C>T") ; rs786201577 (synonymous)
 
         ;; Deletion
         "chr1" 963222 "GCG" "G" '("NM_198317:c.1157_1158delCG")
         "chr3" 116193879 "ACAC" "A" '("NM_001318915:c.156-107326_156-107324delGTG"
                                       "NM_002338:c.156-107326_156-107324delGTG") ; cf. rs17358
         "chr16" 282999 "GTCTC" "G" '("NM_001176:c.*186_*189delTCTC") ; cf. rs28365940 (deletion in UTR)
+        "chr6" 33086236 "TA" "T" '("NM_002121:c.776delA") ; cf. rs67523850 (deletion in border of UTR)
 
         ;; Duplication
         "chr2" 47806842 "T" "TGACT" '("NM_000179:c.4062_4065dupGACT"
@@ -36,7 +46,7 @@
                                       "NM_001281494:c.3156_3159dupGACT") ; cf. rs55740729 (+)
         "chr2" 26254257 "G" "GACT" '("NM_000183:c.4_6dupACT"
                                      "NM_001281512:c.4_6dupACT"
-                                     "NM_001281513:c.-146_-144dupACT") ; cf. rs3839049 (+)
+                                     "NM_001281513:c.-147_-146insACT") ; cf. rs3839049 (+)
         "chr1" 42752620 "T" "TGGAGTTC" '("NM_001146289:c.1383_1389dupGAACTCC"
                                          "NM_001243246:c.1383_1389dupGAACTCC"
                                          "NM_022356:c.1383_1389dupGAACTCC") ; cf. rs137853953 (-)
@@ -95,12 +105,15 @@
         "chr7" 55191822 "T" "G" '("p.L858R") ; cf. rs121434568
         "chr1" 11796321 "G" "A" '("p.A222V") ; cf. rs1801133
         "chr12" 25245350 "C" "A" '("p.G12V") ; cf. rs121913529 (-)
+        "chr17" 7676147 "G" "A" '("p.A74="
+                                  "p.A35=") ; cf. (synonymous)
 
         ;; deletion
         "chr1" 1286041 "CCTT" "C" '("p.F227del")
         "chr3" 198153259 "GGCAGCAGCA" "G" '("p.Q82_Q84del"); cf. rs56683636 (+)
         "chr1" 247815239 "AAGG" "A" '("p.S163del") ; cf. rs35979231 (-)
         "chr1" 84574315 "CGCAGCGCCA" "C" '("p.L31_L33del"); cf. rs3217269 (-)
+        "chr6" 33086236 "TA" "T" '("p.*259=") ; cf. rs67523850 (deletion in border of UTR)
 
         ;; Duplication
         "chr2" 26254257 "G" "GACT" '("p.T2dup") ; cf. rs3839049 (+)
