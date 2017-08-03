@@ -54,7 +54,8 @@
         ;; Insertion
         "chr1" 69567 "A" "AT" '("NM_001005484:c.477_478insT")
         "chr3" 122740443 "G" "GAGA" '("NM_024610:c.1368_1369insTCT"
-                                      "NM_001320728:c.1284_1285insTCT") ;cf. rs16338 (-)
+                                      "NM_001320728:c.1284_1285insTCT") ; cf. rs16338 (-)
+        "chr7" 152247986 "G" "GT" '("NM_170606:c.2447dupA") ; cf. rs150073007 (-)
 
         ;; inversion
         "chr2" 47806747 "AAAACTTTTTTTTTTTTTTTTTTAA" "ATTAAAAAAAAAAAAAAAAAAGTTT"
@@ -123,6 +124,7 @@
         "chr3" 73062352 "T" "TTGG" '("p.L91_E92insV") ; cf. rs143235716 (+)
         "chr3" 122740443 "G" "GAGA" '("p.P456_Q457insS"
                                       "p.P428_Q429insS") ; cf. rs71270423 (-)
+        "chr7" 152247986 "G" "GT" '("p.Y816*fs*?") ; cf. rs150073007 (-) ; this shold be nonsense mutation "p.Y816*"?
 
         ;; indel
         "chr2" 47445589 "CTTACTGAT" "CCC" '("p.L440_D442delinsP" "p.L374_D376delinsP") ; cf. rs63749931 (+)

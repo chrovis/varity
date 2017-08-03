@@ -121,9 +121,12 @@
   (if (= \* (last alt-prot-seq))
     alt-prot-seq
     (let [s (subs alt-tx-prot-seq
-                  ini-offset)]
-      (if-let [end (string/index-of s \*)]
-        (subs s 0 (inc end))
+                  ini-offset)
+          s-head (subs s 0 (count alt-prot-seq))
+          s-tail (subs s (count alt-prot-seq))]
+      (if-let [end (string/index-of s-tail \*)]
+        (str s-head
+             (subs s-tail 0 (inc end)))
         s))))
 
 (defn- ->protein-variant
@@ -250,13 +253,14 @@
         [_ _ offset _] (diff-bases pref palt)
         ref (nth (:ref-prot-seq seq-info) (dec (+ ppos offset)))
         alt (nth (:alt-prot-seq seq-info) (dec (+ ppos offset)))
-        ter-site (-> (:alt-prot-seq seq-info)
+        ter-site (-> seq-info
+                     format-alt-prot-seq
                      (subs (dec (+ ppos offset)))
                      (string/index-of "*"))]
     (mut/protein-frame-shift (mut/->long-amino-acid ref)
                              (coord/protein-coordinate (+ ppos offset))
                              (mut/->long-amino-acid alt)
-                             (if ter-site
+                             (if (and ter-site (< 1 ter-site))
                                (coord/protein-coordinate (inc ter-site))
                                (coord/unknown-coordinate)))))
 
