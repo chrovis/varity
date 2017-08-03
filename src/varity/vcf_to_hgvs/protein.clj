@@ -117,7 +117,7 @@
        ppos))))
 
 (defn format-alt-prot-seq
-  [{:keys [ref-prot-seq alt-prot-seq alt-tx-prot-seq ini-offset] :as seq-info}]
+  [{:keys [alt-prot-seq alt-tx-prot-seq ini-offset] :as seq-info}]
   (if (= \* (last alt-prot-seq))
     alt-prot-seq
     (let [s (subs alt-tx-prot-seq

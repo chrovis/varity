@@ -106,7 +106,7 @@
         "chr1" 11796321 "G" "A" '("p.A222V") ; cf. rs1801133
         "chr12" 25245350 "C" "A" '("p.G12V") ; cf. rs121913529 (-)
         "chr17" 7676147 "G" "A" '("p.A74="
-                                  "p.A35=") ; cf. (synonymous)
+                                  "p.A35=") ; cf. rs786201577 (synonymous)
 
         ;; deletion
         "chr1" 1286041 "CCTT" "C" '("p.F227del")
