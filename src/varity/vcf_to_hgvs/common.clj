@@ -57,7 +57,7 @@
   (if (= (subs seq* (dec pos) (+ (dec pos) (count bases))) bases)
     (if (string/blank? bases)
       0
-      (let [rbases (apply str (reverse bases))
+      (let [rbases (string/reverse bases)
             n (count bases)
             step (count (first (repeat-units rbases)))
             tweak (if (= step 1) #(+ (dec n) %) #(* step %))]

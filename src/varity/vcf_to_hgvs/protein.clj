@@ -222,7 +222,7 @@
   (let [[ppos pref palt] (if (= pref palt)
                            (->> (map vector (:ref-prot-seq seq-info) (:alt-prot-seq seq-info))
                                 (drop (dec ppos))
-                                (map-indexed #(vector %1 %2))
+                                (map-indexed vector)
                                 (drop-while (fn [[_ [r a]]] (= r a)))
                                 first
                                 ((fn [[i [r a]]]
