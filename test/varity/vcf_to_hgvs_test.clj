@@ -50,12 +50,12 @@
         "chr1" 42752620 "T" "TGGAGTTC" '("NM_001146289:c.1383_1389dupGAACTCC"
                                          "NM_001243246:c.1383_1389dupGAACTCC"
                                          "NM_022356:c.1383_1389dupGAACTCC") ; cf. rs137853953 (-)
+        "chr7" 152247986 "G" "GT" '("NM_170606:c.2447dupA") ; cf. rs150073007 (-)
 
         ;; Insertion
         "chr1" 69567 "A" "AT" '("NM_001005484:c.477_478insT")
         "chr3" 122740443 "G" "GAGA" '("NM_024610:c.1368_1369insTCT"
                                       "NM_001320728:c.1284_1285insTCT") ; cf. rs16338 (-)
-        "chr7" 152247986 "G" "GT" '("NM_170606:c.2447dupA") ; cf. rs150073007 (-)
 
         ;; inversion
         "chr2" 47806747 "AAAACTTTTTTTTTTTTTTTTTTAA" "ATTAAAAAAAAAAAAAAAAAAGTTT"
@@ -108,13 +108,13 @@
         "chr12" 25245350 "C" "A" '("p.G12V") ; cf. rs121913529 (-)
         "chr17" 7676147 "G" "A" '("p.A74="
                                   "p.A35=") ; cf. rs786201577 (synonymous)
+        "chr6" 33086236 "TA" "T" '("p.*259=") ; cf. rs67523850 (deletion in border of UTR)
 
         ;; deletion
         "chr1" 1286041 "CCTT" "C" '("p.F227del")
         "chr3" 198153259 "GGCAGCAGCA" "G" '("p.Q82_Q84del"); cf. rs56683636 (+)
         "chr1" 247815239 "AAGG" "A" '("p.S163del") ; cf. rs35979231 (-)
         "chr1" 84574315 "CGCAGCGCCA" "C" '("p.L31_L33del"); cf. rs3217269 (-)
-        "chr6" 33086236 "TA" "T" '("p.*259=") ; cf. rs67523850 (deletion in border of UTR)
 
         ;; Duplication
         "chr2" 26254257 "G" "GACT" '("p.T2dup") ; cf. rs3839049 (+)
@@ -124,7 +124,6 @@
         "chr3" 73062352 "T" "TTGG" '("p.L91_E92insV") ; cf. rs143235716 (+)
         "chr3" 122740443 "G" "GAGA" '("p.P456_Q457insS"
                                       "p.P428_Q429insS") ; cf. rs71270423 (-)
-        "chr7" 152247986 "G" "GT" '("p.Y816*fs*?") ; cf. rs150073007 (-) ; this shold be nonsense mutation "p.Y816*"?
 
         ;; indel
         "chr2" 47445589 "CTTACTGAT" "CCC" '("p.L440_D442delinsP" "p.L374_D376delinsP") ; cf. rs63749931 (+)
@@ -137,6 +136,7 @@
         ;; Frame shift
         "chr1" 69567 "A" "AT" '("p.L160Sfs*7")
         "chr1" 963222 "GCG" "G" '("p.A386Gfs*12")
+        "chr7" 152247986 "G" "GT" '("p.Y816*fs*?") ; cf. rs150073007 (-) ; this shold be nonsense mutation "p.Y816*"?
 
         ;; Extension
         "chr2" 189011772 "T" "C" '("p.*1467Qext*45") ; cf. ClinVar 101338
