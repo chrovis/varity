@@ -20,11 +20,24 @@
         ;; Substitution
         "chr7" 55191822 "T" "G" '("NM_005228:c.2573T>G") ; cf. rs121434568 (+)
         "chr1" 11796321 "G" "A" '("NM_005957:c.665C>T") ; cf. rs1801133 (-)
+        "chr12" 25245350 "C" "A" '("NM_004985:c.35G>T"
+                                   "NM_033360:c.35G>T") ; cf. rs121913529 (-)
+        "chr17" 7676147 "G" "A" '("NM_000546:c.222C>T"
+                                  "NM_001126112:c.222C>T"
+                                  "NM_001126113:c.222C>T"
+                                  "NM_001126114:c.222C>T"
+                                  "NM_001126118:c.105C>T"
+                                  "NM_001276695:c.105C>T"
+                                  "NM_001276696:c.105C>T"
+                                  "NM_001276760:c.105C>T"
+                                  "NM_001276761:c.105C>T") ; rs786201577 (synonymous)
 
         ;; Deletion
         "chr1" 963222 "GCG" "G" '("NM_198317:c.1157_1158delCG")
         "chr3" 116193879 "ACAC" "A" '("NM_001318915:c.156-107326_156-107324delGTG"
                                       "NM_002338:c.156-107326_156-107324delGTG") ; cf. rs17358
+        "chr16" 282999 "GTCTC" "G" '("NM_001176:c.*186_*189delTCTC") ; cf. rs28365940 (deletion in UTR)
+        "chr6" 33086236 "TA" "T" '("NM_002121:c.776delA") ; cf. rs67523850 (deletion in border of UTR)
 
         ;; Duplication
         "chr2" 47806842 "T" "TGACT" '("NM_000179:c.4062_4065dupGACT"
@@ -33,15 +46,16 @@
                                       "NM_001281494:c.3156_3159dupGACT") ; cf. rs55740729 (+)
         "chr2" 26254257 "G" "GACT" '("NM_000183:c.4_6dupACT"
                                      "NM_001281512:c.4_6dupACT"
-                                     "NM_001281513:c.-146_-144dupACT") ; cf. rs3839049 (+)
+                                     "NM_001281513:c.-147_-146insACT") ; cf. rs3839049 (+)
         "chr1" 42752620 "T" "TGGAGTTC" '("NM_001146289:c.1383_1389dupGAACTCC"
                                          "NM_001243246:c.1383_1389dupGAACTCC"
                                          "NM_022356:c.1383_1389dupGAACTCC") ; cf. rs137853953 (-)
+        "chr7" 152247986 "G" "GT" '("NM_170606:c.2447dupA") ; cf. rs150073007 (-)
 
         ;; Insertion
         "chr1" 69567 "A" "AT" '("NM_001005484:c.477_478insT")
         "chr3" 122740443 "G" "GAGA" '("NM_024610:c.1368_1369insTCT"
-                                      "NM_001320728:c.1284_1285insTCT") ;cf. rs16338 (-)
+                                      "NM_001320728:c.1284_1285insTCT") ; cf. rs16338 (-)
 
         ;; inversion
         "chr2" 47806747 "AAAACTTTTTTTTTTTTTTTTTTAA" "ATTAAAAAAAAAAAAAAAAAAGTTT"
@@ -91,6 +105,10 @@
         ;; Substitution
         "chr7" 55191822 "T" "G" '("p.L858R") ; cf. rs121434568
         "chr1" 11796321 "G" "A" '("p.A222V") ; cf. rs1801133
+        "chr12" 25245350 "C" "A" '("p.G12V") ; cf. rs121913529 (-)
+        "chr17" 7676147 "G" "A" '("p.A74="
+                                  "p.A35=") ; cf. rs786201577 (synonymous)
+        "chr6" 33086236 "TA" "T" '("p.*259=") ; cf. rs67523850 (deletion in border of UTR)
 
         ;; deletion
         "chr1" 1286041 "CCTT" "C" '("p.F227del")
@@ -118,6 +136,7 @@
         ;; Frame shift
         "chr1" 69567 "A" "AT" '("p.L160Sfs*7")
         "chr1" 963222 "GCG" "G" '("p.A386Gfs*12")
+        "chr7" 152247986 "G" "GT" '("p.Y816*fs*?") ; cf. rs150073007 (-) ; this shold be nonsense mutation "p.Y816*"?
 
         ;; Extension
         "chr2" 189011772 "T" "C" '("p.*1467Qext*45") ; cf. ClinVar 101338
