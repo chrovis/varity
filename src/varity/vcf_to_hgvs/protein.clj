@@ -260,7 +260,7 @@
     (mut/protein-frame-shift (mut/->long-amino-acid ref)
                              (coord/protein-coordinate (+ ppos offset))
                              (mut/->long-amino-acid alt)
-                             (if (and ter-site (< 1 ter-site))
+                             (if (and ter-site (pos? ter-site))
                                (coord/protein-coordinate (inc ter-site))
                                (coord/unknown-coordinate)))))
 
