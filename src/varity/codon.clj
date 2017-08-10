@@ -1,4 +1,5 @@
 (ns varity.codon
+  "Handles codon."
   (:require [clojure.string :as string]))
 
 ;; See https://en.wikipedia.org/wiki/DNA_codon_table

@@ -1,4 +1,5 @@
-(ns varity.util)
+(ns varity.util
+  "Utilities.")
 
 (def ^:private comp-base-map
   {\A \T

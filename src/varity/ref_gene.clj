@@ -1,4 +1,5 @@
 (ns varity.ref-gene
+  "Handles refGene.txt(.gz) content."
   (:require [clojure.java.io :as io]
             [clojure.string :as string]
             [clj-hgvs.coordinate :as coord]
@@ -10,10 +11,12 @@
 ;;; Utility
 
 (defn in-cds?
+  "Returns true if pos is in the coding region, false otherwise."
   [pos {:keys [cds-start cds-end]}]
   (<= cds-start pos cds-end))
 
 (defn in-exon?
+  "Returns true if pos is in the exon region, false otherwise."
   [pos {:keys [exon-ranges]}]
   (->> exon-ranges
        (some (fn [[s e]] (<= s pos e)))
@@ -108,7 +111,7 @@
                  (gene-index rgs)))
 
 (defn ref-genes
-  "Searches for refGene entries with ref-seq, gene or (chr, pos) using index,
+  "Searches refGene entries with ref-seq, gene or (chr, pos) using index,
   returning results as sequence. See also varity.ref-gene/index."
   ([s rgidx]
    (get-in rgidx (if (re-find #"^(NC|LRG|NG|NM|NR|NP)_" s)
@@ -167,6 +170,8 @@
       :else [(inc (- pos* start*)) nil])))
 
 (defn cds-coord
+  "Converts the genomic position into the cDNA coordinate. The return value is
+  clj-hgvs.coordinate/CDNACoordinate record."
   [pos rg]
   (let [[pos* offset] (if (in-exon? pos rg)
                         [pos 0]
@@ -198,6 +203,8 @@
        :downstream (nth downstream-poss (dec cds-pos) nil)))))
 
 (defn cds-coord->genomic-pos
+  "Converts the cDNA coordinate into the genomic position. coord must be
+  clj-hgvs.coordinate/CDNACoordinate record."
   [coord {:keys [strand] :as rg}]
   (if-let [base-pos (cds->genomic-pos (:position coord) (:region coord) rg)]
     (+ base-pos (cond-> (:offset coord) (= strand "-") (-)))))

@@ -58,6 +58,8 @@
       (split-lines (rest lines)))))
 
 (defn load-chain
+  "Loads f (e.g. hg19ToHg38.over.chain(.gz)), returning the all contents as a
+  sequence."
   [f]
   (with-open [^java.io.Reader rdr (try (-> (CompressorStreamFactory.)
                                            (.createCompressorInputStream (io/input-stream f))
@@ -70,6 +72,7 @@
 ;;; Indexing
 
 (defn index
+  "Creates chain index for search."
   [chains]
   (->> (group-by (comp :t-name :header) chains)
        doall))
@@ -91,6 +94,8 @@
                    (recur r (+ e dt))))))))))
 
 (defn search-chains
+  "Searches chain entries with chr and pos using the index, returning the
+  results as a sequence. See also varity.chain/index."
   [chr pos chain-idx]
   (->> (get chain-idx (normalize-chromosome-key chr))
        (filter (partial in-block? pos))))
