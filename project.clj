@@ -6,9 +6,9 @@
   :min-lein-version "2.7.0"
   :dependencies [[org.clojure/clojure "1.8.0" :scope "provided"]
                  [clj-hgvs "0.2.1"]
-                 [cljam "0.4.0"]
+                 [cljam "0.4.1"]
                  [org.apache.commons/commons-compress "1.14"]
-                 [proton "0.1.1"]]
+                 [proton "0.1.2"]]
   :plugins [[lein-cloverage "1.0.9"]
             [lein-codox "0.10.3"]]
   :test-selectors {:default (complement :slow)
