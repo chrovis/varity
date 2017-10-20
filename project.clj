@@ -14,7 +14,7 @@
   :test-selectors {:default (complement :slow)
                    :slow :slow
                    :all (constantly true)}
-  :profiles {:dev {:dependencies [[cavia "0.4.1"]]}
+  :profiles {:dev {:dependencies [[cavia "0.4.2"]]}
              :1.9 {:dependencies [[org.clojure/clojure "1.9.0-alpha17"]]}}
   :deploy-repositories [["snapshots" {:url "https://clojars.org/repo/"
                                       :username [:env/clojars_username :gpg]
