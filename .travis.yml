@@ -6,17 +6,18 @@ cache:
 jdk:
   - oraclejdk8
   - openjdk7
-script:
-  - lein with-profile +dev:+1.9 test
-after_success:
-  - CLOVERAGE_VERSION=1.0.9 lein cloverage --codecov
-  - bash <(curl -s https://codecov.io/bash) -f target/coverage/codecov.json
+  - openjdk8
+script: lein with-profile +dev:+1.9 test
 jobs:
   include:
+    - stage: coverage
+      jdk: oraclejdk8
+      script:
+        - lein cloverage --codecov
+        - bash <(curl -s https://codecov.io/bash) -f target/coverage/codecov.json
     - stage: deploy
       jdk: oraclejdk8
       script: skip
-      after_success: echo skip
       deploy:
         provider: script
         script: ./deploy-snapshot.sh

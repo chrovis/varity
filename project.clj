@@ -9,7 +9,7 @@
                  [cljam "0.4.1"]
                  [org.apache.commons/commons-compress "1.14"]
                  [proton "0.1.2"]]
-  :plugins [[lein-cloverage "1.0.9"]
+  :plugins [[lein-cloverage "1.0.10"]
             [lein-codox "0.10.3"]]
   :test-selectors {:default (complement :slow)
                    :slow :slow
