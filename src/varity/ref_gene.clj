@@ -134,6 +134,21 @@
        (some #(in-exon? pos %))
        (true?)))
 
+(defn seek-exon
+  "Seeks chr:pos through exon entries in refGene and returns those indices"
+  [chr pos rgidx]
+  (->> (ref-genes chr pos rgidx)
+       (map (fn [rg]
+              (let [exon-ranges ((case (:strand rg)
+                                    "+" identity
+                                    "-" reverse) (:exon-ranges rg))]
+                {:exon-index (->> exon-ranges
+                                  (keep-indexed (fn [i [s e]] (if (<= s pos e) i)))
+                                  first
+                                  inc) ; 1-origin
+                 :exon-count (count exon-ranges)
+                 :gene rg})))))
+
 ;;; Calculation of CDS coordinate
 ;;;
 ;;; cf. http://varnomen.hgvs.org/bg-material/numbering/
