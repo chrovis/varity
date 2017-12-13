@@ -122,7 +122,7 @@
         "chr2" 233521093 "T" "TTTC" '("p.K752dup") ; cf. rs59586144 (-)
 
         ;; Insertion
-        "chr3" 73062352 "T" "TTGG" '("p.L91_E92insV") ; cf. rs143235716 (+)
+        "chr3" 73062352 "T" "TTGG" '("p.=" "p.L91_E92insV") ; cf. rs143235716 (+)
         "chr3" 122740443 "G" "GAGA" '("p.P456_Q457insS"
                                       "p.P428_Q429insS") ; cf. rs71270423 (-)
 
@@ -141,6 +141,11 @@
         ;; Extension
         "chr2" 189011772 "T" "C" '("p.*1467Qext*45") ; cf. ClinVar 101338
         ;; NOTE: There are very few correct examples...
+
+        ;; no effect
+        "chr7" 55181876 "A" "T" '("p.=") ; not actual example (+)
+        "chr7" 55181874 "TGAT" "T" '("p.=") ; not actual example (+)
+        "chr7" 55181876 "A" "AGGT" '("p.=") ; not actual example (+)
         )))
   (cavia-testing "throws Exception if inputs are illegal"
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]

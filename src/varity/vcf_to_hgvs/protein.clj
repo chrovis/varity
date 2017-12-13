@@ -94,10 +94,12 @@
                                 reverse
                                 (apply str))
         alt-exon-seq1 (exon-sequence alt-seq cds-start alt-exon-ranges*)]
-    {:ref-prot-seq (codon/amino-acid-sequence (cond-> ref-exon-seq1
-                                             (= strand "-") revcomp-bases))
+    {:ref-exon-seq ref-exon-seq1
+     :ref-prot-seq (codon/amino-acid-sequence (cond-> ref-exon-seq1
+                                                (= strand "-") revcomp-bases))
+     :alt-exon-seq alt-exon-seq1
      :alt-prot-seq (codon/amino-acid-sequence (cond-> alt-exon-seq1
-                                             (= strand "-") revcomp-bases))
+                                                (= strand "-") revcomp-bases))
      :alt-tx-prot-seq (codon/amino-acid-sequence
                        (cond-> (str ref-up-exon-seq1 alt-exon-seq1 ref-down-exon-seq1)
                          (= strand "-") revcomp-bases))
@@ -130,48 +132,49 @@
         s))))
 
 (defn- ->protein-variant
-  [rg pos ref alt seq-info]
-  (if-let [ppos (protein-position pos rg)]
-    (let [{:keys [strand]} rg
-          {:keys [ref-prot-seq alt-prot-seq]} seq-info
-          alt-prot-seq* (format-alt-prot-seq seq-info)
-          base-ppos (case strand
-                      "+" ppos
-                      "-" (protein-position pos (- (count ref)) rg))
-          pref (subs ref-prot-seq
-                     (dec base-ppos)
-                     (case strand
-                       "+" (protein-position pos (dec (count ref)) rg)
-                       "-" ppos))
-          palt (subs alt-prot-seq*
-                     (dec base-ppos)
-                     (case strand
-                       "+" (protein-position pos (dec (count alt)) rg)
-                       "-" (protein-position pos (- (count alt) (count ref)) rg)))
-          [pref-only palt-only offset _] (diff-bases pref palt)
-          nprefo (count pref-only)
-          npalto (count palt-only)
-          [unit ref-repeat ins-repeat] (common/repeat-info ref-prot-seq (+ base-ppos offset) palt-only)]
-      {:type (cond
-               (or (= (+ base-ppos offset) 1)
-                   (= (+ base-ppos offset) (count ref-prot-seq))) :extension
-               (and (pos? nprefo) (= (first palt-only) \*)) :substitution
-               (not= (subs ref-prot-seq (+ base-ppos (count pref) -1))
-                     (subs alt-prot-seq* (+ base-ppos (count palt) -1))) :frame-shift
-               (or (and (zero? nprefo) (zero? npalto))
-                   (and (= nprefo 1) (= npalto 1))) :substitution
-               (and (pos? nprefo) (zero? npalto)) :deletion
-               (and (pos? nprefo) (pos? npalto)) (if (= base-ppos 1)
-                                                   :extension
-                                                   :indel)
-               (some? unit) (cond
-                              (and (= ref-repeat 1) (= ins-repeat 1)) :duplication
-                              (or (> ref-repeat 1) (> ins-repeat 1)) :repeated-seqs)
-               (and (zero? nprefo) (pos? npalto)) :insertion
-               :else (throw (IllegalArgumentException. "Unsupported variant")))
-       :pos base-ppos
-       :ref pref
-       :alt palt})))
+  [{:keys [strand] :as rg} pos ref alt
+   {:keys [ref-exon-seq ref-prot-seq alt-exon-seq alt-prot-seq] :as seq-info}]
+  (if (= ref-exon-seq alt-exon-seq)
+    {:type :no-effect, :pos 1, :ref nil, :alt nil}
+    (if-let [ppos (protein-position pos rg)]
+      (let [alt-prot-seq* (format-alt-prot-seq seq-info)
+            base-ppos (case strand
+                        "+" ppos
+                        "-" (protein-position pos (- (count ref)) rg))
+            pref (subs ref-prot-seq
+                       (dec base-ppos)
+                       (case strand
+                         "+" (protein-position pos (dec (count ref)) rg)
+                         "-" ppos))
+            palt (subs alt-prot-seq*
+                       (dec base-ppos)
+                       (case strand
+                         "+" (protein-position pos (dec (count alt)) rg)
+                         "-" (protein-position pos (- (count alt) (count ref)) rg)))
+            [pref-only palt-only offset _] (diff-bases pref palt)
+            nprefo (count pref-only)
+            npalto (count palt-only)
+            [unit ref-repeat ins-repeat] (common/repeat-info ref-prot-seq (+ base-ppos offset) palt-only)]
+        {:type (cond
+                 (or (= (+ base-ppos offset) 1)
+                     (= (+ base-ppos offset) (count ref-prot-seq))) :extension
+                 (and (pos? nprefo) (= (first palt-only) \*)) :substitution
+                 (not= (subs ref-prot-seq (+ base-ppos (count pref) -1))
+                       (subs alt-prot-seq* (+ base-ppos (count palt) -1))) :frame-shift
+                 (or (and (zero? nprefo) (zero? npalto))
+                     (and (= nprefo 1) (= npalto 1))) :substitution
+                 (and (pos? nprefo) (zero? npalto)) :deletion
+                 (and (pos? nprefo) (pos? npalto)) (if (= base-ppos 1)
+                                                     :extension
+                                                     :indel)
+                 (some? unit) (cond
+                                (and (= ref-repeat 1) (= ins-repeat 1)) :duplication
+                                (or (> ref-repeat 1) (> ins-repeat 1)) :repeated-seqs)
+                 (and (zero? nprefo) (pos? npalto)) :insertion
+                 :else (throw (IllegalArgumentException. "Unsupported variant")))
+         :pos base-ppos
+         :ref pref
+         :alt palt}))))
 
 (defn- protein-substitution
   [ppos pref palt]
@@ -298,7 +301,8 @@
         :indel (protein-indel ppos pref palt)
         :repeated-seqs (protein-repeated-seqs ppos pref palt seq-info)
         :frame-shift (protein-frame-shift ppos pref palt seq-info)
-        :extension (protein-extension ppos pref palt seq-info)))))
+        :extension (protein-extension ppos pref palt seq-info)
+        :no-effect (mut/protein-no-effect)))))
 
 (defn ->hgvs
   [{:keys [pos ref alt]} seq-rdr rg]
