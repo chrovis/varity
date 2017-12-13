@@ -109,6 +109,7 @@
         "chr17" 7676147 "G" "A" '("p.A74="
                                   "p.A35=") ; cf. rs786201577 (synonymous)
         "chr6" 33086236 "TA" "T" '("p.*259=") ; cf. rs67523850 (deletion in border of UTR)
+        "chr7" 152247986 "G" "GT" '("p.Y816*") ; cf. rs150073007 (-, nonsense mutation)
 
         ;; deletion
         "chr1" 1286041 "CCTT" "C" '("p.F227del")
@@ -136,7 +137,6 @@
         ;; Frame shift
         "chr1" 69567 "A" "AT" '("p.L160Sfs*7")
         "chr1" 963222 "GCG" "G" '("p.A386Gfs*12")
-        "chr7" 152247986 "G" "GT" '("p.Y816*fs*?") ; cf. rs150073007 (-) ; this shold be nonsense mutation "p.Y816*"?
 
         ;; Extension
         "chr2" 189011772 "T" "C" '("p.*1467Qext*45") ; cf. ClinVar 101338

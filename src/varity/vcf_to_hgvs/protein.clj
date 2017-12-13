@@ -155,6 +155,7 @@
       {:type (cond
                (or (= (+ base-ppos offset) 1)
                    (= (+ base-ppos offset) (count ref-prot-seq))) :extension
+               (and (pos? nprefo) (= (first palt-only) \*)) :substitution
                (not= (subs ref-prot-seq (+ base-ppos (count pref) -1))
                      (subs alt-prot-seq* (+ base-ppos (count palt) -1))) :frame-shift
                (or (and (zero? nprefo) (zero? npalto))
@@ -179,9 +180,9 @@
       (mut/protein-substitution (mut/->long-amino-acid (last pref))
                                 (coord/protein-coordinate ppos)
                                 (mut/->long-amino-acid (last palt)))
-      (mut/protein-substitution (mut/->long-amino-acid (last pref))
+      (mut/protein-substitution (mut/->long-amino-acid (first s-ref))
                                 (coord/protein-coordinate (+ ppos offset))
-                                (mut/->long-amino-acid (last palt))))))
+                                (mut/->long-amino-acid (first s-alt))))))
 
 (defn- protein-deletion
   [ppos pref palt]
