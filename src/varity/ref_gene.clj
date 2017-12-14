@@ -49,10 +49,12 @@
         (update m :exon-count as-long)
         (update m :exon-start #(map inc (parse-exon-pos %)))
         (update m :exon-end parse-exon-pos)
+        (update m :score as-long)
         (assoc m :exon-ranges (exon-ranges (:exon-start m) (:exon-end m)))
         (dissoc m :exon-start :exon-end)
         (update m :cds-start-stat keyword)
-        (update m :cds-end-stat keyword)))
+        (update m :cds-end-stat keyword)
+        (update m :exon-frames parse-exon-pos)))
 
 (defn load-ref-genes
   "Loads f (e.g. refGene.txt(.gz)), returning the all contents as a sequence."
