@@ -18,11 +18,11 @@
           :cds-end 981029
           :exon-count 4
           :exon-ranges [[975199 976269] [976499 976624] [978881 981047] [982065 982117]]
-          :score "0"
+          :score 0
           :name2 "PERM1"
           :cds-start-stat :cmpl
           :cds-end-stat :cmpl
-          :exon-frames "1,1,0,-1,"})))
+          :exon-frames '(1 1 0 -1)})))
 
 (defslowtest in-any-exon?-test
   (cavia-testing "in-any-exon? (slow)"
