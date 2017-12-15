@@ -4,7 +4,7 @@
   :license {:name "Apache License, Version 2.0"
             :url "http://www.apache.org/licenses/LICENSE-2.0"}
   :min-lein-version "2.7.0"
-  :dependencies [[org.clojure/clojure "1.8.0" :scope "provided"]
+  :dependencies [[org.clojure/clojure "1.9.0" :scope "provided"]
                  [clj-hgvs "0.2.3"]
                  [cljam "0.4.1"]
                  [org.apache.commons/commons-compress "1.14"]
@@ -15,7 +15,7 @@
                    :slow :slow
                    :all (constantly true)}
   :profiles {:dev {:dependencies [[cavia "0.4.2"]]}
-             :1.9 {:dependencies [[org.clojure/clojure "1.9.0-RC1"]]}}
+             :1.8 {:dependencies [[org.clojure/clojure "1.8.0"]]}}
   :deploy-repositories [["snapshots" {:url "https://clojars.org/repo/"
                                       :username [:env/clojars_username :gpg]
                                       :password [:env/clojars_password :gpg]}]]
