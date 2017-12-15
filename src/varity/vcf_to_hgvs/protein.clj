@@ -119,7 +119,7 @@
        ppos))))
 
 (defn format-alt-prot-seq
-  [{:keys [alt-prot-seq alt-tx-prot-seq ini-offset] :as seq-info}]
+  [{:keys [alt-prot-seq alt-tx-prot-seq ini-offset]}]
   (if (= \* (last alt-prot-seq))
     alt-prot-seq
     (let [s (subs alt-tx-prot-seq
@@ -133,7 +133,7 @@
 
 (defn- ->protein-variant
   [{:keys [strand] :as rg} pos ref alt
-   {:keys [ref-exon-seq ref-prot-seq alt-exon-seq alt-prot-seq] :as seq-info}]
+   {:keys [ref-exon-seq ref-prot-seq alt-exon-seq] :as seq-info}]
   (if (= ref-exon-seq alt-exon-seq)
     {:type :no-effect, :pos 1, :ref nil, :alt nil}
     (if-let [ppos (protein-position pos rg)]
