@@ -8,7 +8,7 @@
                  [clj-hgvs "0.2.3"]
                  [cljam "0.5.1"]
                  [org.apache.commons/commons-compress "1.15"]
-                 [proton "0.1.2"]]
+                 [proton "0.1.3"]]
   :plugins [[lein-cloverage "1.0.10"]
             [lein-codox "0.10.3"]]
   :test-selectors {:default (complement :slow)
