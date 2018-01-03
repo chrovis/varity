@@ -30,8 +30,8 @@
       (is (true? (rg/in-any-exon? "chr7" 55191822 rgidx)))
       (is (false? (rg/in-any-exon? "chr7" 55019367 rgidx))))))
 
-(defslowtest seek-exon-test
-  (cavia-testing "seek-exon (slow)"
+(defslowtest seek-gene-region-test
+  (cavia-testing "seek-gene-region (slow)"
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
       (are [c p tn exs] (= exs
                            (->> (rg/seek-gene-region c p rgidx tn)
