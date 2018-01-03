@@ -134,20 +134,28 @@
        (some #(in-exon? pos %))
        (true?)))
 
-(defn seek-exon
+(defn seek-gene-region
   "Seeks chr:pos through exon entries in refGene and returns those indices"
-  [chr pos rgidx]
-  (->> (ref-genes chr pos rgidx)
-       (map (fn [rg]
-              (let [exon-ranges ((case (:strand rg)
+  ([chr pos rgidx]
+   (seek-gene-region chr pos rgidx nil))
+  ([chr pos rgidx name]
+   ;; TODO seek intron region
+   ;; TODO seek UTR-5 or UTR-3 region
+   (->> (if name
+          (ref-genes name rgidx)
+          (ref-genes chr pos rgidx))
+        (map (fn [rg]
+               (let [exon-ranges ((case (:strand rg)
                                     "+" identity
-                                    "-" reverse) (:exon-ranges rg))]
-                {:exon-index (->> exon-ranges
-                                  (keep-indexed (fn [i [s e]] (if (<= s pos e) i)))
-                                  first
-                                  inc) ; 1-origin
-                 :exon-count (count exon-ranges)
-                 :gene rg})))))
+                                    "-" reverse) (:exon-ranges rg))
+                     idx (->> exon-ranges
+                              (keep-indexed (fn [i [s e]] (if (<= s pos e) i)))
+                              first)]
+                 {:exon-index (if idx
+                                (inc idx) ; 1-origin
+                                nil)
+                  :exon-count (count exon-ranges)
+                  :gene rg}))))))
 
 ;;; Calculation of CDS coordinate
 ;;;

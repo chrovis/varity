@@ -30,6 +30,17 @@
       (is (true? (rg/in-any-exon? "chr7" 55191822 rgidx)))
       (is (false? (rg/in-any-exon? "chr7" 55019367 rgidx))))))
 
+(defslowtest seek-exon-test
+  (cavia-testing "seek-exon (slow)"
+    (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
+      (are [c p tn exs] (= exs
+                           (->> (rg/seek-gene-region c p rgidx tn)
+                                (map #(vector (:exon-index %) (:exon-count %)))))
+        "chr4" 54736520   nil        [[18 21] [18 21]]
+        "chr7" 116771976 "NM_000245" [[14 21]]
+        "chrX" 61197987   nil        []
+        "chr3" 41217131  "NM_001904" [[nil 15]]))))
+
 (deftest cds-coord-test
   ;; 1 [2 3 4] 5 6 7 [8 9 10 11] 12 13 14 15
   (testing "strand +"
