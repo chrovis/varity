@@ -74,10 +74,10 @@
                                         :pos pos
                                         :ref (cond-> ref (= strand "-") revcomp-bases)
                                         :alt (cond-> alt (= strand "-") revcomp-bases)}
-                                  :cdna (hgvs/hgvs nil :cdna (mut/dna-substitution (rg/cds-coord pos rg)
-                                                                                   ref
-                                                                                   (if (= ref alt) "=" ">")
-                                                                                   alt))}))))
+                                  :cdna (hgvs/hgvs (:name rg) :cdna (mut/dna-substitution (rg/cds-coord pos rg)
+                                                                                  ref
+                                                                                  (if (= ref alt) "=" ">")
+                                                                                  alt))}))))
                            (remove nil?))))
                (flatten)))))
     (throw (IllegalArgumentException. "Unsupported mutation"))))
