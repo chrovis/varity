@@ -61,7 +61,8 @@
                               (apply str))
               ref-codon (cond-> ref-codon1 (= strand "-") revcomp-bases)
               palt (mut/->short-amino-acid (:alt mut*))
-              codon-cands (codon/amino-acid->codons palt)]
+              codon-cands (codon/amino-acid->codons palt)
+              pos-cands (cond-> pos-cands (= strand "-") reverse)]
           (->> codon-cands
                (keep (fn [codon*]
                       (->> pos-cands
