@@ -82,4 +82,12 @@
           (= (hgvs->vcf-variants (hgvs/parse hgvs*) gene test-ref-seq-file rgidx) e)
         "p.L858R" "EGFR" '({:chr "chr7", :pos 55191822, :ref "T", :alt "G"}) ; cf. rs121434568
         "p.A222V" "MTHFR" '({:chr "chr1", :pos 11796321, :ref "G", :alt "A"}) ; cf. rs1801133
-        ))))
+        )))
+  (cavia-testing "protein HGVS with gene to possible vcf variants with cDNA HGVS"
+    (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
+      (are [hgvs* gene e]
+          (= (protein-hgvs->vcf-variants-with-cdna-hgvs (hgvs/parse hgvs*) gene test-ref-seq-file rgidx) e)
+        "p.T790M" "EGFR" `({:vcf {:chr "chr7", :pos 55181378, :ref "C", :alt "T"} ; cf. rs121434569
+                            :cdna ~(hgvs/parse "NM_005228:c.2369C>T")})
+        "p.L1196M" "ALK" `({:vcf {:chr "chr2", :pos 29220765, :ref "G", :alt "T"} ; cf. rs1057519784
+                            :cdna ~(hgvs/parse "NM_004304:c.3586C>A")})))))

@@ -61,7 +61,8 @@
                               (apply str))
               ref-codon (cond-> ref-codon1 (= strand "-") revcomp-bases)
               palt (mut/->short-amino-acid (:alt mut*))
-              codon-cands (codon/amino-acid->codons palt)]
+              codon-cands (codon/amino-acid->codons palt)
+              pos-cands (cond-> pos-cands (= strand "-") reverse)]
           (->> codon-cands
                (keep (fn [codon*]
                       (->> pos-cands
@@ -74,10 +75,10 @@
                                         :pos pos
                                         :ref (cond-> ref (= strand "-") revcomp-bases)
                                         :alt (cond-> alt (= strand "-") revcomp-bases)}
-                                  :cdna (hgvs/hgvs nil :cdna (mut/dna-substitution (rg/cds-coord pos rg)
-                                                                                   ref
-                                                                                   (if (= ref alt) "=" ">")
-                                                                                   alt))}))))
+                                  :cdna (hgvs/hgvs (:name rg) :cdna (mut/dna-substitution (rg/cds-coord pos rg)
+                                                                                  ref
+                                                                                  (if (= ref alt) "=" ">")
+                                                                                  alt))}))))
                            (remove nil?))))
                (flatten)))))
     (throw (IllegalArgumentException. "Unsupported mutation"))))
