@@ -8,8 +8,7 @@ Variant translation library for Clojure.
 
 ## Features
 
-* VCF variant -> HGVS
-* HGVS -> VCF variant
+* VCF variant ⇄ HGVS
 * Conversion between assemblies
 
 ## Installation
@@ -17,7 +16,7 @@ Variant translation library for Clojure.
 With Leiningen/Boot:
 
 ```clojure
-[varity "0.3.5"]
+[varity "0.3.6"]
 ```
 
 ## Usage
@@ -114,6 +113,6 @@ To convert a genome coordinate between assemblies,
 
 ## License
 
-Copyright 2017 [Xcoo, Inc.](https://xcoo.jp/)
+Copyright 2017-2018 [Xcoo, Inc.](https://xcoo.jp/)
 
 Licensed under the [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0).
