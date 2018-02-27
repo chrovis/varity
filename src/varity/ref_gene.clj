@@ -6,7 +6,7 @@
             [cljam.io.sequence :as cseq]
             [cljam.util.chromosome :refer [normalize-chromosome-key]]
             [cljam.util.sequence :as util-seq]
-            [proton.core :refer [as-long]]
+            [proton.core :refer [as-long as-float]]
             [varity.util :as util]))
 
 ;;; Utility
@@ -65,6 +65,88 @@
     (->> (line-seq rdr)
          (map parse-ref-gene-line)
          doall)))
+
+(defn parse-gtf-line
+  [s]
+  (if-not (= \# (first s))
+    (let [row (string/split s #"\t")]
+      {:seqname (nth row 0)
+       :source (nth row 1)
+       :feature (nth row 2)
+       :start (as-long (nth row 3))
+       :end (as-long (nth row 4))
+       :score (as-float (nth row 5))
+       :strand (nth row 6)
+       :frame (nth row 7)
+       :attribute (->> (string/split (nth row 8) #";")
+                       (map string/trim)
+                       (mapcat #(string/split % #"\s"))
+                       (partition-all 2)
+                       (map (fn [[k v]]
+                              [k (string/replace v #"\"" "")]))
+                       (into {}))})))
+
+(defn load-genecode
+  [f]
+  (with-open [^java.io.Reader rdr (io/reader f)]
+    (let [features (->> (line-seq rdr)
+                        (keep parse-gtf-line))
+          feature-map (loop [features features
+                             data {:transcript {}
+                                   :exon {}
+                                   :cds {}}]
+                        (if-let [o (first features)]
+                          (recur (rest features)
+                                 (case (:feature o)
+                                   "transcript" (assoc-in data
+                                                          [:transcript (get-in o [:attribute "transcript_id"])]
+                                                          {:chr (:seqname o)
+                                                           :start (:start o)
+                                                           :end (:end o)
+                                                           :name2 (get-in o [:attribute "gene_name"])
+                                                           :name (get-in o [:attribute "transcript_name"])
+                                                           :id (get-in o [:attribute "transcript_id"])
+                                                           :strand (:strand o)
+                                                           :score (:score o)})
+                                   "exon" (update-in data
+                                                     [:exon (get-in o [:attribute "transcript_id"])]
+                                                     conj {:chr (:seqname o)
+                                                           :start (:start o)
+                                                           :end (:end o)
+                                                           :exon-number (as-long (get-in o [:attribute "exon_number"]))
+                                                           :frame (:frame o)
+                                                           :strand (:strand o)})
+                                   "CDS" (assoc-in data
+                                                   [:cds (get-in o [:attribute "transcript_id"])]
+                                                   {:chr (:seqname o)
+                                                    :start (:start o)
+                                                    :end (:end o)})
+                                   data))
+                          data))]
+      (->> (:transcript feature-map)
+           (map (fn [[id t]]
+                  (let [exons (->> (get-in feature-map [:exon id])
+                                   (filter :exon-number)
+                                   (sort-by :exon-number))
+                        cds (get-in feature-map [:cds id])]
+                    (cond-> t
+                      (not (empty? exons)) (assoc :exon-count (count exons)
+                                                  :exon-start (:start (first exons))
+                                                  :exon-end (:end (last exons))
+                                                  :exon-ranges (mapv #(vector (:start %) (:end %)) exons)
+                                                  :exon-frames (mapv :frame exons))
+                      (empty? exons) (assoc :exon-count 0
+                                            :exon-start nil
+                                            :exon-end nil
+                                            :exon-ranges []
+                                            :exon-frames [])
+                      cds (assoc :cds-start (:start cds)
+                                 :cds-end (:end cds))
+                      (not cds) (assoc :cds-start (:start t)
+                                       :cds-end (:end t))
+                      true (assoc :tx-start (:start t)
+                                  :tx-end (:end t))))))
+           doall))))
 
 ;; Indexing
 ;; --------
