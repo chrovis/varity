@@ -88,7 +88,7 @@
 
 (defn load-genecode
   [f]
-  (with-open [^java.io.Reader rdr (io/reader f)]
+  (with-open [rdr (io/reader (util/compressor-input-stream f))]
     (let [features (->> (line-seq rdr)
                         (keep parse-gtf-line))
           feature-map (loop [features features
@@ -128,6 +128,9 @@
                   (let [exons (->> (get-in feature-map [:exon id])
                                    (filter :exon-number)
                                    (sort-by :exon-number))
+                        exons (case (:strand t)
+                                "+" exons
+                                "-" (reverse exons))
                         cds (get-in feature-map [:cds id])]
                     (cond-> t
                       (not (empty? exons)) (assoc :exon-count (count exons)
