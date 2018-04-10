@@ -5,10 +5,9 @@
   (:require [clojure.java.io :as io]
             [clojure.string :as string]
             [cljam.util.chromosome :refer [normalize-chromosome-key]]
-            [proton.core :refer [as-long]])
-  (:import [org.apache.commons.compress.compressors
-            CompressorStreamFactory CompressorException]
-           [clojure.lang Sorted]))
+            [proton.core :refer [as-long]]
+            [varity.util :as util])
+  (:import [clojure.lang Sorted]))
 
 (defn- update-multi
   [m ks f]
@@ -62,10 +61,7 @@
   "Loads f (e.g. hg19ToHg38.over.chain(.gz)), returning the all contents as a
   sequence."
   [f]
-  (with-open [^java.io.Reader rdr (try (-> (CompressorStreamFactory.)
-                                           (.createCompressorInputStream (io/input-stream f))
-                                           io/reader)
-                                       (catch CompressorException _ (io/reader f)))]
+  (with-open [rdr (io/reader (util/compressor-input-stream f))]
     (->> (line-seq rdr)
          split-lines
          doall)))

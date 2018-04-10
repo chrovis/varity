@@ -4,9 +4,8 @@
             [clojure.string :as string]
             [clj-hgvs.coordinate :as coord]
             [cljam.util.chromosome :refer [normalize-chromosome-key]]
-            [proton.core :refer [as-long]])
-  (:import [org.apache.commons.compress.compressors
-            CompressorStreamFactory CompressorException]))
+            [proton.core :refer [as-long]]
+            [varity.util :as util]))
 
 ;;; Utility
 
@@ -59,10 +58,7 @@
 (defn load-ref-genes
   "Loads f (e.g. refGene.txt(.gz)), returning the all contents as a sequence."
   [f]
-  (with-open [^java.io.Reader rdr (try (-> (CompressorStreamFactory.)
-                                           (.createCompressorInputStream (io/input-stream f))
-                                           io/reader)
-                                       (catch CompressorException _ (io/reader f)))]
+  (with-open [rdr (io/reader (util/compressor-input-stream f))]
     (->> (line-seq rdr)
          (map parse-ref-gene-line)
          doall)))
