@@ -5,9 +5,9 @@
   (:require [clojure.java.io :as io]
             [clojure.string :as string]
             [cljam.util.chromosome :refer [normalize-chromosome-key]]
-            [proton.core :refer [as-long]])
-  (:import [org.apache.commons.compress.compressors
-            CompressorStreamFactory CompressorException]))
+            [proton.core :refer [as-long]]
+            [varity.util :as util])
+  (:import [clojure.lang Sorted]))
 
 (defn- update-multi
   [m ks f]
@@ -61,41 +61,62 @@
   "Loads f (e.g. hg19ToHg38.over.chain(.gz)), returning the all contents as a
   sequence."
   [f]
-  (with-open [^java.io.Reader rdr (try (-> (CompressorStreamFactory.)
-                                           (.createCompressorInputStream (io/input-stream f))
-                                           io/reader)
-                                       (catch CompressorException _ (io/reader f)))]
+  (with-open [rdr (io/reader (util/compressor-input-stream f))]
     (->> (line-seq rdr)
          split-lines
          doall)))
 
 ;;; Indexing
 
+(defn- cumsum-chain [{:keys [header data]}]
+  (loop [results (transient [])
+         d (first data)
+         r (next data)
+         curr-t-start (inc (:t-start header))
+         curr-q-start (inc (:q-start header))]
+    (if-not d
+      (persistent! results)
+      (recur (->> (assoc d :t-start curr-t-start :q-start curr-q-start)
+                  (conj! results))
+             (first r)
+             (next r)
+             (if (:dt d)
+               (+ curr-t-start (:size d) (:dt d))
+               (:t-end header))
+             (if (:dq d)
+               (+ curr-q-start (:size d) (:dq d))
+               (:q-end header))))))
+
+(defn- index-chain [chain]
+  (->> chain
+       cumsum-chain
+       (map (juxt :t-start identity))
+       (into (sorted-map))
+       (assoc chain :data)))
+
 (defn index
   "Creates chain index for search."
   [chains]
   (->> (group-by (comp :t-name :header) chains)
-       doall))
+       (into {} (map
+                 (fn [[chr xs]]
+                   [(normalize-chromosome-key chr)
+                    (mapv index-chain xs)])))))
 
 ;;; Search
 
 (defn- in-block?
-  [pos {:keys [header data]}]
-  (let [rpos (- pos (:t-start header))]
-    (and (>= rpos 0)
-         (loop [[{:keys [^long size ^long dt]} & r] data, s 0]
-           (let [e (+ s size)]
-             (if (< rpos s)
-               false
-               (if (< rpos e)
-                 true
-                 (if (nil? dt)
-                   false
-                   (recur r (+ e dt))))))))))
+  [pos {:keys [^Sorted data header] :as chain}]
+  (when (<= (inc (:t-start header)) pos (:t-end header))
+    (when-let [[start m] (first (. data seqFrom pos false))]
+      (when (<= start pos (dec (+ start (:size m))))
+        (assoc chain :in-block m)))))
+
+(def ^:private normalize-chr (memoize normalize-chromosome-key))
 
 (defn search-chains
   "Searches chain entries with chr and pos using the index, returning the
   results as a sequence. See also varity.chain/index."
   [chr pos chain-idx]
-  (->> (get chain-idx (normalize-chromosome-key chr))
-       (filter (partial in-block? pos))))
+  (->> (chain-idx (normalize-chr chr))
+       (keep (partial in-block? pos))))
