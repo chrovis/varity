@@ -15,10 +15,10 @@
   :test-selectors {:default (complement :slow)
                    :slow :slow
                    :all (constantly true)}
-  :profiles {:dev {:source-paths ["bench"]
-                   :dependencies [[cavia "0.4.3"]
+  :profiles {:dev {:dependencies [[cavia "0.4.3"]
                                   [criterium "0.4.4"]
                                   [net.totakke/libra "0.1.1"]]}
+             :repl {:source-paths ["bench"]}
              :1.8 {:dependencies [[org.clojure/clojure "1.8.0"]]}}
   :deploy-repositories [["snapshots" {:url "https://clojars.org/repo/"
                                       :username [:env/clojars_username :gpg]
