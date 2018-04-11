@@ -33,13 +33,42 @@
 (defslowtest seek-gene-region-test
   (cavia-testing "seek-gene-region (slow)"
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
-      (are [c p tn exs] (= exs
-                           (->> (rg/seek-gene-region c p rgidx tn)
-                                (map #(vector (:exon-index %) (:exon-count %)))))
-        "chr4" 54736520   nil        [[18 21] [18 21]]
-        "chr7" 116771976 "NM_000245" [[14 21]]
-        "chrX" 61197987   nil        []
-        "chr3" 41217131  "NM_001904" [[nil 15]]))))
+      (are [c p tn only-cds? exs] (= exs
+                                     (->> {:only-cds? only-cds?}
+                                          (rg/seek-gene-region c p rgidx tn)
+                                          (map (juxt :exon-index :exon-count))))
+        "chr4" 54736520  nil         false [[18 21] [18 21]]
+        "chr7" 116771976 "NM_000245" false [[14 21]]
+        "chrX" 61197987  nil         false []
+        "chr3" 41199450  nil         false []         ;; tx-start - 1
+        "chr3" 41199450  "NM_001904" false [[nil 15]] ;; tx-start - 1
+        "chr3" 41199451  nil         false [[1 16] [1 16] [1 15]]
+        "chr3" 41199451  "NM_001904" false [[1 15]]   ;; tx-start
+        "chr3" 41224068  "NM_001904" false [[2 15]]   ;; cds-start - 1
+        "chr3" 41224069  nil         false [[2 16] [2 16] [2 15]]
+        "chr3" 41224069  "NM_001904" false [[2 15]]   ;; cds-start
+        "chr3" 41239342  "NM_001904" false [[15 15]]  ;; cds-end
+        "chr3" 41239343  "NM_001904" false [[15 15]]  ;; cds-end + 1
+        "chr3" 41240448  "NM_001904" false [[15 15]]  ;; tx-end
+        "chr3" 41240449  "NM_001904" false [[nil 15]] ;; tx-end + 1
+        "chr3" 41240449  nil         false []         ;; tx-end + 1
+        "chr3" 41217131  "NM_001904" false [[nil 15]]
+        "chr4" 54736520  nil         true  [[18 21] [18 21]]
+        "chr7" 116771976 "NM_000245" true  [[14 21]]
+        "chrX" 61197987  nil         true  []
+        "chr3" 41199450  nil         true  []
+        "chr3" 41199450  "NM_001904" true  [[nil 15]]
+        "chr3" 41199451  nil         true  [[nil 16] [nil 16] [nil 15]]
+        "chr3" 41199451  "NM_001904" true  [[nil 15]]
+        "chr3" 41224068  "NM_001904" true  [[nil 15]]
+        "chr3" 41224069  nil         true  [[2 16] [2 16] [2 15]]
+        "chr3" 41224069  "NM_001904" true  [[2 15]]
+        "chr3" 41239342  "NM_001904" true  [[15 15]]
+        "chr3" 41239343  "NM_001904" true  [[nil 15]]
+        "chr3" 41240448  "NM_001904" true  [[nil 15]]
+        "chr3" 41240449  "NM_001904" true  [[nil 15]]
+        "chr3" 41240449  nil         true  []
+        "chr3" 41217131  "NM_001904" true  [[nil 15]]))))
 
 (deftest cds-coord-test
   ;; 1 [2 3 4] 5 6 7 [8 9 10 11] 12 13 14 15

@@ -135,6 +135,8 @@
   ([chr pos rgidx]
    (seek-gene-region chr pos rgidx nil))
   ([chr pos rgidx name]
+   (seek-gene-region chr pos rgidx name {:only-cds? false}))
+  ([chr pos rgidx name {:keys [only-cds?]}]
    ;; TODO seek intron region
    ;; TODO seek UTR-5 or UTR-3 region
    (->> (if name
@@ -146,10 +148,11 @@
                                     "-" reverse) (:exon-ranges rg))
                      idx (->> exon-ranges
                               (keep-indexed (fn [i [s e]] (if (<= s pos e) i)))
-                              first)]
-                 {:exon-index (if idx
-                                (inc idx) ; 1-origin
-                                nil)
+                              first)
+                     in-cds? (<= (:cds-start rg) pos (:cds-end rg))]
+                 {:exon-index (if (and idx (or (not only-cds?) in-cds?))
+                                  (inc idx) ; 1-origin
+                                  nil)
                   :exon-count (count exon-ranges)
                   :gene rg}))))))
 
