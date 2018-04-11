@@ -10,11 +10,15 @@
                  [org.apache.commons/commons-compress "1.16"]
                  [proton "0.1.4"]]
   :plugins [[lein-cloverage "1.0.10"]
-            [lein-codox "0.10.3"]]
+            [lein-codox "0.10.3"]
+            [net.totakke/lein-libra "0.1.2"]]
   :test-selectors {:default (complement :slow)
                    :slow :slow
                    :all (constantly true)}
-  :profiles {:dev {:dependencies [[cavia "0.4.3"]]}
+  :profiles {:dev {:dependencies [[cavia "0.4.3"]
+                                  [criterium "0.4.4"]
+                                  [net.totakke/libra "0.1.1"]]}
+             :repl {:source-paths ["bench"]}
              :1.8 {:dependencies [[org.clojure/clojure "1.8.0"]]}}
   :deploy-repositories [["snapshots" {:url "https://clojars.org/repo/"
                                       :username [:env/clojars_username :gpg]
