@@ -7,7 +7,7 @@
   :dependencies [[org.clojure/clojure "1.9.0" :scope "provided"]
                  [clj-hgvs "0.2.3"]
                  [cljam "0.5.1"]
-                 [org.apache.commons/commons-compress "1.16"]
+                 [org.apache.commons/commons-compress "1.16.1"]
                  [proton "0.1.4"]]
   :plugins [[lein-cloverage "1.0.10"]
             [lein-codox "0.10.3"]
