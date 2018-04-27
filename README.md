@@ -16,7 +16,7 @@ Variant translation library for Clojure.
 With Leiningen/Boot:
 
 ```clojure
-[varity "0.3.6"]
+[varity "0.3.7"]
 ```
 
 ## Usage
@@ -115,4 +115,4 @@ To convert a genome coordinate between assemblies,
 
 Copyright 2017-2018 [Xcoo, Inc.](https://xcoo.jp/)
 
-Licensed under the [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0).
+Licensed under the [Apache License, Version 2.0](LICENSE).
