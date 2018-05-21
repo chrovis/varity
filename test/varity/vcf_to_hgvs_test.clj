@@ -110,6 +110,7 @@
                                   "p.A35=") ; cf. rs786201577 (synonymous)
         "chr6" 33086236 "TA" "T" '("p.*259=") ; cf. rs67523850 (deletion in border of UTR)
         "chr7" 152247986 "G" "GT" '("p.Y816*") ; cf. rs150073007 (-, nonsense mutation)
+        "chr17" 31159027 "TGC" "T" '("p.A75*") ; not actual example (+, nonsense in del case)
 
         ;; deletion
         "chr1" 1286041 "CCTT" "C" '("p.F227del")
