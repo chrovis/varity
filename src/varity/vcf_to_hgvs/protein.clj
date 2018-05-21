@@ -9,6 +9,16 @@
             [varity.util :refer [revcomp-bases]]
             [varity.vcf-to-hgvs.common :refer [diff-bases] :as common]))
 
+(defn- split-string-at [s x]
+  (cond
+    (integer? x) [(subs s 0 x) (subs s x)]
+    (sequential? x) (let [[n & r] x]
+                      (if n
+                        (let [[s1 s2] (split-string-at s n)]
+                          (vec (cons s1 (split-string-at s2 (map #(- % n) r)))))
+                        [s]))
+    :else (throw (IllegalArgumentException.))))
+
 (defn- alt-sequence
   "Returns sequence a variant applied."
   [ref-seq seq-start pos ref alt]
@@ -124,8 +134,7 @@
     alt-prot-seq
     (let [s (subs alt-tx-prot-seq
                   ini-offset)
-          s-head (subs s 0 (count alt-prot-seq))
-          s-tail (subs s (count alt-prot-seq))]
+          [s-head s-tail] (split-string-at s (count alt-prot-seq))]
       (if-let [end (string/index-of s-tail \*)]
         (str s-head
              (subs s-tail 0 (inc end)))
@@ -141,40 +150,44 @@
             base-ppos (case strand
                         "+" ppos
                         "-" (protein-position pos (- (count ref)) rg))
-            pref (subs ref-prot-seq
-                       (dec base-ppos)
-                       (case strand
-                         "+" (protein-position pos (dec (count ref)) rg)
-                         "-" ppos))
-            palt (subs alt-prot-seq*
-                       (dec base-ppos)
-                       (case strand
-                         "+" (protein-position pos (dec (count alt)) rg)
-                         "-" (protein-position pos (- (count alt) (count ref)) rg)))
+            [_ pref ref-prot-rest] (split-string-at
+                                    ref-prot-seq
+                                    [(dec base-ppos)
+                                     (case strand
+                                       "+" (protein-position pos (dec (count ref)) rg)
+                                       "-" ppos)])
+            [_ palt alt-prot-rest] (split-string-at
+                                    alt-prot-seq*
+                                    [(dec base-ppos)
+                                     (case strand
+                                       "+" (protein-position pos (dec (count alt)) rg)
+                                       "-" (protein-position pos (- (count alt) (count ref)) rg))])
             [pref-only palt-only offset _] (diff-bases pref palt)
             nprefo (count pref-only)
             npalto (count palt-only)
-            [unit ref-repeat ins-repeat] (common/repeat-info ref-prot-seq (+ base-ppos offset) palt-only)]
-        {:type (cond
-                 (or (= (+ base-ppos offset) 1)
-                     (= (+ base-ppos offset) (count ref-prot-seq))) :extension
-                 (and (pos? nprefo) (= (first palt-only) \*)) :substitution
-                 (not= (subs ref-prot-seq (+ base-ppos (count pref) -1))
-                       (subs alt-prot-seq* (+ base-ppos (count palt) -1))) :frame-shift
-                 (or (and (zero? nprefo) (zero? npalto))
-                     (and (= nprefo 1) (= npalto 1))) :substitution
-                 (and (pos? nprefo) (zero? npalto)) :deletion
-                 (and (pos? nprefo) (pos? npalto)) (if (= base-ppos 1)
-                                                     :extension
-                                                     :indel)
-                 (some? unit) (cond
-                                (and (= ref-repeat 1) (= ins-repeat 1)) :duplication
-                                (or (> ref-repeat 1) (> ins-repeat 1)) :repeated-seqs)
-                 (and (zero? nprefo) (pos? npalto)) :insertion
-                 :else (throw (IllegalArgumentException. "Unsupported variant")))
+            [unit ref-repeat ins-repeat] (common/repeat-info ref-prot-seq (+ base-ppos offset) palt-only)
+            t (cond
+                (or (= (+ base-ppos offset) 1)
+                    (= (+ base-ppos offset) (count ref-prot-seq))) :extension
+                (and (pos? nprefo) (= (first palt-only) \*)) :substitution
+                (not= ref-prot-rest alt-prot-rest) (if (= (first alt-prot-rest) \*)
+                                                     :fs-ter-substitution
+                                                     :frame-shift)
+                (or (and (zero? nprefo) (zero? npalto))
+                    (and (= nprefo 1) (= npalto 1))) :substitution
+                (and (pos? nprefo) (zero? npalto)) :deletion
+                (and (pos? nprefo) (pos? npalto)) (if (= base-ppos 1)
+                                                    :extension
+                                                    :indel)
+                (some? unit) (cond
+                               (and (= ref-repeat 1) (= ins-repeat 1)) :duplication
+                               (or (> ref-repeat 1) (> ins-repeat 1)) :repeated-seqs)
+                (and (zero? nprefo) (pos? npalto)) :insertion
+                :else (throw (IllegalArgumentException. "Unsupported variant")))]
+        {:type (if (= t :fs-ter-substitution) :substitution t)
          :pos base-ppos
          :ref pref
-         :alt palt}))))
+         :alt (if (= t :fs-ter-substitution) (str palt \*) palt)}))))
 
 (defn- protein-substitution
   [ppos pref palt]
