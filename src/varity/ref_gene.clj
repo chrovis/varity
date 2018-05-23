@@ -179,7 +179,8 @@
 
 (defn cds-pos
   [pos {:keys [strand cds-start cds-end exon-ranges]}]
-  {:pre [(<= (ffirst exon-ranges) pos (second (last exon-ranges)))]}
+  {:pre [(<= (ffirst exon-ranges) pos (second (last exon-ranges)))
+         (<= cds-start cds-end)]}
   (let [pos* (exon-pos pos strand exon-ranges)
         cds-start* (exon-pos cds-start strand exon-ranges)
         cds-end* (exon-pos cds-end strand exon-ranges)

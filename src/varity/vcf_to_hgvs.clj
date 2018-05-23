@@ -23,6 +23,9 @@
       (instance? varity.ref_gene.RefGeneIndex ref-gene) :ref-gene-index
       (map? ref-gene) :ref-gene-entity)))
 
+(defn- cdna-ref-gene? [rg]
+  (some? (re-matches #"NM_\d+(\.\d+)?" (:name rg))))
+
 (defn select-variant
   [var seq-rdr rg]
   (let [nvar (normalize-variant var seq-rdr rg)
@@ -59,6 +62,7 @@
   (let [chr (normalize-chromosome-key chr)]
     (if (valid-ref? seq-rdr chr pos ref)
       (->> (rg/ref-genes chr pos rgidx)
+           (filter cdna-ref-gene?)
            (map (fn [rg]
                   (assoc (select-variant {:chr chr, :pos pos, :ref ref, :alt alt}
                                          seq-rdr rg)
@@ -103,6 +107,7 @@
   (let [chr (normalize-chromosome-key chr)]
     (if (valid-ref? seq-rdr chr pos ref)
       (->> (rg/ref-genes chr pos rgidx)
+           (filter cdna-ref-gene?)
            (map (fn [rg]
                   (assoc (select-variant {:chr chr, :pos pos, :ref ref, :alt alt}
                                          seq-rdr rg)
@@ -149,6 +154,7 @@
   (let [chr (normalize-chromosome-key chr)]
     (if (valid-ref? seq-rdr chr pos ref)
       (->> (rg/ref-genes chr pos rgidx)
+           (filter cdna-ref-gene?)
            (map (fn [rg]
                   (assoc (select-variant {:chr chr, :pos pos, :ref ref, :alt alt}
                                          seq-rdr rg)
