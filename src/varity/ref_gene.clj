@@ -197,12 +197,16 @@
   (let [[pos* offset] (if (in-exon? pos rg)
                         [pos 0]
                         (nearest-edge-and-offset pos rg))
-        [cds-pos* region] (cds-pos pos* rg)]
-    (coord/cdna-coordinate cds-pos*
-                           (case (:strand rg)
-                             "+" offset
-                             "-" (- offset))
-                           region)))
+        tx-edge? (or (= pos* (:tx-start rg)) (= pos* (:tx-end rg)))
+        offset (case (:strand rg)
+                 "+" offset
+                 "-" (- offset))
+        [cds-pos* region] (cds-pos pos* rg)
+        [cds-pos* offset] (cond
+                            (and tx-edge? (= region :upstream)) [(- cds-pos* offset) 0]
+                            (and tx-edge? (= region :downstream)) [(+ cds-pos* offset) 0]
+                            :else [cds-pos* offset])]
+    (coord/cdna-coordinate cds-pos* offset region)))
 
 ;;; Calculation of genomic coordinate
 
@@ -212,15 +216,27 @@
    (let [exon-poss (mapcat (fn [[s e]] (range s (inc e))) exon-ranges)
          cds-poss (cond-> (filter #(<= cds-start % cds-end) exon-poss)
                     (= strand "-") reverse)
-         upstream-poss (case strand
-                         "+" (filter #(< % cds-start) exon-poss)
-                         "-" (reverse (filter #(< cds-end %) exon-poss)))
-         downstream-poss (case strand
-                           "+" (filter #(< cds-end %) exon-poss)
-                           "-" (reverse (filter #(< % cds-start) exon-poss)))]
+         utr-up-poss (case strand
+                       "+" (reverse (filter #(< % cds-start) exon-poss))
+                       "-" (filter #(< cds-end %) exon-poss))
+         utr-down-poss (case strand
+                         "+" (filter #(< cds-end %) exon-poss)
+                         "-" (reverse (filter #(< % cds-start) exon-poss)))
+         upstream-poss (if (seq utr-up-poss)
+                         (concat utr-up-poss
+                                 (case strand
+                                   "+" (iterate dec (dec (last utr-up-poss)))
+                                   "-" (iterate inc (inc (last utr-up-poss)))))
+                         utr-up-poss)
+         downstream-poss (if (seq utr-down-poss)
+                           (concat utr-down-poss
+                                   (case strand
+                                     "+" (iterate inc (inc (last utr-down-poss)))
+                                     "-" (iterate dec (dec (last utr-down-poss)))))
+                           utr-down-poss)]
      (case region
        nil (nth cds-poss (dec cds-pos) nil)
-       :upstream (nth (reverse upstream-poss) (dec cds-pos) nil)
+       :upstream (nth upstream-poss (dec cds-pos) nil)
        :downstream (nth downstream-poss (dec cds-pos) nil)))))
 
 (defn cds-coord->genomic-pos
