@@ -73,19 +73,24 @@
 
 (def ^:private pos-index-block 1000000)
 
+(def max-promoter-size 10000)
+
 (defn- locus-index
   [rgs]
   (->> (group-by :chr rgs)
        (map (fn [[chr sub-rgs]]
-              (let [fs (round-int (apply min (map :tx-start sub-rgs))
+              (let [fs (round-int (- (apply min (map :tx-start sub-rgs))
+                                     max-promoter-size)
                                   pos-index-block)
-                    le (round-int (apply max (map :tx-end sub-rgs))
+                    le (round-int (+ (apply max (map :tx-end sub-rgs))
+                                     max-promoter-size)
                                   pos-index-block)]
                 [chr (loop [s fs, ret {}]
                        (if (<= s le)
                          (let [e (+ s pos-index-block)
                                rgs* (filter (fn [{:keys [tx-start tx-end]}]
-                                              (and (<= tx-start e) (<= s tx-end)))
+                                              (and (<= (- tx-start max-promoter-size) e)
+                                                   (<= s (+ tx-end max-promoter-size))))
                                             sub-rgs)]
                            (recur e (assoc ret [s e] rgs*)))
                          ret))])))
@@ -115,13 +120,15 @@
    (get-in rgidx (if (re-find #"^(NC|LRG|NG|NM|NR|NP)_" s)
                    [:ref-seq s]
                    [:gene s])))
-  ([chr pos rgidx]
+  ([chr pos rgidx] (ref-genes chr pos rgidx 0))
+  ([chr pos rgidx promoter-size]
+   {:pre [(<= 0 promoter-size max-promoter-size)]}
    (let [pos-r (round-int pos pos-index-block)]
      (->> (get-in rgidx [:locus
                          (normalize-chromosome-key chr)
                          [pos-r (+ pos-r pos-index-block)]])
           (filter (fn [{:keys [tx-start tx-end]}]
-                    (<= tx-start pos tx-end)))))))
+                    (<= (- tx-start promoter-size) pos (+ tx-end promoter-size))))))))
 
 (defn in-any-exon?
   "Returns true if chr:pos is located in any ref-gene exon, else false."

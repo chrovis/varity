@@ -1,6 +1,7 @@
 (ns varity.vcf-to-hgvs.common
   (:require [clojure.string :as string]
-            [cljam.io.sequence :as cseq]))
+            [cljam.io.sequence :as cseq]
+            [varity.ref-gene :as rg]))
 
 (defn- left-common-len
   "Returns the number of common characters on the left side of s1 and s2."
@@ -137,7 +138,9 @@
 (defn- normalize-variant-forward
   [{:keys [chr pos ref alt]} seq-rdr rg]
   (->> (read-sequence-stepwise seq-rdr
-                               {:chr chr, :start pos, :end (:tx-end rg)}
+                               {:chr chr
+                                :start pos
+                                :end (+ (:tx-end rg) rg/max-promoter-size)}
                                100)
        (keep (fn [seq*]
                (let [nvar (normalize-variant* {:pos 1, :ref ref, :alt alt} seq* "+")]
@@ -150,7 +153,9 @@
 (defn- normalize-variant-backward
   [{:keys [chr pos ref alt]} seq-rdr rg]
   (->> (read-sequence-stepwise-backward seq-rdr
-                                        {:chr chr, :start (:tx-start rg), :end (+ pos (count ref) -1)}
+                                        {:chr chr
+                                         :start (- (:tx-start rg) rg/max-promoter-size)
+                                         :end (+ pos (count ref) -1)}
                                         100)
        (keep (fn [seq*]
                (let [offset (- (count seq*) (count ref))

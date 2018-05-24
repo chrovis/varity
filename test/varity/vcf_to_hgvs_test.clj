@@ -6,10 +6,10 @@
             [varity.t-common :refer :all]))
 
 (defn- vcf-variant->cdna-hgvs-texts
-  [variant seq-rdr rgidx]
+  [variant seq-rdr rgidx & [options]]
   (map #(hgvs/format % {:show-bases? true
                         :range-format :coord})
-       (vcf-variant->cdna-hgvs variant seq-rdr rgidx)))
+       (vcf-variant->cdna-hgvs variant seq-rdr rgidx options)))
 
 (defslowtest vcf-variant->cdna-hgvs-test
   (cavia-testing "returns cDNA HGVS strings"
@@ -22,7 +22,13 @@
         "chr1" 11796321 "G" "A" '("NM_005957:c.665C>T") ; cf. rs1801133 (-)
         "chr12" 25245350 "C" "A" '("NM_004985:c.35G>T"
                                    "NM_033360:c.35G>T") ; cf. rs121913529 (-)
-        "chr17" 7676147 "G" "A" '("NM_000546:c.222C>T"
+        "chr17" 7676147 "G" "A" '("NM_001126115:c.-932C>T"
+                                  "NM_001126116:c.-932C>T"
+                                  "NM_001126117:c.-932C>T"
+                                  "NM_001276697:c.-1013C>T"
+                                  "NM_001276698:c.-1013C>T"
+                                  "NM_001276699:c.-1013C>T"
+                                  "NM_000546:c.222C>T"
                                   "NM_001126112:c.222C>T"
                                   "NM_001126113:c.222C>T"
                                   "NM_001126114:c.222C>T"
@@ -33,20 +39,28 @@
                                   "NM_001276761:c.105C>T") ; rs786201577 (synonymous)
 
         ;; Deletion
-        "chr1" 963222 "GCG" "G" '("NM_198317:c.1157_1158delCG")
+        "chr1" 963222 "GCG" "G" '("NM_015658:c.-3984_-3983delCG"
+                                  "NM_198317:c.1157_1158delCG"
+                                  "NM_001160184:c.-3309_-3308delCG"
+                                  "NM_032129:c.-3309_-3308delCG")
         "chr3" 116193879 "ACAC" "A" '("NM_001318915:c.156-107326_156-107324delGTG"
                                       "NM_002338:c.156-107326_156-107324delGTG") ; cf. rs17358
-        "chr16" 282999 "GTCTC" "G" '("NM_001176:c.*186_*189delTCTC") ; cf. rs28365940 (deletion in UTR)
+        "chr16" 282999 "GTCTC" "G" '("NM_001176:c.*190_*193delTCTC"
+                                     "NM_006849:c.-166_-163delTCTC"
+                                     "NM_003502:c.*5119_*5122delGAGA"
+                                     "NM_181050:c.*5119_*5122delGAGA") ; cf. rs28365940 (deletion in UTR)
         "chr6" 33086236 "TA" "T" '("NM_002121:c.776delA") ; cf. rs67523850 (deletion in border of UTR)
 
         ;; Duplication
         "chr2" 47806842 "T" "TGACT" '("NM_000179:c.4062_4065dupGACT"
                                       "NM_001281492:c.3672_3675dupGACT"
                                       "NM_001281493:c.3156_3159dupGACT"
-                                      "NM_001281494:c.3156_3159dupGACT") ; cf. rs55740729 (+)
+                                      "NM_001281494:c.3156_3159dupGACT"
+                                      "NM_025133:c.*1276_*1279dupAGTC"
+                                      "NM_001190274:c.*1276_*1279dupAGTC") ; cf. rs55740729 (+)
         "chr2" 26254257 "G" "GACT" '("NM_000183:c.4_6dupACT"
                                      "NM_001281512:c.4_6dupACT"
-                                     "NM_001281513:c.-147_-146insACT") ; cf. rs3839049 (+)
+                                     "NM_001281513:c.-146_-144dupACT") ; cf. rs3839049 (+)
         "chr1" 42752620 "T" "TGGAGTTC" '("NM_001146289:c.1383_1389dupGAACTCC"
                                          "NM_001243246:c.1383_1389dupGAACTCC"
                                          "NM_022356:c.1383_1389dupGAACTCC") ; cf. rs137853953 (-)
@@ -62,7 +76,9 @@
         '("NM_000179:c.4002-31_4002-8inv"
           "NM_001281492:c.3612-31_3612-8inv"
           "NM_001281493:c.3096-31_3096-8inv"
-          "NM_001281494:c.3096-31_3096-8inv") ; cf. rs267608133 (+)
+          "NM_001281494:c.3096-31_3096-8inv"
+          "NM_025133:c.*1347_*1370inv"
+          "NM_001190274:c.*1347_*1370inv") ; cf. rs267608133 (+)
         ;; NOTE: strand - example is not found on dbSNP
 
         ;; indel
@@ -84,6 +100,15 @@
                                     "NM_057166:c.4242+6[9]"
                                     "NM_057167:c.5445+6[9]") ; cf. rs11385011 (-)
         )))
+  (cavia-testing "promoter size"
+    (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
+      (are [chr pos ref alt psize e]
+          (= (vcf-variant->cdna-hgvs-texts {:chr chr, :pos pos, :ref ref, :alt alt}
+                                           test-ref-seq-file rgidx
+                                           {:promoter-size psize}) e)
+        "chr5" 1295113 "G" "A" 5000 '("NM_001193376:c.-124C>T"
+                                      "NM_198253:c.-124C>T")
+        "chr5" 1295113 "G" "A" 0 '())))
   (cavia-testing "throws Exception if inputs are illegal"
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
       (is (thrown? Exception
