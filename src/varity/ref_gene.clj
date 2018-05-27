@@ -73,19 +73,24 @@
 
 (def ^:private pos-index-block 1000000)
 
+(def max-tx-margin 10000)
+
 (defn- locus-index
   [rgs]
   (->> (group-by :chr rgs)
        (map (fn [[chr sub-rgs]]
-              (let [fs (round-int (apply min (map :tx-start sub-rgs))
+              (let [fs (round-int (- (apply min (map :tx-start sub-rgs))
+                                     max-tx-margin)
                                   pos-index-block)
-                    le (round-int (apply max (map :tx-end sub-rgs))
+                    le (round-int (+ (apply max (map :tx-end sub-rgs))
+                                     max-tx-margin)
                                   pos-index-block)]
                 [chr (loop [s fs, ret {}]
                        (if (<= s le)
                          (let [e (+ s pos-index-block)
                                rgs* (filter (fn [{:keys [tx-start tx-end]}]
-                                              (and (<= tx-start e) (<= s tx-end)))
+                                              (and (<= (- tx-start max-tx-margin) e)
+                                                   (<= s (+ tx-end max-tx-margin))))
                                             sub-rgs)]
                            (recur e (assoc ret [s e] rgs*)))
                          ret))])))
@@ -115,13 +120,15 @@
    (get-in rgidx (if (re-find #"^(NC|LRG|NG|NM|NR|NP)_" s)
                    [:ref-seq s]
                    [:gene s])))
-  ([chr pos rgidx]
+  ([chr pos rgidx] (ref-genes chr pos rgidx 0))
+  ([chr pos rgidx tx-margin]
+   {:pre [(<= 0 tx-margin max-tx-margin)]}
    (let [pos-r (round-int pos pos-index-block)]
      (->> (get-in rgidx [:locus
                          (normalize-chromosome-key chr)
                          [pos-r (+ pos-r pos-index-block)]])
           (filter (fn [{:keys [tx-start tx-end]}]
-                    (<= tx-start pos tx-end)))))))
+                    (<= (- tx-start tx-margin) pos (+ tx-end tx-margin))))))))
 
 (defn in-any-exon?
   "Returns true if chr:pos is located in any ref-gene exon, else false."
@@ -179,7 +186,8 @@
 
 (defn cds-pos
   [pos {:keys [strand cds-start cds-end exon-ranges]}]
-  {:pre [(<= (ffirst exon-ranges) pos (second (last exon-ranges)))]}
+  {:pre [(<= (ffirst exon-ranges) pos (second (last exon-ranges)))
+         (<= cds-start cds-end)]}
   (let [pos* (exon-pos pos strand exon-ranges)
         cds-start* (exon-pos cds-start strand exon-ranges)
         cds-end* (exon-pos cds-end strand exon-ranges)
@@ -197,12 +205,16 @@
   (let [[pos* offset] (if (in-exon? pos rg)
                         [pos 0]
                         (nearest-edge-and-offset pos rg))
-        [cds-pos* region] (cds-pos pos* rg)]
-    (coord/cdna-coordinate cds-pos*
-                           (case (:strand rg)
-                             "+" offset
-                             "-" (- offset))
-                           region)))
+        tx-edge? (or (= pos* (:tx-start rg)) (= pos* (:tx-end rg)))
+        offset (case (:strand rg)
+                 "+" offset
+                 "-" (- offset))
+        [cds-pos* region] (cds-pos pos* rg)
+        [cds-pos* offset] (cond
+                            (and tx-edge? (= region :upstream)) [(- cds-pos* offset) 0]
+                            (and tx-edge? (= region :downstream)) [(+ cds-pos* offset) 0]
+                            :else [cds-pos* offset])]
+    (coord/cdna-coordinate cds-pos* offset region)))
 
 ;;; Calculation of genomic coordinate
 
@@ -212,15 +224,27 @@
    (let [exon-poss (mapcat (fn [[s e]] (range s (inc e))) exon-ranges)
          cds-poss (cond-> (filter #(<= cds-start % cds-end) exon-poss)
                     (= strand "-") reverse)
-         upstream-poss (case strand
-                         "+" (filter #(< % cds-start) exon-poss)
-                         "-" (reverse (filter #(< cds-end %) exon-poss)))
-         downstream-poss (case strand
-                           "+" (filter #(< cds-end %) exon-poss)
-                           "-" (reverse (filter #(< % cds-start) exon-poss)))]
+         utr-up-poss (case strand
+                       "+" (reverse (filter #(< % cds-start) exon-poss))
+                       "-" (filter #(< cds-end %) exon-poss))
+         utr-down-poss (case strand
+                         "+" (filter #(< cds-end %) exon-poss)
+                         "-" (reverse (filter #(< % cds-start) exon-poss)))
+         upstream-poss (if (seq utr-up-poss)
+                         (concat utr-up-poss
+                                 (case strand
+                                   "+" (iterate dec (dec (last utr-up-poss)))
+                                   "-" (iterate inc (inc (last utr-up-poss)))))
+                         utr-up-poss)
+         downstream-poss (if (seq utr-down-poss)
+                           (concat utr-down-poss
+                                   (case strand
+                                     "+" (iterate inc (inc (last utr-down-poss)))
+                                     "-" (iterate dec (dec (last utr-down-poss)))))
+                           utr-down-poss)]
      (case region
        nil (nth cds-poss (dec cds-pos) nil)
-       :upstream (nth (reverse upstream-poss) (dec cds-pos) nil)
+       :upstream (nth upstream-poss (dec cds-pos) nil)
        :downstream (nth downstream-poss (dec cds-pos) nil)))))
 
 (defn cds-coord->genomic-pos

@@ -46,6 +46,8 @@
   (testing "strand +"
     (are [p s e r] (= (coord/format
                        (rg/cds-coord p {:strand "+"
+                                        :tx-start 2
+                                        :tx-end 11
                                         :cds-start s
                                         :cds-end e
                                         :exon-ranges [[2 4] [8 11]]}))
@@ -60,10 +62,14 @@
       3  9 11 "-3"
       9  2 3  "*3"
       5  9 11 "-2+1"
-      13 2 3  "*5+2"))
+      7  2 3  "*2-1"
+      1  9 11 "-5"
+      13 2 3  "*7"))
   (testing "strand -"
     (are [p s e r] (= (coord/format
                        (rg/cds-coord p {:strand "-"
+                                        :tx-start 2
+                                        :tx-end 11
                                         :cds-start s
                                         :cds-end e
                                         :exon-ranges [[2 4] [8 11]]}))
@@ -77,8 +83,10 @@
       5  2 11 "5-1"
       9  2 3  "-3"
       3  9 11 "*3"
-      12 2 3  "-5-1"
-      5  9 11 "*2-1")))
+      7  2 3  "-2+1"
+      5  9 11 "*2-1"
+      13 2 3  "-7"
+      1  9 11 "*5")))
 
 (defn- cds-coord
   [chr pos rgidx]
@@ -114,7 +122,9 @@
       "-3"   9 11 3
       "*3"   2 3  9
       "-2+1" 9 11 5
-      "*5+2" 2 3  13))
+      "*2-1" 2 3  7
+      "-5"   9 11 1
+      "*7"   2 3  13))
   (testing "strand -"
     (are [c s e r] (= (rg/cds-coord->genomic-pos (coord/parse-cdna-coordinate c)
                                                  {:strand "-"
@@ -131,5 +141,7 @@
       "5-1"  2 11 5
       "-3"   2 3  9
       "*3"   9 11 3
-      "-5-1" 2 3  12
-      "*2-1" 9 11 5)))
+      "-2+1" 2 3  7
+      "*2-1" 9 11 5
+      "-7"   2 3  13
+      "*5"   9 11 1)))
