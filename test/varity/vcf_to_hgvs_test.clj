@@ -100,12 +100,12 @@
                                     "NM_057166:c.4242+6[9]"
                                     "NM_057167:c.5445+6[9]") ; cf. rs11385011 (-)
         )))
-  (cavia-testing "promoter size"
+  (cavia-testing "tx-margin"
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
-      (are [chr pos ref alt psize e]
+      (are [chr pos ref alt tx-margin e]
           (= (vcf-variant->cdna-hgvs-texts {:chr chr, :pos pos, :ref ref, :alt alt}
                                            test-ref-seq-file rgidx
-                                           {:promoter-size psize}) e)
+                                           {:tx-margin tx-margin}) e)
         "chr5" 1295113 "G" "A" 5000 '("NM_001193376:c.-124C>T"
                                       "NM_198253:c.-124C>T")
         "chr5" 1295113 "G" "A" 0 '())))

@@ -50,8 +50,8 @@
 
   Options:
 
-    :promoter-size  The length of promoter, up to a maximum of 10000, default
-                    5000."
+    :tx-margin  The length of transcription margin, up to a maximum of 10000,
+                default 5000."
   {:arglists '([variant ref-seq ref-gene]
                [variant ref-seq ref-gene options])}
   (fn [_ ref-seq ref-gene & _]
@@ -69,10 +69,10 @@
 
 (defmethod vcf-variant->cdna-hgvs :ref-gene-index
   [{:keys [chr pos ref alt]} seq-rdr rgidx & [options]]
-  (let [{:keys [promoter-size] :or {promoter-size 5000}} options
+  (let [{:keys [tx-margin] :or {tx-margin 5000}} options
         chr (normalize-chromosome-key chr)]
     (if (valid-ref? seq-rdr chr pos ref)
-      (->> (rg/ref-genes chr pos rgidx promoter-size)
+      (->> (rg/ref-genes chr pos rgidx tx-margin)
            (filter cdna-ref-gene?)
            (map (fn [rg]
                   (assoc (select-variant {:chr chr, :pos pos, :ref ref, :alt alt}
@@ -149,8 +149,8 @@
 
   Options:
 
-    :promoter-size  The length of promoter, up to a maximum of 10000, default
-                    5000."
+    :tx-margin  The length of transcription margin, up to a maximum of 10000,
+                default 5000."
   {:arglists '([variant ref-seq ref-gene]
                [variant ref-seq ref-gene options])}
   (fn [_ ref-seq ref-gene & _]
@@ -168,10 +168,10 @@
 
 (defmethod vcf-variant->hgvs :ref-gene-index
   [{:keys [chr pos ref alt]} seq-rdr rgidx & [options]]
-  (let [{:keys [promoter-size] :or {promoter-size 5000}} options
+  (let [{:keys [tx-margin] :or {tx-margin 5000}} options
         chr (normalize-chromosome-key chr)]
     (if (valid-ref? seq-rdr chr pos ref)
-      (->> (rg/ref-genes chr pos rgidx promoter-size)
+      (->> (rg/ref-genes chr pos rgidx tx-margin)
            (filter cdna-ref-gene?)
            (map (fn [rg]
                   (assoc (select-variant {:chr chr, :pos pos, :ref ref, :alt alt}

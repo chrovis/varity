@@ -73,24 +73,24 @@
 
 (def ^:private pos-index-block 1000000)
 
-(def max-promoter-size 10000)
+(def max-tx-margin 10000)
 
 (defn- locus-index
   [rgs]
   (->> (group-by :chr rgs)
        (map (fn [[chr sub-rgs]]
               (let [fs (round-int (- (apply min (map :tx-start sub-rgs))
-                                     max-promoter-size)
+                                     max-tx-margin)
                                   pos-index-block)
                     le (round-int (+ (apply max (map :tx-end sub-rgs))
-                                     max-promoter-size)
+                                     max-tx-margin)
                                   pos-index-block)]
                 [chr (loop [s fs, ret {}]
                        (if (<= s le)
                          (let [e (+ s pos-index-block)
                                rgs* (filter (fn [{:keys [tx-start tx-end]}]
-                                              (and (<= (- tx-start max-promoter-size) e)
-                                                   (<= s (+ tx-end max-promoter-size))))
+                                              (and (<= (- tx-start max-tx-margin) e)
+                                                   (<= s (+ tx-end max-tx-margin))))
                                             sub-rgs)]
                            (recur e (assoc ret [s e] rgs*)))
                          ret))])))
@@ -121,14 +121,14 @@
                    [:ref-seq s]
                    [:gene s])))
   ([chr pos rgidx] (ref-genes chr pos rgidx 0))
-  ([chr pos rgidx promoter-size]
-   {:pre [(<= 0 promoter-size max-promoter-size)]}
+  ([chr pos rgidx tx-margin]
+   {:pre [(<= 0 tx-margin max-tx-margin)]}
    (let [pos-r (round-int pos pos-index-block)]
      (->> (get-in rgidx [:locus
                          (normalize-chromosome-key chr)
                          [pos-r (+ pos-r pos-index-block)]])
           (filter (fn [{:keys [tx-start tx-end]}]
-                    (<= (- tx-start promoter-size) pos (+ tx-end promoter-size))))))))
+                    (<= (- tx-start tx-margin) pos (+ tx-end tx-margin))))))))
 
 (defn in-any-exon?
   "Returns true if chr:pos is located in any ref-gene exon, else false."

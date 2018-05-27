@@ -140,7 +140,7 @@
   (->> (read-sequence-stepwise seq-rdr
                                {:chr chr
                                 :start pos
-                                :end (+ (:tx-end rg) rg/max-promoter-size)}
+                                :end (+ (:tx-end rg) rg/max-tx-margin)}
                                100)
        (keep (fn [seq*]
                (let [nvar (normalize-variant* {:pos 1, :ref ref, :alt alt} seq* "+")]
@@ -154,7 +154,7 @@
   [{:keys [chr pos ref alt]} seq-rdr rg]
   (->> (read-sequence-stepwise-backward seq-rdr
                                         {:chr chr
-                                         :start (- (:tx-start rg) rg/max-promoter-size)
+                                         :start (- (:tx-start rg) rg/max-tx-margin)
                                          :end (+ pos (count ref) -1)}
                                         100)
        (keep (fn [seq*]

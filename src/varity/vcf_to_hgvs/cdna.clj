@@ -10,7 +10,7 @@
   (->> (common/read-sequence-stepwise-backward
         seq-rdr
         {:chr (:chr rg)
-         :start (- (:tx-start rg) rg/max-promoter-size)
+         :start (- (:tx-start rg) rg/max-tx-margin)
          :end (dec pos)}
         100)
        (map (fn [seq*]
@@ -29,7 +29,7 @@
         seq-rdr
         {:chr (:chr rg)
          :start pos
-         :end (+ (:tx-end rg) rg/max-promoter-size)}
+         :end (+ (:tx-end rg) rg/max-tx-margin)}
         100)
        (map (fn [seq*]
               (let [nseq* (count seq*)]
