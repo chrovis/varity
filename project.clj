@@ -19,7 +19,8 @@
                                   [criterium "0.4.4"]
                                   [net.totakke/libra "0.1.1"]]}
              :repl {:source-paths ["bench"]}
-             :1.8 {:dependencies [[org.clojure/clojure "1.8.0"]]}}
+             :1.8 {:dependencies [[org.clojure/clojure "1.8.0"]]}
+             :1.10 {:dependencies [[org.clojure/clojure "1.10.0-alpha5"]]}}
   :deploy-repositories [["snapshots" {:url "https://clojars.org/repo/"
                                       :username [:env/clojars_username :gpg]
                                       :password [:env/clojars_password :gpg]}]]
