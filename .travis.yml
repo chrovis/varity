@@ -6,9 +6,13 @@ cache:
 jdk:
   - oraclejdk8
   - oraclejdk9
-  - openjdk7
+  - oraclejdk10
   - openjdk8
-script: lein with-profile +dev:+1.8 test
+  - openjdk9
+  - openjdk10
+  - openjdk11
+before_install: if [ -f "${JAVA_HOME}/lib/security/cacerts" -a -w  "${JAVA_HOME}/lib/security/cacerts" ]; then rm "${JAVA_HOME}/lib/security/cacerts" && ln -s /etc/ssl/certs/java/cacerts "${JAVA_HOME}/lib/security/cacerts"; fi
+script: lein with-profile +dev:+1.8:+1.10 test
 jobs:
   include:
     - stage: coverage
