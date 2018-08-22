@@ -1,34 +1,195 @@
 (ns varity.ref-gene-test
   (:require [clojure.test :refer :all]
+            [clojure.string :as string]
+            [cljam.io.sequence :as cseq]
+            [cljam.io.protocols :as p]
             [clj-hgvs.coordinate :as coord]
             [varity.ref-gene :as rg]
             [varity.t-common :refer :all]))
 
 (def parse-ref-gene-line #'varity.ref-gene/parse-ref-gene-line)
 
+(def ^:private ^:const test-ref-gene
+  {:bin 592
+   :name "NM_001291366"
+   :chr "chr1"
+   :strand "-"
+   :tx-start 975199
+   :tx-end 982117
+   :cds-start 976172
+   :cds-end 981029
+   :exon-count 4
+   :exon-ranges [[975199 976269] [976499 976624] [978881 981047] [982065 982117]]
+   :score 0
+   :name2 "PERM1"
+   :cds-start-stat :cmpl
+   :cds-end-stat :cmpl
+   :exon-frames [1 1 0 -1]})
+
 (deftest parse-ref-gene-line-test
   (is (= (parse-ref-gene-line "592\tNM_001291366\tchr1\t-\t975198\t982117\t976171\t981029\t4\t975198,976498,978880,982064,\t976269,976624,981047,982117,\t0\tPERM1\tcmpl\tcmpl\t1,1,0,-1,")
-         {:bin 592
-          :name "NM_001291366"
-          :chr "chr1"
-          :strand "-"
-          :tx-start 975199
-          :tx-end 982117
-          :cds-start 976172
-          :cds-end 981029
-          :exon-count 4
-          :exon-ranges [[975199 976269] [976499 976624] [978881 981047] [982065 982117]]
-          :score 0
-          :name2 "PERM1"
-          :cds-start-stat :cmpl
-          :cds-end-stat :cmpl
-          :exon-frames '(1 1 0 -1)})))
+         test-ref-gene)))
 
 (defslowtest in-any-exon?-test
   (cavia-testing "in-any-exon? (slow)"
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
       (is (true? (rg/in-any-exon? "chr7" 55191822 rgidx)))
       (is (false? (rg/in-any-exon? "chr7" 55019367 rgidx))))))
+
+(deftest regions
+  (testing "tx-region"
+    (are [?ref-gene ?output]
+        (= ?output (rg/tx-region ?ref-gene))
+      test-ref-gene {:chr "chr1", :start 975199, :end 982117, :reverse? true}
+      (merge test-ref-gene {:cds-start 982118 :cds-end 982117}) {:chr "chr1", :start 975199, :end 982117, :reverse? true}))
+  (testing "cds-region"
+    (are [?ref-gene ?output]
+        (= ?output (rg/cds-region ?ref-gene))
+      test-ref-gene {:chr "chr1", :start 976172, :end 981029, :reverse? true}
+      (merge test-ref-gene {:cds-start 982118 :cds-end 982117}) nil))
+  (testing "exon-seq"
+    (are [?ref-gene ?output]
+        (= ?output (rg/exon-seq ?ref-gene))
+      test-ref-gene [{:exon-index 1, :exon-count 4, :chr "chr1", :start 982065, :end 982117, :reverse? true}
+                     {:exon-index 2, :exon-count 4, :chr "chr1", :start 978881, :end 981047, :reverse? true}
+                     {:exon-index 3, :exon-count 4, :chr "chr1", :start 976499, :end 976624, :reverse? true}
+                     {:exon-index 4, :exon-count 4, :chr "chr1", :start 975199, :end 976269, :reverse? true}]))
+  (testing "cds-exon-seq"
+    (are [?ref-gene ?output]
+        (= ?output (rg/cds-exon-seq ?ref-gene))
+      test-ref-gene [{:exon-index 2, :exon-count 4, :chr "chr1", :start 978881, :end 981029, :reverse? true}
+                     {:exon-index 3, :exon-count 4, :chr "chr1", :start 976499, :end 976624, :reverse? true}
+                     {:exon-index 4, :exon-count 4, :chr "chr1", :start 976172, :end 976269, :reverse? true}])))
+
+(defslowtest regions-slow
+  (cavia-testing "exon-seq"
+    (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
+      (are [?nm ?output]
+          (= (some->> ?output (map (partial zipmap [:exon-index :exon-count :chr :start :end :reverse?])))
+             (rg/exon-seq (first (rg/ref-genes ?nm rgidx))))
+        "NM_000024" [[1 1 "chr5" 148826593 148828634 false]]
+        "NM_000361" [[1 1 "chr20" 23045633 23049664 true]]
+        "NM_000015" [[1 2 "chr8" 18391245 18391345 false]
+                     [2 2 "chr8" 18399998 18401213 false]]
+        "NM_000025" [[1 2 "chr8" 37965265 37966666 true]
+                     [2 2 "chr8" 37962996 37964239 true]]
+        "NR_024420" [[1 2 "chr12" 8390270 8390752 true]
+                     [2 2 "chr12" 8356964 8357141 true]]
+        "NR_037934" [[1 2 "chr4" 25160672 25160753 false]
+                     [2 2 "chr4" 25197468 25198505 false]]
+        "NM_020403" [[1 4 "chr13" 67229780 67230336 true]
+                     [2 4 "chr13" 67225405 67228575 true]
+                     [3 4 "chr13" 66631210 66631411 true]
+                     [4 4 "chr13" 66302834 66305028 true]])))
+  (cavia-testing "cds-exon-seq"
+    (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
+      (are [?nm ?output]
+          (= (some->> ?output (map (partial zipmap [:exon-index :exon-count :chr :start :end :reverse?])))
+             (rg/cds-exon-seq (first (rg/ref-genes ?nm rgidx))))
+        "NM_000024" [[1 1 "chr5" 148826832 148828073 false]]
+        "NM_000361" [[1 1 "chr20" 23047777 23049504 true]]
+        "NM_000015" [[2 2 "chr8" 18400004 18400876 false]]
+        "NM_000025" [[1 2 "chr8" 37965265 37966469 true]
+                     [2 2 "chr8" 37964218 37964239 true]]
+        "NR_024420" nil
+        "NR_037934" nil
+        "NM_020403" [[2 4 "chr13" 67225405 67228440 true]
+                     [3 4 "chr13" 66631210 66631411 true]
+                     [4 4 "chr13" 66304655 66305028 true]]))))
+
+(deftest read-sequences
+  (testing "read-gene-sequence"
+    (let [r (reify p/ISequenceReader
+              (p/read-sequence [this {:keys [start end]}]
+                (subs "AAAATTTTGGGGCCCCAAAATTTTGGGGCCCC" (dec start) end)))]
+      (are [?ref-gene ?seq]
+          (= ?seq (rg/read-gene-sequence r ?ref-gene))
+        {:strand "+" :exon-ranges [[2 5]]} "AAAT"
+        {:strand "-" :exon-ranges [[2 5]]} "ATTT"
+        {:strand "+" :exon-ranges [[2 5] [8 10]]} "AAATTGG"
+        {:strand "-" :exon-ranges [[2 5] [8 10]]} "CCAATTT")))
+  (testing "read-coding-sequence"
+    (let [r (reify p/ISequenceReader
+              (p/read-sequence [this {:keys [start end]}]
+                (subs "AAAATTTTGGGGCCCCAAAATTTTGGGGCCCC" (dec start) end)))]
+      (are [?ref-gene ?seq]
+          (= ?seq (rg/read-coding-sequence r ?ref-gene))
+        {:strand "+" :cds-start 3 :cds-end 9 :exon-ranges [[2 5]]} "AAT"
+        {:strand "-" :cds-start 3 :cds-end 9 :exon-ranges [[2 5]]} "ATT"
+        {:strand "+" :cds-start 3 :cds-end 9 :exon-ranges [[2 5] [8 10]]} "AATTG"
+        {:strand "-" :cds-start 3 :cds-end 9 :exon-ranges [[2 5] [8 10]]} "CAATT"
+        {:strand "+" :cds-start 8 :cds-end 9 :exon-ranges [[2 5] [8 10]]} "TG"
+        {:strand "-" :cds-start 2 :cds-end 5 :exon-ranges [[2 5] [8 10]]} "ATTT"))))
+
+(defslowtest read-sequences-slow
+  (cavia-testing "read-gene-sequence"
+    (with-open [r (cseq/reader test-ref-seq-file)]
+      (are [?ref-gene ?prefix ?suffix]
+          (let [s (rg/read-gene-sequence r ?ref-gene)]
+            (and (string/starts-with? s ?prefix)
+                 (string/ends-with? s ?suffix)))
+        test-ref-gene "ATGCCG" "CTTTTT")))
+  (cavia-testing "read-coding-sequence"
+    (with-open [r (cseq/reader test-ref-seq-file)]
+      (are [?ref-gene ?prefix ?suffix]
+          (let [s (rg/read-coding-sequence r ?ref-gene)]
+            (and (string/starts-with? s ?prefix)
+                 (string/ends-with? s ?suffix)))
+        test-ref-gene "ATGGAA" "TCCTAG"))))
+
+(defslowtest read-sequences-rg-slow
+  (cavia-testing "read-gene-sequence"
+    (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
+      (with-open [r (cseq/reader test-ref-seq-file)]
+        (are [?nm ?prefix ?suffix ?length]
+            (= {:prefix ?prefix :suffix ?suffix :length ?length}
+               (->> rgidx
+                    (rg/ref-genes ?nm)
+                    first
+                    (rg/read-gene-sequence r)
+                    ((juxt #(string/join (take 6 %))
+                           #(string/join (take-last 6 %))
+                           count))
+                    (zipmap [:prefix :suffix :length])))
+          "NM_000024" "GCACAT" "ATTGCA" 2042
+          "NM_000361" "GGCTGC" "ATCCCA" 4032
+          "NM_000015" "TGAGAT" "TTGTGG" 1317
+          "NM_000025" "GCTACT" "TACAAA" 2647
+          "NR_024420" "CAGGCA" "ATCAAA" 662
+          "NR_037934" "AGTTAA" "AATAAA" 1121
+          "NM_020403" "AGTTCA" "TCCTGA" 6125
+          "NM_201282" "CCCCGG" "ATTTGA" 2239
+          "NM_004333" "CGCCTC" "TATAAA" 2947
+          "NM_000314" "CCTCCC" "TGACTA" 8701
+          "NM_000546" "GATGGG" "GGGGTG" 2591
+          "NM_019063" "GGGGCG" "TTCTAA" 5561
+          "NM_004304" "AGCTGC" "GACTAA" 6265))))
+  (cavia-testing "read-coding-sequence"
+    (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
+      (with-open [r (cseq/reader test-ref-seq-file)]
+        (are [?nm ?prefix ?suffix ?length]
+            (= {:prefix ?prefix :suffix ?suffix :length ?length}
+               (->> rgidx
+                    (rg/ref-genes ?nm)
+                    first
+                    (rg/read-coding-sequence r)
+                    ((juxt #(string/join (take 6 %))
+                           #(string/join (take-last 6 %))
+                           count))
+                    (zipmap [:prefix :suffix :length])))
+          "NM_000024" "ATGGGG" "CTGTAA" 1242
+          "NM_000361" "ATGCTT" "CTCTGA" 1728
+          "NM_000015" "ATGGAC" "ATTTAG" 873
+          "NM_000025" "ATGGCT" "TCTTAG" 1227
+          "NR_024420" "" "" 0
+          "NR_037934" "" "" 0
+          "NM_020403" "ATGGAC" "CTCTAA" 3612
+          "NM_201282" "ATGCGA" "TCCTAA" 1887
+          "NM_004333" "ATGGCG" "CACTGA" 2301
+          "NM_000314" "ATGACA" "GTCTGA" 1212
+          "NM_000546" "ATGGAG" "GACTGA" 1182
+          "NM_019063" "ATGGAC" "TCCTAA" 2946
+          "NM_004304" "ATGGGA" "CCCTGA" 4863)))))
 
 (defslowtest seek-gene-region-test
   (cavia-testing "seek-gene-region (slow)"
