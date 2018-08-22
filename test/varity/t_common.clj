@@ -27,6 +27,7 @@
     (cavia/without-print (cavia/get!))))
 
 (defmacro cavia-testing
+  {:style/indent 1}
   [s & body]
   `(testing ~s
      (prepare-cavia!)
