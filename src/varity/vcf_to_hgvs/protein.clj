@@ -1,5 +1,6 @@
 (ns varity.vcf-to-hgvs.protein
   (:require [clojure.string :as string]
+            [clojure.tools.logging :as log]
             [clj-hgvs.coordinate :as coord]
             [clj-hgvs.core :as hgvs]
             [clj-hgvs.mutation :as mut]
@@ -143,8 +144,16 @@
 (defn- ->protein-variant
   [{:keys [strand] :as rg} pos ref alt
    {:keys [ref-exon-seq ref-prot-seq alt-exon-seq] :as seq-info}]
-  (if (= ref-exon-seq alt-exon-seq)
+  (cond
+    (= ref-exon-seq alt-exon-seq)
     {:type :no-effect, :pos 1, :ref nil, :alt nil}
+
+    (pos? (mod (count ref-exon-seq) 3))
+    (do (log/warnf "CDS length is indivisible by 3: %d (%s, %s)"
+                   (count ref-exon-seq) (:name rg) (:name2 rg))
+        {:type :unknown, :pos nil, :ref nil, :alt nil})
+
+    :else
     (if-let [ppos (protein-position pos rg)]
       (let [alt-prot-seq* (format-alt-prot-seq seq-info)
             base-ppos (case strand
@@ -315,7 +324,8 @@
         :repeated-seqs (protein-repeated-seqs ppos pref palt seq-info)
         :frame-shift (protein-frame-shift ppos pref palt seq-info)
         :extension (protein-extension ppos pref palt seq-info)
-        :no-effect (mut/protein-no-effect)))))
+        :no-effect (mut/protein-no-effect)
+        :unknown (mut/protein-unknown-mutation)))))
 
 (defn ->hgvs
   [{:keys [pos ref alt]} seq-rdr rg]

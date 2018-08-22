@@ -1,5 +1,7 @@
 (ns varity.t-common
   (:require [clojure.java.io :as io]
+            [clojure.tools.logging :refer [*logger-factory*]]
+            [clojure.tools.logging.impl :refer [disabled-logger-factory]]
             [clojure.test :refer [deftest testing]]
             [cavia.core :as cavia :refer [defprofile with-profile]]))
 
@@ -29,6 +31,10 @@
   `(testing ~s
      (prepare-cavia!)
      ~@body))
+
+(defn disable-log-fixture [f]
+  (binding [*logger-factory* disabled-logger-factory]
+    (f)))
 
 (def test-ref-seq-file (cavia/resource prof "test.2bit"))
 (def test-ref-gene-file (cavia/resource prof "test-refGene.txt.gz"))
