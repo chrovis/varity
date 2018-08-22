@@ -16,7 +16,7 @@
   :test-selectors {:default (complement :slow)
                    :slow :slow
                    :all (constantly true)}
-  :profiles {:dev {:dependencies [[cavia "0.5.0"]
+  :profiles {:dev {:dependencies [[cavia "0.5.1"]
                                   [criterium "0.4.4"]
                                   [net.totakke/libra "0.1.1"]]}
              :repl {:source-paths ["bench"]}
