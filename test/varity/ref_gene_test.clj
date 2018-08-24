@@ -54,9 +54,9 @@
                      {:exon-index 2, :exon-count 4, :chr "chr1", :start 978881, :end 981047, :reverse? true}
                      {:exon-index 3, :exon-count 4, :chr "chr1", :start 976499, :end 976624, :reverse? true}
                      {:exon-index 4, :exon-count 4, :chr "chr1", :start 975199, :end 976269, :reverse? true}]))
-  (testing "cds-exon-seq"
+  (testing "cds-seq"
     (are [?ref-gene ?output]
-        (= ?output (rg/cds-exon-seq ?ref-gene))
+        (= ?output (rg/cds-seq ?ref-gene))
       test-ref-gene [{:exon-index 2, :exon-count 4, :chr "chr1", :start 978881, :end 981029, :reverse? true}
                      {:exon-index 3, :exon-count 4, :chr "chr1", :start 976499, :end 976624, :reverse? true}
                      {:exon-index 4, :exon-count 4, :chr "chr1", :start 976172, :end 976269, :reverse? true}])))
@@ -81,11 +81,11 @@
                      [2 4 "chr13" 67225405 67228575 true]
                      [3 4 "chr13" 66631210 66631411 true]
                      [4 4 "chr13" 66302834 66305028 true]])))
-  (cavia-testing "cds-exon-seq"
+  (cavia-testing "cds-seq"
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
       (are [?nm ?output]
           (= (some->> ?output (map (partial zipmap [:exon-index :exon-count :chr :start :end :reverse?])))
-             (rg/cds-exon-seq (first (rg/ref-genes ?nm rgidx))))
+             (rg/cds-seq (first (rg/ref-genes ?nm rgidx))))
         "NM_000024" [[1 1 "chr5" 148826832 148828073 false]]
         "NM_000361" [[1 1 "chr20" 23047777 23049504 true]]
         "NM_000015" [[2 2 "chr8" 18400004 18400876 false]]

@@ -169,7 +169,7 @@
              :end e,
              :reverse? reverse?})))))
 
-(defn cds-exon-seq
+(defn cds-seq
   "Returns a lazy sequence of exons included in a coding region of a `gene`.
   Note that exons outside of the CDS are removed and partially overlapping ones
   are cropped in the result. Returns nil if the gene is a non-coding RNA."
@@ -202,7 +202,7 @@
   nil if the gene is a non-coding RNA."
   [seq-rdr gene]
   (some->> gene
-           cds-exon-seq
+           cds-seq
            (map (partial read-exon-sequence seq-rdr))
            string/join))
 
