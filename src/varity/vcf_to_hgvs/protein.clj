@@ -5,9 +5,9 @@
             [clj-hgvs.core :as hgvs]
             [clj-hgvs.mutation :as mut]
             [cljam.io.sequence :as cseq]
+            [cljam.util.sequence :as util-seq]
             [varity.codon :as codon]
             [varity.ref-gene :as rg]
-            [varity.util :refer [revcomp-bases]]
             [varity.vcf-to-hgvs.common :refer [diff-bases] :as common]))
 
 (defn- split-string-at [s x]
@@ -107,13 +107,13 @@
         alt-exon-seq1 (exon-sequence alt-seq cds-start alt-exon-ranges*)]
     {:ref-exon-seq ref-exon-seq1
      :ref-prot-seq (codon/amino-acid-sequence (cond-> ref-exon-seq1
-                                                (= strand "-") revcomp-bases))
+                                                (= strand "-") util-seq/revcomp))
      :alt-exon-seq alt-exon-seq1
      :alt-prot-seq (codon/amino-acid-sequence (cond-> alt-exon-seq1
-                                                (= strand "-") revcomp-bases))
+                                                (= strand "-") util-seq/revcomp))
      :alt-tx-prot-seq (codon/amino-acid-sequence
                        (cond-> (str ref-up-exon-seq1 alt-exon-seq1 ref-down-exon-seq1)
-                         (= strand "-") revcomp-bases))
+                         (= strand "-") util-seq/revcomp))
      :ini-offset (quot (:position (rg/cds-coord (case strand
                                                   "+" tx-start
                                                   "-" tx-end) rg))

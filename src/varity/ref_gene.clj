@@ -5,6 +5,7 @@
             [clj-hgvs.coordinate :as coord]
             [cljam.io.sequence :as cseq]
             [cljam.util.chromosome :refer [normalize-chromosome-key]]
+            [cljam.util.sequence :as util-seq]
             [proton.core :refer [as-long]]
             [varity.util :as util]))
 
@@ -186,7 +187,7 @@
   "Reads a base sequence of an `exon` from `seq-rdr`."
   [seq-rdr {:keys [reverse?] :as exon}]
   (cond-> (cseq/read-sequence seq-rdr exon)
-    reverse? util/revcomp-bases))
+    reverse? util-seq/revcomp))
 
 (defn ^String read-gene-sequence
   "Reads a DNA base sequence of a ref-gene record `gene` from `seq-rdr`."

@@ -1,16 +1,9 @@
 (ns varity.util
   "Utilities."
-  (:require [clojure.java.io :as io]
-            [cljam.util.sequence :as util-seq])
+  (:require [clojure.java.io :as io])
   (:import [java.io InputStream]
            [org.apache.commons.compress.compressors
             CompressorStreamFactory CompressorException]))
-
-(defn revcomp-bases
-  "Returns reverse complementary bases string."
-  [s]
-  {:pre [(string? s)]}
-  (util-seq/revcomp s))
 
 (defn ^InputStream compressor-input-stream
   "Returns an compressor input stream from f, autodetecting the compressor type
