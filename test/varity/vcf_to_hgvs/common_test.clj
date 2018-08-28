@@ -52,7 +52,7 @@
 (deftest normalize-variant*-test
   (testing "normalize-variant* normalizes variant"
     (are [v st ret] (= (normalize-variant* v "NNNCAGTAGTAGTCNNN" st) ret)
-      {:pos 7, :ref "T", :alt "TAGT"} "+" {:pos 13, :ref "T", :alt "TAGT"}
-      {:pos 7, :ref "TAGT", :alt "T"} "+" {:pos 10, :ref "TAGT", :alt "T"}
-      {:pos 7, :ref "T", :alt "TAGT"} "-" {:pos 4, :ref "C", :alt "CAGT"}
-      {:pos 7, :ref "TAGT", :alt "T"} "-" {:pos 4, :ref "CAGT", :alt "C"})))
+      {:pos 7, :ref "T", :alt "TAGT"} :forward {:pos 13, :ref "T", :alt "TAGT"}
+      {:pos 7, :ref "TAGT", :alt "T"} :forward {:pos 10, :ref "TAGT", :alt "T"}
+      {:pos 7, :ref "T", :alt "TAGT"} :reverse {:pos 4, :ref "C", :alt "CAGT"}
+      {:pos 7, :ref "TAGT", :alt "T"} :reverse {:pos 4, :ref "CAGT", :alt "C"})))

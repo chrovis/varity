@@ -46,8 +46,8 @@
 (defn- repeat-info*
   [seq-rdr rg pos ins]
   (case (:strand rg)
-    "+" (repeat-info-forward seq-rdr rg pos ins)
-    "-" (repeat-info-backward seq-rdr rg pos ins)))
+    :forward (repeat-info-forward seq-rdr rg pos ins)
+    :reverse (repeat-info-backward seq-rdr rg pos ins)))
 
 (defn- mutation-type
   [seq-rdr rg pos ref alt]
@@ -72,9 +72,9 @@
   [rg pos ref alt]
   (let [{:keys [strand]} rg]
     (mut/dna-substitution (rg/cds-coord pos rg)
-                          (cond-> ref (= strand "-") util-seq/revcomp)
+                          (cond-> ref (= strand :reverse) util-seq/revcomp)
                           (if (= ref alt) "=" ">")
-                          (cond-> alt (= strand "-") util-seq/revcomp))))
+                          (cond-> alt (= strand :reverse) util-seq/revcomp))))
 
 (defn- dna-deletion
   [rg pos ref alt]
@@ -84,39 +84,39 @@
         left (+ pos offset)
         right (+ pos offset ndel -1)]
     (mut/dna-deletion (rg/cds-coord (case strand
-                                      "+" left
-                                      "-" right)
+                                      :forward left
+                                      :reverse right)
                                     rg)
                       (if (> ndel 1)
                         (rg/cds-coord (case strand
-                                        "+" right
-                                        "-" left)
+                                        :forward right
+                                        :reverse left)
                                       rg))
-                      (cond-> (subs ref offset) (= strand "-") util-seq/revcomp))))
+                      (cond-> (subs ref offset) (= strand :reverse) util-seq/revcomp))))
 
 (defn- dna-duplication
   [rg pos ref alt]
   (let [{:keys [strand]} rg
         [_ ins offset _] (diff-bases ref alt)
         start (case strand
-                "+" (+ pos offset (- (count ins)))
-                "-" (+ pos offset (count ins) -1))
+                :forward (+ pos offset (- (count ins)))
+                :reverse (+ pos offset (count ins) -1))
         end (case strand
-              "+" (dec (+ start (count ins)))
-              "-" (inc (- start (count ins))))]
+              :forward (dec (+ start (count ins)))
+              :reverse (inc (- start (count ins))))]
     (mut/dna-duplication (rg/cds-coord start rg)
                          (rg/cds-coord end rg)
-                         (cond-> ins (= strand "-") util-seq/revcomp))))
+                         (cond-> ins (= strand :reverse) util-seq/revcomp))))
 
 (defn- dna-insertion
   [rg pos ref alt]
   (let [{:keys [strand]} rg
         [_ ins offset _] (diff-bases ref alt)
-        start (cond-> (+ pos offset) (= strand "+") dec)
-        end (cond-> (+ pos offset) (= strand "-") dec)]
+        start (cond-> (+ pos offset) (= strand :forward) dec)
+        end (cond-> (+ pos offset) (= strand :reverse) dec)]
     (mut/dna-insertion (rg/cds-coord start rg)
                        (rg/cds-coord end rg)
-                       (cond-> ins (= strand "-") util-seq/revcomp))))
+                       (cond-> ins (= strand :reverse) util-seq/revcomp))))
 
 (defn- dna-inversion
   [rg pos ref alt]
@@ -125,11 +125,11 @@
         left (+ pos offset)
         right (+ pos offset (count inv) -1)
         start (case strand
-                "+" left
-                "-" right)
+                :forward left
+                :reverse right)
         end (case strand
-              "+" right
-              "-" left)]
+              :forward right
+              :reverse left)]
     (mut/dna-inversion (rg/cds-coord start rg)
                        (rg/cds-coord end rg))))
 
@@ -145,16 +145,16 @@
         left (+ pos offset)
         right (+ pos offset ndel -1)]
     (mut/dna-indel (rg/cds-coord (case strand
-                                   "+" left
-                                   "-" right)
+                                   :forward left
+                                   :reverse right)
                                  rg)
                    (if (> ndel 1)
                      (rg/cds-coord (case strand
-                                     "+" right
-                                     "-" left)
+                                     :forward right
+                                     :reverse left)
                                    rg))
-                   (cond-> del (= strand "-") util-seq/revcomp)
-                   (cond-> ins (= strand "-") util-seq/revcomp))))
+                   (cond-> del (= strand :reverse) util-seq/revcomp)
+                   (cond-> ins (= strand :reverse) util-seq/revcomp))))
 
 (defn- dna-repeated-seqs
   [seq-rdr rg pos ref alt]
@@ -163,11 +163,11 @@
         [unit ref-repeat ins-repeat] (repeat-info* seq-rdr rg (+ pos offset) ins)
         nunit (count unit)
         start (case strand
-                "+" (+ pos offset (- (* nunit ref-repeat)))
-                "-" (+ pos offset (* nunit ref-repeat) -1))
+                :forward (+ pos offset (- (* nunit ref-repeat)))
+                :reverse (+ pos offset (* nunit ref-repeat) -1))
         end (case strand
-              "+" (dec (+ start nunit))
-              "-" (inc (- start nunit)))]
+              :forward (dec (+ start nunit))
+              :reverse (inc (- start nunit)))]
     (mut/dna-repeated-seqs (rg/cds-coord start rg)
                            (rg/cds-coord end rg)
                            unit

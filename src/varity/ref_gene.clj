@@ -41,21 +41,22 @@
                  :exon-count :exon-start :exon-end :score :name2 :cds-start-stat
                  :cds-end-stat :exon-frames]
                 (string/split s #"\t")) m
-        (update m :bin as-long)
-        (update m :chr normalize-chromosome-key)
-        (update m :tx-start (comp inc as-long))
-        (update m :tx-end as-long)
-        (update m :cds-start (comp inc as-long))
-        (update m :cds-end as-long)
-        (update m :exon-count as-long)
-        (update m :exon-start #(map inc (parse-exon-pos %)))
-        (update m :exon-end parse-exon-pos)
-        (update m :score as-long)
-        (assoc m :exon-ranges (exon-ranges (:exon-start m) (:exon-end m)))
-        (dissoc m :exon-start :exon-end)
-        (update m :cds-start-stat keyword)
-        (update m :cds-end-stat keyword)
-        (update m :exon-frames parse-exon-pos)))
+    (update m :bin as-long)
+    (update m :chr normalize-chromosome-key)
+    (update m :strand #(case (first %) \+ :forward \- :reverse))
+    (update m :tx-start (comp inc as-long))
+    (update m :tx-end as-long)
+    (update m :cds-start (comp inc as-long))
+    (update m :cds-end as-long)
+    (update m :exon-count as-long)
+    (update m :exon-start #(map inc (parse-exon-pos %)))
+    (update m :exon-end parse-exon-pos)
+    (update m :score as-long)
+    (assoc m :exon-ranges (exon-ranges (:exon-start m) (:exon-end m)))
+    (dissoc m :exon-start :exon-end)
+    (update m :cds-start-stat keyword)
+    (update m :cds-end-stat keyword)
+    (update m :exon-frames parse-exon-pos)))
 
 (defn load-ref-genes
   "Loads f (e.g. refGene.txt(.gz)), returning the all contents as a sequence."
@@ -142,26 +143,23 @@
 (defn tx-region
   "Returns a genomic region of the given gene."
   [{:keys [chr tx-start tx-end strand]}]
-  {:chr chr, :start tx-start, :end tx-end,
-   :strand (case (first strand) \+ :forward \- :reverse)})
+  {:chr chr, :start tx-start, :end tx-end, :strand strand})
 
 (defn cds-region
   "Returns a genomic region of a coding sequence of the given gene. Returns nil
   if the gene is a non-coding RNA."
   [{:keys [chr cds-start cds-end strand]}]
   (when (<= cds-start cds-end)
-    {:chr chr, :start cds-start, :end cds-end,
-     :strand (case (first strand) \+ :forward \- :reverse)}))
+    {:chr chr, :start cds-start, :end cds-end, :strand strand}))
 
 (defn exon-seq
   "Returns a lazy sequence of regions corresponding to each exon in a gene. The
   exons are ordered by their index, thus they're reversed in genomic coordinate
   if the refGene record is on the reverse strand."
   [{:keys [chr strand exon-ranges]}]
-  (let [exon-count (count exon-ranges)
-        strand-key (case (first strand) \+ :forward \- :reverse)]
+  (let [exon-count (count exon-ranges)]
     (->> exon-ranges
-         ((if (= :reverse strand-key) reverse identity))
+         ((if (= :reverse strand) reverse identity))
          (map-indexed
           (fn [i [s e]]
             {:exon-index (inc i), ;; 1-origin
@@ -169,7 +167,7 @@
              :chr chr,
              :start s,
              :end e,
-             :strand strand-key})))))
+             :strand strand})))))
 
 (defn cds-seq
   "Returns a lazy sequence of exons included in a coding region of a
@@ -222,8 +220,8 @@
           (ref-genes chr pos rgidx))
         (map (fn [rg]
                (let [exon-ranges ((case (:strand rg)
-                                    "+" identity
-                                    "-" reverse) (:exon-ranges rg))
+                                    :forward identity
+                                    :reverse reverse) (:exon-ranges rg))
                      idx (->> exon-ranges
                               (keep-indexed (fn [i [s e]] (if (<= s pos e) i)))
                               first)]
@@ -244,8 +242,8 @@
        (apply concat)
        (sort-by (fn [[e ^long o]]
                   [(Math/abs o) (case strand
-                                  "+" e
-                                  "-" (- e))]))
+                                  :forward e
+                                  :reverse (- e))]))
        first))
 
 (defn- exon-pos
@@ -253,8 +251,8 @@
   (->> exon-ranges
        (map (fn [[s e]]
               (case strand
-                "+" (max (min (inc (- pos s)) (inc (- e s))) 0)
-                "-" (max (min (inc (- e pos)) (inc (- e s))) 0))))
+                :forward (max (min (inc (- pos s)) (inc (- e s))) 0)
+                :reverse (max (min (inc (- e pos)) (inc (- e s))) 0))))
        (reduce +)))
 
 (defn cds-pos
@@ -265,7 +263,7 @@
         cds-start* (exon-pos cds-start strand exon-ranges)
         cds-end* (exon-pos cds-end strand exon-ranges)
         [start* end*] (cond-> [cds-start* cds-end*]
-                        (= strand "-") reverse)]
+                        (= strand :reverse) reverse)]
     (cond
       (< pos* start*) [(- start* pos*) :upstream]
       (< end* pos*) [(- pos* end*) :downstream]
@@ -280,8 +278,8 @@
                         (nearest-edge-and-offset pos rg))
         tx-edge? (or (= pos* (:tx-start rg)) (= pos* (:tx-end rg)))
         offset (case (:strand rg)
-                 "+" offset
-                 "-" (- offset))
+                 :forward offset
+                 :reverse (- offset))
         [cds-pos* region] (cds-pos pos* rg)
         [cds-pos* offset] (cond
                             (and tx-edge? (= region :upstream)) [(- cds-pos* offset) 0]
@@ -296,24 +294,24 @@
   ([cds-pos region {:keys [strand cds-start cds-end exon-ranges]}]
    (let [exon-poss (mapcat (fn [[s e]] (range s (inc e))) exon-ranges)
          cds-poss (cond-> (filter #(<= cds-start % cds-end) exon-poss)
-                    (= strand "-") reverse)
+                    (= strand :reverse) reverse)
          utr-up-poss (case strand
-                       "+" (reverse (filter #(< % cds-start) exon-poss))
-                       "-" (filter #(< cds-end %) exon-poss))
+                       :forward (reverse (filter #(< % cds-start) exon-poss))
+                       :reverse (filter #(< cds-end %) exon-poss))
          utr-down-poss (case strand
-                         "+" (filter #(< cds-end %) exon-poss)
-                         "-" (reverse (filter #(< % cds-start) exon-poss)))
+                         :forward (filter #(< cds-end %) exon-poss)
+                         :reverse (reverse (filter #(< % cds-start) exon-poss)))
          upstream-poss (if (seq utr-up-poss)
                          (concat utr-up-poss
                                  (case strand
-                                   "+" (iterate dec (dec (last utr-up-poss)))
-                                   "-" (iterate inc (inc (last utr-up-poss)))))
+                                   :forward (iterate dec (dec (last utr-up-poss)))
+                                   :reverse (iterate inc (inc (last utr-up-poss)))))
                          utr-up-poss)
          downstream-poss (if (seq utr-down-poss)
                            (concat utr-down-poss
                                    (case strand
-                                     "+" (iterate inc (inc (last utr-down-poss)))
-                                     "-" (iterate dec (dec (last utr-down-poss)))))
+                                     :forward (iterate inc (inc (last utr-down-poss)))
+                                     :reverse (iterate dec (dec (last utr-down-poss)))))
                            utr-down-poss)]
      (case region
        nil (nth cds-poss (dec cds-pos) nil)
@@ -325,4 +323,4 @@
   clj-hgvs.coordinate/CDNACoordinate record."
   [coord {:keys [strand] :as rg}]
   (if-let [base-pos (cds->genomic-pos (:position coord) (:region coord) rg)]
-    (+ base-pos (cond-> (:offset coord) (= strand "-") (-)))))
+    (+ base-pos (cond-> (:offset coord) (= strand :reverse) (-)))))
