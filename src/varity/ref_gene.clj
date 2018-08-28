@@ -154,7 +154,7 @@
 (defn exon-seq
   "Returns a lazy sequence of regions corresponding to each exon in a gene. The
   exons are ordered by their index, thus they're reversed in genomic coordinate
-  if the gene is on the reverse strand."
+  if the refGene record is on the reverse strand."
   [{:keys [chr strand exon-ranges]}]
   (let [exon-count (count exon-ranges)
         reverse? (= strand "-")]
@@ -170,10 +170,11 @@
              :reverse? reverse?})))))
 
 (defn cds-seq
-  "Returns a lazy sequence of exons included in a coding region of a `gene`.
-  Note that exons outside of the CDS are removed and partially overlapping ones
-  are cropped in the result. Returns nil if the gene is a non-coding RNA."
-  [{:keys [cds-start cds-end] :as gene}]
+  "Returns a lazy sequence of exons included in a coding region of a
+  `ref-gene-record`. Note that exons outside of the CDS are removed and
+  partially overlapping ones are cropped in the result. Returns nil if the record
+  is a non-coding RNA."
+  [{:keys [cds-start cds-end] :as ref-gene-record}]
   (when (<= cds-start cds-end)
     (keep
      (fn [{:keys [start end] :as exon}]
@@ -181,7 +182,7 @@
          (-> exon
              (update :start max cds-start)
              (update :end min cds-end))))
-     (exon-seq gene))))
+     (exon-seq ref-gene-record))))
 
 (defn ^String read-exon-sequence
   "Reads a base sequence of an `exon` from `seq-rdr`."
@@ -189,19 +190,20 @@
   (cond-> (cseq/read-sequence seq-rdr exon)
     reverse? util-seq/revcomp))
 
-(defn ^String read-gene-sequence
-  "Reads a DNA base sequence of a ref-gene record `gene` from `seq-rdr`."
-  [seq-rdr gene]
-  (->> gene
+(defn ^String read-transcript-sequence
+  "Reads a DNA base sequence of a `ref-gene-record` from `seq-rdr`. The sequence
+  contains 5'-UTR, CDS and 3'-UTR."
+  [seq-rdr ref-gene-record]
+  (->> ref-gene-record
        exon-seq
        (map (partial read-exon-sequence seq-rdr))
        string/join))
 
 (defn ^String read-coding-sequence
-  "Reads a coding sequence of a ref-gene record `gene` from `seq-rdr`. Returns
-  nil if the gene is a non-coding RNA."
-  [seq-rdr gene]
-  (some->> gene
+  "Reads a coding sequence of a ref-gene record `ref-gene-record` from
+  `seq-rdr`. Returns nil if the gene is a non-coding RNA."
+  [seq-rdr ref-gene-record]
+  (some->> ref-gene-record
            cds-seq
            (map (partial read-exon-sequence seq-rdr))
            string/join))

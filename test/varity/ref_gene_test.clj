@@ -98,12 +98,12 @@
                      [4 4 "chr13" 66304655 66305028 true]]))))
 
 (deftest read-sequences
-  (testing "read-gene-sequence"
+  (testing "read-transcript-sequence"
     (let [r (reify p/ISequenceReader
               (p/read-sequence [this {:keys [start end]}]
                 (subs "AAAATTTTGGGGCCCCAAAATTTTGGGGCCCC" (dec start) end)))]
       (are [?ref-gene ?seq]
-          (= ?seq (rg/read-gene-sequence r ?ref-gene))
+          (= ?seq (rg/read-transcript-sequence r ?ref-gene))
         {:strand "+" :exon-ranges [[2 5]]} "AAAT"
         {:strand "-" :exon-ranges [[2 5]]} "ATTT"
         {:strand "+" :exon-ranges [[2 5] [8 10]]} "AAATTGG"
@@ -122,23 +122,23 @@
         {:strand "-" :cds-start 2 :cds-end 5 :exon-ranges [[2 5] [8 10]]} "ATTT"))))
 
 (defslowtest read-sequences-slow
-  (cavia-testing "read-gene-sequence"
-    (with-open [r (cseq/reader test-ref-seq-file)]
-      (are [?ref-gene ?prefix ?suffix]
-          (let [s (rg/read-gene-sequence r ?ref-gene)]
-            (and (string/starts-with? s ?prefix)
-                 (string/ends-with? s ?suffix)))
-        test-ref-gene "ATGCCG" "CTTTTT")))
+  (cavia-testing "read-transcript-sequence"
+                 (with-open [r (cseq/reader test-ref-seq-file)]
+                   (are [?ref-gene ?prefix ?suffix]
+                       (let [s (rg/read-transcript-sequence r ?ref-gene)]
+                         (and (string/starts-with? s ?prefix)
+                              (string/ends-with? s ?suffix)))
+                     test-ref-gene "ATGCCG" "CTTTTT")))
   (cavia-testing "read-coding-sequence"
-    (with-open [r (cseq/reader test-ref-seq-file)]
-      (are [?ref-gene ?prefix ?suffix]
-          (let [s (rg/read-coding-sequence r ?ref-gene)]
-            (and (string/starts-with? s ?prefix)
-                 (string/ends-with? s ?suffix)))
-        test-ref-gene "ATGGAA" "TCCTAG"))))
+                 (with-open [r (cseq/reader test-ref-seq-file)]
+                   (are [?ref-gene ?prefix ?suffix]
+                       (let [s (rg/read-coding-sequence r ?ref-gene)]
+                         (and (string/starts-with? s ?prefix)
+                              (string/ends-with? s ?suffix)))
+                     test-ref-gene "ATGGAA" "TCCTAG"))))
 
 (defslowtest read-sequences-rg-slow
-  (cavia-testing "read-gene-sequence"
+  (cavia-testing "read-transcript-sequence"
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
       (with-open [r (cseq/reader test-ref-seq-file)]
         (are [?nm ?prefix ?suffix ?length]
@@ -146,7 +146,7 @@
                (->> rgidx
                     (rg/ref-genes ?nm)
                     first
-                    (rg/read-gene-sequence r)
+                    (rg/read-transcript-sequence r)
                     ((juxt #(string/join (take 6 %))
                            #(string/join (take-last 6 %))
                            count))
