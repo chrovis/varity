@@ -40,62 +40,62 @@
   (testing "tx-region"
     (are [?ref-gene ?output]
         (= ?output (rg/tx-region ?ref-gene))
-      test-ref-gene {:chr "chr1", :start 975199, :end 982117, :reverse? true}
-      (merge test-ref-gene {:cds-start 982118 :cds-end 982117}) {:chr "chr1", :start 975199, :end 982117, :reverse? true}))
+      test-ref-gene {:chr "chr1", :start 975199, :end 982117, :strand :reverse}
+      (merge test-ref-gene {:cds-start 982118 :cds-end 982117}) {:chr "chr1", :start 975199, :end 982117, :strand :reverse}))
   (testing "cds-region"
     (are [?ref-gene ?output]
         (= ?output (rg/cds-region ?ref-gene))
-      test-ref-gene {:chr "chr1", :start 976172, :end 981029, :reverse? true}
+      test-ref-gene {:chr "chr1", :start 976172, :end 981029, :strand :reverse}
       (merge test-ref-gene {:cds-start 982118 :cds-end 982117}) nil))
   (testing "exon-seq"
     (are [?ref-gene ?output]
         (= ?output (rg/exon-seq ?ref-gene))
-      test-ref-gene [{:exon-index 1, :exon-count 4, :chr "chr1", :start 982065, :end 982117, :reverse? true}
-                     {:exon-index 2, :exon-count 4, :chr "chr1", :start 978881, :end 981047, :reverse? true}
-                     {:exon-index 3, :exon-count 4, :chr "chr1", :start 976499, :end 976624, :reverse? true}
-                     {:exon-index 4, :exon-count 4, :chr "chr1", :start 975199, :end 976269, :reverse? true}]))
+      test-ref-gene [{:exon-index 1, :exon-count 4, :chr "chr1", :start 982065, :end 982117, :strand :reverse}
+                     {:exon-index 2, :exon-count 4, :chr "chr1", :start 978881, :end 981047, :strand :reverse}
+                     {:exon-index 3, :exon-count 4, :chr "chr1", :start 976499, :end 976624, :strand :reverse}
+                     {:exon-index 4, :exon-count 4, :chr "chr1", :start 975199, :end 976269, :strand :reverse}]))
   (testing "cds-seq"
     (are [?ref-gene ?output]
         (= ?output (rg/cds-seq ?ref-gene))
-      test-ref-gene [{:exon-index 2, :exon-count 4, :chr "chr1", :start 978881, :end 981029, :reverse? true}
-                     {:exon-index 3, :exon-count 4, :chr "chr1", :start 976499, :end 976624, :reverse? true}
-                     {:exon-index 4, :exon-count 4, :chr "chr1", :start 976172, :end 976269, :reverse? true}])))
+      test-ref-gene [{:exon-index 2, :exon-count 4, :chr "chr1", :start 978881, :end 981029, :strand :reverse}
+                     {:exon-index 3, :exon-count 4, :chr "chr1", :start 976499, :end 976624, :strand :reverse}
+                     {:exon-index 4, :exon-count 4, :chr "chr1", :start 976172, :end 976269, :strand :reverse}])))
 
 (defslowtest regions-slow
   (cavia-testing "exon-seq"
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
       (are [?nm ?output]
-          (= (some->> ?output (map (partial zipmap [:exon-index :exon-count :chr :start :end :reverse?])))
+          (= (some->> ?output (map (partial zipmap [:exon-index :exon-count :chr :start :end :strand])))
              (rg/exon-seq (first (rg/ref-genes ?nm rgidx))))
-        "NM_000024" [[1 1 "chr5" 148826593 148828634 false]]
-        "NM_000361" [[1 1 "chr20" 23045633 23049664 true]]
-        "NM_000015" [[1 2 "chr8" 18391245 18391345 false]
-                     [2 2 "chr8" 18399998 18401213 false]]
-        "NM_000025" [[1 2 "chr8" 37965265 37966666 true]
-                     [2 2 "chr8" 37962996 37964239 true]]
-        "NR_024420" [[1 2 "chr12" 8390270 8390752 true]
-                     [2 2 "chr12" 8356964 8357141 true]]
-        "NR_037934" [[1 2 "chr4" 25160672 25160753 false]
-                     [2 2 "chr4" 25197468 25198505 false]]
-        "NM_020403" [[1 4 "chr13" 67229780 67230336 true]
-                     [2 4 "chr13" 67225405 67228575 true]
-                     [3 4 "chr13" 66631210 66631411 true]
-                     [4 4 "chr13" 66302834 66305028 true]])))
+        "NM_000024" [[1 1 "chr5" 148826593 148828634 :forward]]
+        "NM_000361" [[1 1 "chr20" 23045633 23049664 :reverse]]
+        "NM_000015" [[1 2 "chr8" 18391245 18391345 :forward]
+                     [2 2 "chr8" 18399998 18401213 :forward]]
+        "NM_000025" [[1 2 "chr8" 37965265 37966666 :reverse]
+                     [2 2 "chr8" 37962996 37964239 :reverse]]
+        "NR_024420" [[1 2 "chr12" 8390270 8390752 :reverse]
+                     [2 2 "chr12" 8356964 8357141 :reverse]]
+        "NR_037934" [[1 2 "chr4" 25160672 25160753 :forward]
+                     [2 2 "chr4" 25197468 25198505 :forward]]
+        "NM_020403" [[1 4 "chr13" 67229780 67230336 :reverse]
+                     [2 4 "chr13" 67225405 67228575 :reverse]
+                     [3 4 "chr13" 66631210 66631411 :reverse]
+                     [4 4 "chr13" 66302834 66305028 :reverse]])))
   (cavia-testing "cds-seq"
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
       (are [?nm ?output]
-          (= (some->> ?output (map (partial zipmap [:exon-index :exon-count :chr :start :end :reverse?])))
+          (= (some->> ?output (map (partial zipmap [:exon-index :exon-count :chr :start :end :strand])))
              (rg/cds-seq (first (rg/ref-genes ?nm rgidx))))
-        "NM_000024" [[1 1 "chr5" 148826832 148828073 false]]
-        "NM_000361" [[1 1 "chr20" 23047777 23049504 true]]
-        "NM_000015" [[2 2 "chr8" 18400004 18400876 false]]
-        "NM_000025" [[1 2 "chr8" 37965265 37966469 true]
-                     [2 2 "chr8" 37964218 37964239 true]]
+        "NM_000024" [[1 1 "chr5" 148826832 148828073 :forward]]
+        "NM_000361" [[1 1 "chr20" 23047777 23049504 :reverse]]
+        "NM_000015" [[2 2 "chr8" 18400004 18400876 :forward]]
+        "NM_000025" [[1 2 "chr8" 37965265 37966469 :reverse]
+                     [2 2 "chr8" 37964218 37964239 :reverse]]
         "NR_024420" nil
         "NR_037934" nil
-        "NM_020403" [[2 4 "chr13" 67225405 67228440 true]
-                     [3 4 "chr13" 66631210 66631411 true]
-                     [4 4 "chr13" 66304655 66305028 true]]))))
+        "NM_020403" [[2 4 "chr13" 67225405 67228440 :reverse]
+                     [3 4 "chr13" 66631210 66631411 :reverse]
+                     [4 4 "chr13" 66304655 66305028 :reverse]]))))
 
 (deftest read-sequences
   (testing "read-transcript-sequence"

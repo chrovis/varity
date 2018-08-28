@@ -142,14 +142,16 @@
 (defn tx-region
   "Returns a genomic region of the given gene."
   [{:keys [chr tx-start tx-end strand]}]
-  {:chr chr, :start tx-start, :end tx-end, :reverse? (= strand "-")})
+  {:chr chr, :start tx-start, :end tx-end,
+   :strand (case (first strand) \+ :forward \- :reverse)})
 
 (defn cds-region
   "Returns a genomic region of a coding sequence of the given gene. Returns nil
   if the gene is a non-coding RNA."
   [{:keys [chr cds-start cds-end strand]}]
   (when (<= cds-start cds-end)
-    {:chr chr, :start cds-start, :end cds-end, :reverse? (= strand "-")}))
+    {:chr chr, :start cds-start, :end cds-end,
+     :strand (case (first strand) \+ :forward \- :reverse)}))
 
 (defn exon-seq
   "Returns a lazy sequence of regions corresponding to each exon in a gene. The
@@ -157,9 +159,9 @@
   if the refGene record is on the reverse strand."
   [{:keys [chr strand exon-ranges]}]
   (let [exon-count (count exon-ranges)
-        reverse? (= strand "-")]
+        strand-key (case (first strand) \+ :forward \- :reverse)]
     (->> exon-ranges
-         ((if reverse? reverse identity))
+         ((if (= :reverse strand-key) reverse identity))
          (map-indexed
           (fn [i [s e]]
             {:exon-index (inc i), ;; 1-origin
@@ -167,7 +169,7 @@
              :chr chr,
              :start s,
              :end e,
-             :reverse? reverse?})))))
+             :strand strand-key})))))
 
 (defn cds-seq
   "Returns a lazy sequence of exons included in a coding region of a
@@ -186,9 +188,9 @@
 
 (defn ^String read-exon-sequence
   "Reads a base sequence of an `exon` from `seq-rdr`."
-  [seq-rdr {:keys [reverse?] :as exon}]
+  [seq-rdr {:keys [strand] :as exon}]
   (cond-> (cseq/read-sequence seq-rdr exon)
-    reverse? util-seq/revcomp))
+    (= :reverse strand) util-seq/revcomp))
 
 (defn ^String read-transcript-sequence
   "Reads a DNA base sequence of a `ref-gene-record` from `seq-rdr`. The sequence
