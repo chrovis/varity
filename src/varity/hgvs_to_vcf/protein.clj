@@ -2,9 +2,9 @@
   (:require [clj-hgvs.core :as hgvs]
             [clj-hgvs.mutation :as mut]
             [cljam.io.sequence :as cseq]
+            [cljam.util.sequence :as util-seq]
             [varity.codon :as codon]
-            [varity.ref-gene :as rg]
-            [varity.util :refer [revcomp-bases]])
+            [varity.ref-gene :as rg])
   (:import [clj_hgvs.mutation ProteinSubstitution]))
 
 (defn- pos-candidates
@@ -28,7 +28,7 @@
         (let [ref-codon1 (->> pos-cands
                               (map #(cseq/read-sequence seq-rdr {:chr chr, :start %, :end %}))
                               (apply str))
-              ref-codon (cond-> ref-codon1 (= strand "-") revcomp-bases)
+              ref-codon (cond-> ref-codon1 (= strand "-") util-seq/revcomp)
               palt (mut/->short-amino-acid (:alt mut*))
               codon-cands (codon/amino-acid->codons palt)]
           (->> codon-cands
@@ -40,9 +40,9 @@
                                 {:chr chr
                                  :pos pos
                                  :ref (cond-> (str (nth ref-codon idx))
-                                        (= strand "-") revcomp-bases)
+                                        (= strand "-") util-seq/revcomp)
                                  :alt (cond-> (str (nth codon* idx))
-                                        (= strand "-") revcomp-bases)})))
+                                        (= strand "-") util-seq/revcomp)})))
                            (remove nil?))))
                (flatten)))))
     (throw (IllegalArgumentException. "Unsupported mutation"))))
@@ -59,7 +59,7 @@
         (let [ref-codon1 (->> pos-cands
                               (map #(cseq/read-sequence seq-rdr {:chr chr, :start %, :end %}))
                               (apply str))
-              ref-codon (cond-> ref-codon1 (= strand "-") revcomp-bases)
+              ref-codon (cond-> ref-codon1 (= strand "-") util-seq/revcomp)
               palt (mut/->short-amino-acid (:alt mut*))
               codon-cands (codon/amino-acid->codons palt)
               pos-cands (cond-> pos-cands (= strand "-") reverse)]
@@ -73,8 +73,8 @@
                                       alt (str (nth codon* idx))]
                                  {:vcf {:chr chr
                                         :pos pos
-                                        :ref (cond-> ref (= strand "-") revcomp-bases)
-                                        :alt (cond-> alt (= strand "-") revcomp-bases)}
+                                        :ref (cond-> ref (= strand "-") util-seq/revcomp)
+                                        :alt (cond-> alt (= strand "-") util-seq/revcomp)}
                                   :cdna (hgvs/hgvs (:name rg) :cdna (mut/dna-substitution (rg/cds-coord pos rg)
                                                                                   ref
                                                                                   (if (= ref alt) "=" ">")

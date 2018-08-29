@@ -1,8 +1,8 @@
 (ns varity.hgvs-to-vcf.cdna
   (:require clj-hgvs.mutation
             [cljam.io.sequence :as cseq]
-            [varity.ref-gene :as rg]
-            [varity.util :refer [revcomp-bases]]))
+            [cljam.util.sequence :as util-seq]
+            [varity.ref-gene :as rg]))
 
 ;; AGT => ["AGT"]
 ;; AGTAGT => ["AGT" "AGTAGT"]
@@ -23,9 +23,9 @@
     {:chr chr
      :pos pos
      :ref (cond-> (:ref mut*)
-            (= strand "-") (revcomp-bases))
+            (= strand "-") (util-seq/revcomp))
      :alt (cond-> (:alt mut*)
-            (= strand "-") (revcomp-bases))}))
+            (= strand "-") (util-seq/revcomp))}))
 
 (defmethod vcf-variant clj_hgvs.mutation.DNADeletion
   [mut* seq-rdr {:keys [chr strand] :as rg}]
@@ -79,7 +79,7 @@
        :pos start
        :ref ref
        :alt (str ref (cond-> (:alt mut*)
-                       (= strand "-") (revcomp-bases)))})))
+                       (= strand "-") (util-seq/revcomp)))})))
 
 (defmethod vcf-variant clj_hgvs.mutation.DNAInversion
   [mut* seq-rdr {:keys [chr strand] :as rg}]
@@ -96,7 +96,7 @@
         {:chr chr
          :pos (dec start)
          :ref ref
-         :alt (str (first ref) (revcomp-bases (subs ref 1)))}))))
+         :alt (str (first ref) (util-seq/revcomp (subs ref 1)))}))))
 
 (defmethod vcf-variant clj_hgvs.mutation.DNAIndel
   [mut* seq-rdr {:keys [chr strand] :as rg}]
@@ -113,12 +113,12 @@
       (let [ref (cseq/read-sequence seq-rdr {:chr chr, :start (dec start), :end end})]
         (if (or (nil? (:ref mut*))
                 (= (subs ref 1) (cond-> (:ref mut*)
-                                  (= strand "-") (revcomp-bases))))
+                                  (= strand "-") (util-seq/revcomp))))
           {:chr chr
            :pos (dec start)
            :ref ref
            :alt (str (first ref) (cond-> (:alt mut*)
-                                   (= strand "-") (revcomp-bases)))})))))
+                                   (= strand "-") (util-seq/revcomp)))})))))
 
 (defmethod vcf-variant clj_hgvs.mutation.DNARepeatedSeqs
   [mut* seq-rdr {:keys [chr strand] :as rg}]

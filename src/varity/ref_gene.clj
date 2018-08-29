@@ -3,7 +3,9 @@
   (:require [clojure.java.io :as io]
             [clojure.string :as string]
             [clj-hgvs.coordinate :as coord]
+            [cljam.io.sequence :as cseq]
             [cljam.util.chromosome :refer [normalize-chromosome-key]]
+            [cljam.util.sequence :as util-seq]
             [proton.core :refer [as-long]]
             [varity.util :as util]))
 
@@ -136,6 +138,77 @@
   (->> (ref-genes chr pos rgidx)
        (some #(in-exon? pos %))
        (true?)))
+
+(defn tx-region
+  "Returns a genomic region of the given gene."
+  [{:keys [chr tx-start tx-end strand]}]
+  {:chr chr, :start tx-start, :end tx-end,
+   :strand (case (first strand) \+ :forward \- :reverse)})
+
+(defn cds-region
+  "Returns a genomic region of a coding sequence of the given gene. Returns nil
+  if the gene is a non-coding RNA."
+  [{:keys [chr cds-start cds-end strand]}]
+  (when (<= cds-start cds-end)
+    {:chr chr, :start cds-start, :end cds-end,
+     :strand (case (first strand) \+ :forward \- :reverse)}))
+
+(defn exon-seq
+  "Returns a lazy sequence of regions corresponding to each exon in a gene. The
+  exons are ordered by their index, thus they're reversed in genomic coordinate
+  if the refGene record is on the reverse strand."
+  [{:keys [chr strand exon-ranges]}]
+  (let [exon-count (count exon-ranges)
+        strand-key (case (first strand) \+ :forward \- :reverse)]
+    (->> exon-ranges
+         ((if (= :reverse strand-key) reverse identity))
+         (map-indexed
+          (fn [i [s e]]
+            {:exon-index (inc i), ;; 1-origin
+             :exon-count exon-count,
+             :chr chr,
+             :start s,
+             :end e,
+             :strand strand-key})))))
+
+(defn cds-seq
+  "Returns a lazy sequence of exons included in a coding region of a
+  `ref-gene-record`. Note that exons outside of the CDS are removed and
+  partially overlapping ones are cropped in the result. Returns nil if the record
+  is a non-coding RNA."
+  [{:keys [cds-start cds-end] :as ref-gene-record}]
+  (when (<= cds-start cds-end)
+    (keep
+     (fn [{:keys [start end] :as exon}]
+       (when-not (or (< end cds-start) (< cds-end start))
+         (-> exon
+             (update :start max cds-start)
+             (update :end min cds-end))))
+     (exon-seq ref-gene-record))))
+
+(defn ^String read-exon-sequence
+  "Reads a base sequence of an `exon` from `seq-rdr`."
+  [seq-rdr {:keys [strand] :as exon}]
+  (cond-> (cseq/read-sequence seq-rdr exon)
+    (= :reverse strand) util-seq/revcomp))
+
+(defn ^String read-transcript-sequence
+  "Reads a DNA base sequence of a `ref-gene-record` from `seq-rdr`. The sequence
+  contains 5'-UTR, CDS and 3'-UTR."
+  [seq-rdr ref-gene-record]
+  (->> ref-gene-record
+       exon-seq
+       (map (partial read-exon-sequence seq-rdr))
+       string/join))
+
+(defn ^String read-coding-sequence
+  "Reads a coding sequence of a ref-gene record `ref-gene-record` from
+  `seq-rdr`. Returns nil if the gene is a non-coding RNA."
+  [seq-rdr ref-gene-record]
+  (some->> ref-gene-record
+           cds-seq
+           (map (partial read-exon-sequence seq-rdr))
+           string/join))
 
 (defn seek-gene-region
   "Seeks chr:pos through exon entries in refGene and returns those indices"

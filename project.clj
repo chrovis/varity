@@ -7,8 +7,8 @@
   :dependencies [[org.clojure/clojure "1.9.0" :scope "provided"]
                  [org.clojure/tools.logging "0.4.1"]
                  [clj-hgvs "0.2.3"]
-                 [cljam "0.5.1"]
-                 [org.apache.commons/commons-compress "1.16.1"]
+                 [cljam "0.6.0"]
+                 [org.apache.commons/commons-compress "1.18"]
                  [proton "0.1.6"]]
   :plugins [[lein-cloverage "1.0.10"]
             [lein-codox "0.10.3"]
@@ -16,7 +16,7 @@
   :test-selectors {:default (complement :slow)
                    :slow :slow
                    :all (constantly true)}
-  :profiles {:dev {:dependencies [[cavia "0.5.0"]
+  :profiles {:dev {:dependencies [[cavia "0.5.1"]
                                   [criterium "0.4.4"]
                                   [net.totakke/libra "0.1.1"]]}
              :repl {:source-paths ["bench"]}

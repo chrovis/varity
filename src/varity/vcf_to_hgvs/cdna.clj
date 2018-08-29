@@ -1,8 +1,8 @@
 (ns varity.vcf-to-hgvs.cdna
   (:require [clj-hgvs.core :as hgvs]
             [clj-hgvs.mutation :as mut]
+            [cljam.util.sequence :as util-seq]
             [varity.ref-gene :as rg]
-            [varity.util :refer [revcomp-bases]]
             [varity.vcf-to-hgvs.common :refer [diff-bases] :as common]))
 
 (defn- repeat-info-forward
@@ -33,9 +33,9 @@
         100)
        (map (fn [seq*]
               (let [nseq* (count seq*)]
-                (if-let [[unit ref-repeat :as ri] (common/repeat-info (revcomp-bases seq*)
+                (if-let [[unit ref-repeat :as ri] (common/repeat-info (util-seq/revcomp seq*)
                                                                       (inc nseq*)
-                                                                      (revcomp-bases ins))]
+                                                                      (util-seq/revcomp ins))]
                   (let [nunit (count unit)]
                     (if (> (* nunit ref-repeat) (- nseq* nunit))
                       false
@@ -58,7 +58,7 @@
           [unit ref-repeat ins-repeat] (repeat-info* seq-rdr rg (+ pos offset) alt-only)]
       (cond
         (and (= nrefo 1) (= nalto 1)) :substitution
-        (= ref-only (revcomp-bases alt-only)) :inversion
+        (= ref-only (util-seq/revcomp alt-only)) :inversion
         (and (pos? nrefo) (zero? nalto)) :deletion
         (and (pos? nrefo) (pos? nalto)) :indel
         (some? unit) (cond
@@ -72,9 +72,9 @@
   [rg pos ref alt]
   (let [{:keys [strand]} rg]
     (mut/dna-substitution (rg/cds-coord pos rg)
-                          (cond-> ref (= strand "-") revcomp-bases)
+                          (cond-> ref (= strand "-") util-seq/revcomp)
                           (if (= ref alt) "=" ">")
-                          (cond-> alt (= strand "-") revcomp-bases))))
+                          (cond-> alt (= strand "-") util-seq/revcomp))))
 
 (defn- dna-deletion
   [rg pos ref alt]
@@ -92,7 +92,7 @@
                                         "+" right
                                         "-" left)
                                       rg))
-                      (cond-> (subs ref offset) (= strand "-") revcomp-bases))))
+                      (cond-> (subs ref offset) (= strand "-") util-seq/revcomp))))
 
 (defn- dna-duplication
   [rg pos ref alt]
@@ -106,7 +106,7 @@
               "-" (inc (- start (count ins))))]
     (mut/dna-duplication (rg/cds-coord start rg)
                          (rg/cds-coord end rg)
-                         (cond-> ins (= strand "-") revcomp-bases))))
+                         (cond-> ins (= strand "-") util-seq/revcomp))))
 
 (defn- dna-insertion
   [rg pos ref alt]
@@ -116,7 +116,7 @@
         end (cond-> (+ pos offset) (= strand "-") dec)]
     (mut/dna-insertion (rg/cds-coord start rg)
                        (rg/cds-coord end rg)
-                       (cond-> ins (= strand "-") revcomp-bases))))
+                       (cond-> ins (= strand "-") util-seq/revcomp))))
 
 (defn- dna-inversion
   [rg pos ref alt]
@@ -153,8 +153,8 @@
                                      "+" right
                                      "-" left)
                                    rg))
-                   (cond-> del (= strand "-") revcomp-bases)
-                   (cond-> ins (= strand "-") revcomp-bases))))
+                   (cond-> del (= strand "-") util-seq/revcomp)
+                   (cond-> ins (= strand "-") util-seq/revcomp))))
 
 (defn- dna-repeated-seqs
   [seq-rdr rg pos ref alt]
