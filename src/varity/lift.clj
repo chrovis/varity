@@ -7,7 +7,7 @@
         {:keys [q-start t-start]} :in-block}]
   (let [new-pos (+ q-start (- pos t-start))]
     {:chr q-name
-     :pos (if (= q-strand "-")
+     :pos (if (= q-strand :reverse)
             (inc (- q-size new-pos))
             new-pos)}))
 

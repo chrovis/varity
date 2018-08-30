@@ -107,16 +107,16 @@
         alt-exon-seq1 (exon-sequence alt-seq cds-start alt-exon-ranges*)]
     {:ref-exon-seq ref-exon-seq1
      :ref-prot-seq (codon/amino-acid-sequence (cond-> ref-exon-seq1
-                                                (= strand "-") util-seq/revcomp))
+                                                (= strand :reverse) util-seq/revcomp))
      :alt-exon-seq alt-exon-seq1
      :alt-prot-seq (codon/amino-acid-sequence (cond-> alt-exon-seq1
-                                                (= strand "-") util-seq/revcomp))
+                                                (= strand :reverse) util-seq/revcomp))
      :alt-tx-prot-seq (codon/amino-acid-sequence
                        (cond-> (str ref-up-exon-seq1 alt-exon-seq1 ref-down-exon-seq1)
-                         (= strand "-") util-seq/revcomp))
+                         (= strand :reverse) util-seq/revcomp))
      :ini-offset (quot (:position (rg/cds-coord (case strand
-                                                  "+" tx-start
-                                                  "-" tx-end) rg))
+                                                  :forward tx-start
+                                                  :reverse tx-end) rg))
                        3)}))
 
 (defn- protein-position
@@ -157,20 +157,20 @@
     (if-let [ppos (protein-position pos rg)]
       (let [alt-prot-seq* (format-alt-prot-seq seq-info)
             base-ppos (case strand
-                        "+" ppos
-                        "-" (protein-position pos (- (count ref)) rg))
+                        :forward ppos
+                        :reverse (protein-position pos (- (count ref)) rg))
             [_ pref ref-prot-rest] (split-string-at
                                     ref-prot-seq
                                     [(dec base-ppos)
                                      (case strand
-                                       "+" (protein-position pos (dec (count ref)) rg)
-                                       "-" ppos)])
+                                       :forward (protein-position pos (dec (count ref)) rg)
+                                       :reverse ppos)])
             [_ palt alt-prot-rest] (split-string-at
                                     alt-prot-seq*
                                     [(dec base-ppos)
                                      (case strand
-                                       "+" (protein-position pos (dec (count alt)) rg)
-                                       "-" (protein-position pos (- (count alt) (count ref)) rg))])
+                                       :forward (protein-position pos (dec (count alt)) rg)
+                                       :reverse (protein-position pos (- (count alt) (count ref)) rg))])
             [pref-only palt-only offset _] (diff-bases pref palt)
             nprefo (count pref-only)
             npalto (count palt-only)

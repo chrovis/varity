@@ -13,7 +13,7 @@
   {:bin 592
    :name "NM_001291366"
    :chr "chr1"
-   :strand "-"
+   :strand :reverse
    :tx-start 975199
    :tx-end 982117
    :cds-start 976172
@@ -104,22 +104,22 @@
                 (subs "AAAATTTTGGGGCCCCAAAATTTTGGGGCCCC" (dec start) end)))]
       (are [?ref-gene ?seq]
           (= ?seq (rg/read-transcript-sequence r ?ref-gene))
-        {:strand "+" :exon-ranges [[2 5]]} "AAAT"
-        {:strand "-" :exon-ranges [[2 5]]} "ATTT"
-        {:strand "+" :exon-ranges [[2 5] [8 10]]} "AAATTGG"
-        {:strand "-" :exon-ranges [[2 5] [8 10]]} "CCAATTT")))
+        {:strand :forward :exon-ranges [[2 5]]} "AAAT"
+        {:strand :reverse :exon-ranges [[2 5]]} "ATTT"
+        {:strand :forward :exon-ranges [[2 5] [8 10]]} "AAATTGG"
+        {:strand :reverse :exon-ranges [[2 5] [8 10]]} "CCAATTT")))
   (testing "read-coding-sequence"
     (let [r (reify p/ISequenceReader
               (p/read-sequence [this {:keys [start end]}]
                 (subs "AAAATTTTGGGGCCCCAAAATTTTGGGGCCCC" (dec start) end)))]
       (are [?ref-gene ?seq]
           (= ?seq (rg/read-coding-sequence r ?ref-gene))
-        {:strand "+" :cds-start 3 :cds-end 9 :exon-ranges [[2 5]]} "AAT"
-        {:strand "-" :cds-start 3 :cds-end 9 :exon-ranges [[2 5]]} "ATT"
-        {:strand "+" :cds-start 3 :cds-end 9 :exon-ranges [[2 5] [8 10]]} "AATTG"
-        {:strand "-" :cds-start 3 :cds-end 9 :exon-ranges [[2 5] [8 10]]} "CAATT"
-        {:strand "+" :cds-start 8 :cds-end 9 :exon-ranges [[2 5] [8 10]]} "TG"
-        {:strand "-" :cds-start 2 :cds-end 5 :exon-ranges [[2 5] [8 10]]} "ATTT"))))
+        {:strand :forward :cds-start 3 :cds-end 9 :exon-ranges [[2 5]]} "AAT"
+        {:strand :reverse :cds-start 3 :cds-end 9 :exon-ranges [[2 5]]} "ATT"
+        {:strand :forward :cds-start 3 :cds-end 9 :exon-ranges [[2 5] [8 10]]} "AATTG"
+        {:strand :reverse :cds-start 3 :cds-end 9 :exon-ranges [[2 5] [8 10]]} "CAATT"
+        {:strand :forward :cds-start 8 :cds-end 9 :exon-ranges [[2 5] [8 10]]} "TG"
+        {:strand :reverse :cds-start 2 :cds-end 5 :exon-ranges [[2 5] [8 10]]} "ATTT"))))
 
 (defslowtest read-sequences-slow
   (cavia-testing "read-transcript-sequence"
@@ -206,7 +206,7 @@
   ;; 1 [2 3 4] 5 6 7 [8 9 10 11] 12 13 14 15
   (testing "strand +"
     (are [p s e r] (= (coord/format
-                       (rg/cds-coord p {:strand "+"
+                       (rg/cds-coord p {:strand :forward
                                         :tx-start 2
                                         :tx-end 11
                                         :cds-start s
@@ -228,7 +228,7 @@
       13 2 3  "*7"))
   (testing "strand -"
     (are [p s e r] (= (coord/format
-                       (rg/cds-coord p {:strand "-"
+                       (rg/cds-coord p {:strand :reverse
                                         :tx-start 2
                                         :tx-end 11
                                         :cds-start s
@@ -268,7 +268,7 @@
   ;; 1 [2 3 4] 5 6 7 [8 9 10 11] 12 13 14 15
   (testing "strand +"
     (are [c s e r] (= (rg/cds-coord->genomic-pos (coord/parse-cdna-coordinate c)
-                                                 {:strand "+"
+                                                 {:strand :forward
                                                   :cds-start s
                                                   :cds-end e
                                                   :exon-ranges [[2 4] [8 11]]})
@@ -288,7 +288,7 @@
       "*7"   2 3  13))
   (testing "strand -"
     (are [c s e r] (= (rg/cds-coord->genomic-pos (coord/parse-cdna-coordinate c)
-                                                 {:strand "-"
+                                                 {:strand :reverse
                                                   :cds-start s
                                                   :cds-end e
                                                   :exon-ranges [[2 4] [8 11]]})

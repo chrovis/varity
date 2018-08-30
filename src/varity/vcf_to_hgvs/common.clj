@@ -127,8 +127,8 @@
                    (str (subs seq* 0 (+ pos offset -1)) bases (subs seq* (+ pos offset -1)))
                    seq*)
             move (case strand
-                   "+" (forward-shift seq' (+ pos offset) bases)
-                   "-" (- (backward-shift seq' (+ pos offset) bases)))
+                   :forward (forward-shift seq' (+ pos offset) bases)
+                   :reverse (- (backward-shift seq' (+ pos offset) bases)))
             comm (subs seq* (+ pos move -1) (+ pos move offset -1))]
         {:pos (+ pos move)
          :ref (str comm ref-only)
@@ -143,7 +143,7 @@
                                 :end (+ (:tx-end rg) rg/max-tx-margin)}
                                100)
        (keep (fn [seq*]
-               (let [nvar (normalize-variant* {:pos 1, :ref ref, :alt alt} seq* "+")]
+               (let [nvar (normalize-variant* {:pos 1, :ref ref, :alt alt} seq* :forward)]
                  (if (<= (dec (:pos nvar)) (- (count seq*) (max (count ref) (count alt))))
                    (-> nvar
                        (assoc :chr chr)
@@ -159,7 +159,7 @@
                                         100)
        (keep (fn [seq*]
                (let [offset (- (count seq*) (count ref))
-                     nvar (normalize-variant* {:pos (inc offset), :ref ref, :alt alt} seq* "-")]
+                     nvar (normalize-variant* {:pos (inc offset), :ref ref, :alt alt} seq* :reverse)]
                  (if (> (:pos nvar) (max (count ref) (count alt)))
                    (-> nvar
                        (assoc :chr chr)
@@ -173,5 +173,5 @@
   e.g.  ...CAGTAGTAGTC... 7 T TAGT => 13 T TAGT"
   [variant seq-rdr rg]
   (case (:strand rg)
-    "+" (normalize-variant-forward variant seq-rdr rg)
-    "-" (normalize-variant-backward variant seq-rdr rg)))
+    :forward (normalize-variant-forward variant seq-rdr rg)
+    :reverse (normalize-variant-backward variant seq-rdr rg)))

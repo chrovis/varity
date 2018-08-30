@@ -25,16 +25,18 @@
 ;; chain 4900  chrY  58368225 +       25985403 25985638 chr5  151006098 -       43257292 43257528 1
 (defn- parse-header-line
   [line]
-  (-> (zipmap [:score
-               :t-name :t-size :t-strand :t-start :t-end
-               :q-name :q-size :q-strand :q-start :q-end
-               :id]
-              (drop 1 (string/split line #"\s")))
-      (update-multi [:score
-                     :t-size :t-start :t-end
-                     :q-size :q-start :q-end
-                     :id]
-                    as-long)))
+  (letfn [(parse-strand [^String s] (case (.charAt s 0) \+ :forward \- :reverse))]
+    (-> (zipmap [:score
+                 :t-name :t-size :t-strand :t-start :t-end
+                 :q-name :q-size :q-strand :q-start :q-end
+                 :id]
+                (drop 1 (string/split line #"\s")))
+        (update-multi [:t-strand :q-strand] parse-strand)
+        (update-multi [:score
+                       :t-size :t-start :t-end
+                       :q-size :q-start :q-end
+                       :id]
+                      as-long))))
 
 ;; size dt dq
 ;; 16   0  2
