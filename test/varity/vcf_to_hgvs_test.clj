@@ -138,6 +138,7 @@
         "chr6" 33086236 "TA" "T" '("p.*259=") ; cf. rs67523850 (deletion in border of UTR)
         "chr7" 152247986 "G" "GT" '("p.Y816*") ; cf. rs150073007 (-, nonsense mutation)
         "chr17" 31159027 "TGC" "T" '("p.A75*") ; not actual example (+, nonsense in del case)
+        "chr2" 47478341 "TG" "T" '("p.L762*" "p.L696*") ;; rs786204050 (+) frameshift with termination
 
         ;; deletion
         "chr1" 1286041 "CCTT" "C" '("p.F227del")
@@ -165,6 +166,7 @@
         ;; Frame shift
         "chr1" 69567 "A" "AT" '("p.L160Sfs*7")
         "chr1" 963222 "GCG" "G" '("p.A386Gfs*12")
+        "chr2" 47478341 "T" "TGG" '("p.L762Gfs*2" "p.L696Gfs*2")
 
         ;; Extension
         "chr2" 189011772 "T" "C" '("p.*1467Qext*45") ; cf. ClinVar 101338
