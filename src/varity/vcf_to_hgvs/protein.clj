@@ -179,8 +179,9 @@
                 (or (= (+ base-ppos offset) 1)
                     (= (+ base-ppos offset) (count ref-prot-seq))) :extension
                 (and (pos? nprefo) (= (first palt-only) \*)) :substitution
-                (not= ref-prot-rest alt-prot-rest) (if (= (first alt-prot-rest) \*)
-                                                     :fs-ter-substitution
+                (not= ref-prot-rest alt-prot-rest) (if (or (and (empty? palt-only)
+                                                                (= (first alt-prot-rest) \*))
+                                                           (= (last palt-only) \*)) :fs-ter-substitution
                                                      :frame-shift)
                 (or (and (zero? nprefo) (zero? npalto))
                     (and (= nprefo 1) (= npalto 1))) :substitution
@@ -195,8 +196,12 @@
                 :else (throw (IllegalArgumentException. "Unsupported variant")))]
         {:type (if (= t :fs-ter-substitution) :substitution t)
          :pos base-ppos
-         :ref pref
-         :alt (if (= t :fs-ter-substitution) (str palt \*) palt)}))))
+         :ref (if (= t :fs-ter-substitution)
+                (str pref (subs ref-prot-rest 0 (max 0 (inc (- (count palt) (count pref))))))
+                pref)
+         :alt (if (= t :fs-ter-substitution)
+                (str palt \*)
+                palt)}))))
 
 (defn- protein-substitution
   [ppos pref palt]
