@@ -5,10 +5,18 @@
 ### Added
 
 - Support promoter on variant conversion. [#10](https://github.com/chrovis/varity/pull/10)
+- Profile for Clojure 1.10. [#11](https://github.com/chrovis/varity/pull/11)
+- Add several functions to work with refGene exon sequences. [#13](https://github.com/chrovis/varity/pull/13)
+
+### Changed
+
+- Return p.? w/ warning when CDS is indivisible by 3. [#12](https://github.com/chrovis/varity/pull/12)
+- Use :forward/:reverse as values for the key ':strand'. [#14](https://github.com/chrovis/varity/pull/14)
 
 ### Fixed
 
 - Fix nonsense substitution in del case. [#9](https://github.com/chrovis/varity/pull/9)
+- Fix the translation condition of termination substitution with frameshift. [#15](https://github.com/chrovis/varity/pull/15)
 
 ## [0.3.7] - 2018-04-27
 
