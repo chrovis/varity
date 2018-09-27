@@ -20,12 +20,15 @@
 (defmethod vcf-variant clj_hgvs.mutation.DNASubstitution
   [mut* _ {:keys [chr strand] :as rg}]
   (if-let [pos (rg/cds-coord->genomic-pos (:coord mut*) rg)]
-    {:chr chr
-     :pos pos
-     :ref (cond-> (:ref mut*)
-            (= strand :reverse) (util-seq/revcomp))
-     :alt (cond-> (:alt mut*)
-            (= strand :reverse) (util-seq/revcomp))}))
+    (let [alt (if (= (:type mut*) "=")
+                (:ref mut*)
+                (:alt mut*))]
+      {:chr chr
+       :pos pos
+       :ref (cond-> (:ref mut*)
+              (= strand :reverse) (util-seq/revcomp))
+       :alt (cond-> alt
+              (= strand :reverse) (util-seq/revcomp))})))
 
 (defmethod vcf-variant clj_hgvs.mutation.DNADeletion
   [mut* seq-rdr {:keys [chr strand] :as rg}]
