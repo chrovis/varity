@@ -57,7 +57,7 @@
           nalto (count alt-only)
           [unit ref-repeat ins-repeat] (repeat-info* seq-rdr rg (+ pos offset) alt-only)]
       (cond
-        (and (= nrefo 1) (= nalto 1)) :substitution
+        (or (= nrefo nalto 0) (= nrefo nalto 1)) :substitution
         (= ref-only (util-seq/revcomp alt-only)) :inversion
         (and (pos? nrefo) (zero? nalto)) :deletion
         (and (pos? nrefo) (pos? nalto)) :indel
@@ -70,11 +70,13 @@
 
 (defn- dna-substitution
   [rg pos ref alt]
-  (let [{:keys [strand]} rg]
+  (let [{:keys [strand]} rg
+        type (if (= ref alt) "=" ">")]
     (mut/dna-substitution (rg/cds-coord pos rg)
                           (cond-> ref (= strand :reverse) util-seq/revcomp)
-                          (if (= ref alt) "=" ">")
-                          (cond-> alt (= strand :reverse) util-seq/revcomp))))
+                          type
+                          (when-not (= type "=")
+                            (cond-> alt (= strand :reverse) util-seq/revcomp)))))
 
 (defn- dna-deletion
   [rg pos ref alt]

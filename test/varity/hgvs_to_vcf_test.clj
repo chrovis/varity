@@ -13,6 +13,7 @@
         ;; substitution
         "NM_005228:c.2573T>G" '({:chr "chr7", :pos 55191822, :ref "T", :alt "G"}) ; cf. rs121434568
         "NM_005957:c.665C>T" '({:chr "chr1", :pos 11796321, :ref "G", :alt "A"}) ; cf. rs1801133
+        "NM_000546:c.215C=" '({:chr "chr17", :pos 7676154, :ref "G", :alt "G"}) ; cf. rs1042522
         "NM_198253:c.-124C>T" '({:chr "chr5", :pos 1295113, :ref "G", :alt "A"}) ; promoter
 
         ;; deletion
@@ -47,6 +48,10 @@
         ;; substitution
         "c.2573T>G" "EGFR" '({:chr "chr7", :pos 55191822, :ref "T", :alt "G"}) ; cf. rs121434568
         "c.665C>T" "MTHFR" '({:chr "chr1", :pos 11796321, :ref "G", :alt "A"}) ; cf. rs1801133
+        "c.215C=" "TP53" '({:chr "chr17", :pos 7674920, :ref "G", :alt "G"}
+                           {:chr "chr17", :pos 7674271, :ref "G", :alt "G"}
+                           {:chr "chr17", :pos 7676154, :ref "G", :alt "G"}
+                           {:chr "chr17", :pos 7676037, :ref "G", :alt "G"}) ; cf. rs1042522
         "c.-124C>T" "TERT" '({:chr "chr5", :pos 1295113, :ref "G", :alt "A"}) ; promoter
 
         ;; deletion
