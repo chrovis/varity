@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### BREAKING
+
+Strand representation is changed from string (`+`, `-`) to keyword (`:forward`,
+`:reverse`).
+
 ### Added
 
 - Support promoter on variant conversion. [#10](https://github.com/chrovis/varity/pull/10)
@@ -12,11 +17,16 @@
 
 - Return p.? w/ warning when CDS is indivisible by 3. [#12](https://github.com/chrovis/varity/pull/12)
 - Use :forward/:reverse as values for the key ':strand'. [#14](https://github.com/chrovis/varity/pull/14)
+- Update dependencies:
+    - clj-hgvs 0.2.4
+    - cljam 0.6.0
+    - commons-compress 1.18
 
 ### Fixed
 
 - Fix nonsense substitution in del case. [#9](https://github.com/chrovis/varity/pull/9)
 - Fix the translation condition of termination substitution with frameshift. [#15](https://github.com/chrovis/varity/pull/15)
+- Fix conversion of no change substitution. [#16](https://github.com/chrovis/varity/pull/16)
 
 ## [0.3.7] - 2018-04-27
 
