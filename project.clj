@@ -11,7 +11,7 @@
                  [org.apache.commons/commons-compress "1.18"]
                  [proton "0.1.6"]]
   :plugins [[lein-cloverage "1.0.13"]
-            [lein-codox "0.10.3"]
+            [lein-codox "0.10.4"]
             [net.totakke/lein-libra "0.1.2"]]
   :test-selectors {:default (complement :slow)
                    :slow :slow
