@@ -1,6 +1,8 @@
 (ns varity.vcf-to-hgvs.common-test
   (:require [clojure.test :refer :all]
-            [varity.vcf-to-hgvs.common :refer :all]))
+            [cljam.io.sequence :as cseq]
+            [varity.vcf-to-hgvs.common :refer :all]
+            [varity.t-common :refer :all]))
 
 (deftest diff-bases-test
   (testing "diff-bases returns a vector of diff info"
@@ -56,3 +58,10 @@
       {:pos 7, :ref "TAGT", :alt "T"} :forward {:pos 10, :ref "TAGT", :alt "T"}
       {:pos 7, :ref "T", :alt "TAGT"} :reverse {:pos 4, :ref "C", :alt "CAGT"}
       {:pos 7, :ref "TAGT", :alt "T"} :reverse {:pos 4, :ref "CAGT", :alt "C"})))
+
+(defslowtest normalize-variant-test
+  (cavia-testing "normalize without error"
+    (with-open [seq-rdr (cseq/reader test-ref-seq-file)]
+      (are [v rg] (map? (normalize-variant v seq-rdr rg))
+        {:chr "chr17", :pos 43125270, :ref "CCTTTACCCAGAGCAGAGGGTGAAGGCCTCCTGAGCGCAGGGGCCCAGTTATCTGAGAAACCCCACAGCCTGTCCCCCGTCCAGGAAGTCTCAGCGAGCTCACGCCGCGCAGTCGCAGTTTTAATTTATCTGTAATTCCCGCGCTTTTCCGTTGCCACGGAAACCAAGGGGCTACCGCTAAG", :alt "C"}
+        {:tx-start 43044295, :strand :reverse}))))
