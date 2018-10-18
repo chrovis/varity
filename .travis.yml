@@ -6,7 +6,7 @@ cache:
 jdk:
   - oraclejdk8
   - oraclejdk9
-  - oraclejdk10
+  # - oraclejdk10 # temporarily disabled (see https://github.com/travis-ci/travis-ci/issues/10249)
   - openjdk8
   - openjdk9
   - openjdk10
