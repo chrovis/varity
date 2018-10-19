@@ -28,15 +28,16 @@
 
 (defn select-variant
   [var seq-rdr rg]
-  (let [nvar (normalize-variant var seq-rdr rg)
-        var-start-cds-coord (rg/cds-coord (:pos var) rg)
-        var-end-cds-coord (rg/cds-coord (+ (:pos var) (max (count (:ref var)) (count (:alt var)))) rg)
-        nvar-start-cds-coord (rg/cds-coord (:pos nvar) rg)
-        nvar-end-cds-coord (rg/cds-coord (+ (:pos nvar) (max (count (:ref nvar)) (count (:alt nvar)))) rg)]
-    (if (= (:region var-start-cds-coord) (:region nvar-start-cds-coord)
-           (:region var-end-cds-coord) (:region nvar-end-cds-coord))
-      nvar
-      var)))
+  (if-let [nvar (normalize-variant var seq-rdr rg)]
+    (let [var-start-cds-coord (rg/cds-coord (:pos var) rg)
+          var-end-cds-coord (rg/cds-coord (+ (:pos var) (max (count (:ref var)) (count (:alt var)))) rg)
+          nvar-start-cds-coord (rg/cds-coord (:pos nvar) rg) ;; !
+          nvar-end-cds-coord (rg/cds-coord (+ (:pos nvar) (max (count (:ref nvar)) (count (:alt nvar)))) rg)]
+      (if (= (:region var-start-cds-coord) (:region nvar-start-cds-coord)
+             (:region var-end-cds-coord) (:region nvar-end-cds-coord))
+        nvar
+        var))
+    var))
 
 ;;; -> cDNA HGVS
 

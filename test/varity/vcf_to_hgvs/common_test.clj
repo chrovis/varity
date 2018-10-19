@@ -2,11 +2,12 @@
   (:require [clojure.test :refer :all]
             [cljam.io.sequence :as cseq]
             [varity.vcf-to-hgvs.common :refer :all]
-            [varity.t-common :refer :all]))
+            [varity.t-common :refer :all]
+            [varity.vcf-to-hgvs.common :as common]))
 
 (deftest diff-bases-test
   (testing "diff-bases returns a vector of diff info"
-    (are [s1 s2 ret] (= (diff-bases s1 s2) ret)
+    (are [s1 s2 ret] (= (common/diff-bases s1 s2) ret)
       "C"   "G"       ["C" "G" 0 0]
       "TC"  "T"       ["C" "" 1 0]
       "C"   "CA"      ["" "A" 1 0]
@@ -17,43 +18,54 @@
       "CAG" "CT"      ["AG" "T" 1 0]
       "CAGTC" "CTGAC" ["AGT" "TGA" 1 1])))
 
+(deftest repeat-units-test
+  (are [s ret] (= (#'common/repeat-units s) ret)
+    "AGT"          ["AGT"]
+    "AGTAGT"       ["AGT" "AGTAGT"]
+    "AGTAGTAGTAGT" ["AGT" "AGTAGT" "AGTAGTAGTAGT"]
+    "AGTTGA"       ["AGTTGA"]
+    "A"            ["A"]
+    ""             []
+    nil            [])
+  (let [s (apply str (repeat (* common/max-repeat-unit-size 10) "A"))]
+    (is (<= (count (first (take-last 2 (#'common/repeat-units s))))
+            common/max-repeat-unit-size))))
+
 (deftest forward-shift-test
   (testing "forward-shift calculates forward shifting steps"
-    (are [s p b ret] (= (forward-shift s p b) ret)
+    (are [s p b ret] (= (common/forward-shift s p b) ret)
       "AGGGGGGT" 2 "G" 5
       "AGGGGGGT" 2 "GG" 4
       "AGGGGGGT" 2 "GGG" 3
       "AAGTGTCC" 3 "GT" 2
       "AAGTGTCC" 5 "GT" 0))
   (testing "foward-shift throws exception when inputs are illegal"
-    (are [s p b] (thrown? Exception (forward-shift s p b))
+    (are [s p b] (thrown? Exception (common/forward-shift s p b))
       "AGGGGGGT" 2 "T"
       "" 2 "T")))
 
 (deftest backward-shift-test
   (testing "backward-shift calculates backward shifting steps"
-    (are [s p b ret] (= (backward-shift s p b) ret)
+    (are [s p b ret] (= (common/backward-shift s p b) ret)
       "AGGGGGGT" 7 "G" 5
       "AGGGGGGT" 6 "GG" 4
       "AGGGGGGT" 5 "GGG" 3
       "AAGTGTCC" 5 "GT" 2
       "AAGTGTCC" 3 "GT" 0))
   (testing "backward-shift throws exception when inputs are illegal"
-    (are [s p b] (thrown? Exception (backward-shift s p b))
+    (are [s p b] (thrown? Exception (common/backward-shift s p b))
       "AGGGGGGT" 7 "A"
       "" 7 "A")))
 
 (deftest repeat-info-test
-  (are [s p i e] (= (repeat-info s p i) e)
+  (are [s p i e] (= (common/repeat-info s p i) e)
     "XXXCAGTCXXX" 8 "AGT" ["AGT" 1 1]
     "XXXCAGTCXXX" 8 "AGTAGT" ["AGT" 1 2]
     "XXXCAGTAGTCXXX" 11 "AGTAGT" ["AGT" 2 2]))
 
-(def normalize-variant* #'varity.vcf-to-hgvs.common/normalize-variant*)
-
 (deftest normalize-variant*-test
   (testing "normalize-variant* normalizes variant"
-    (are [v st ret] (= (normalize-variant* v "NNNCAGTAGTAGTCNNN" st) ret)
+    (are [v st ret] (= (#'common/normalize-variant* v "NNNCAGTAGTAGTCNNN" st) ret)
       {:pos 7, :ref "T", :alt "TAGT"} :forward {:pos 13, :ref "T", :alt "TAGT"}
       {:pos 7, :ref "TAGT", :alt "T"} :forward {:pos 10, :ref "TAGT", :alt "T"}
       {:pos 7, :ref "T", :alt "TAGT"} :reverse {:pos 4, :ref "C", :alt "CAGT"}
@@ -62,6 +74,6 @@
 (defslowtest normalize-variant-test
   (cavia-testing "normalize without error"
     (with-open [seq-rdr (cseq/reader test-ref-seq-file)]
-      (are [v rg] (map? (normalize-variant v seq-rdr rg))
+      (are [v rg] (map? (common/normalize-variant v seq-rdr rg))
         {:chr "chr17", :pos 43125270, :ref "CCTTTACCCAGAGCAGAGGGTGAAGGCCTCCTGAGCGCAGGGGCCCAGTTATCTGAGAAACCCCACAGCCTGTCCCCCGTCCAGGAAGTCTCAGCGAGCTCACGCCGCGCAGTCGCAGTTTTAATTTATCTGTAATTCCCGCGCTTTTCCGTTGCCACGGAAACCAAGGGGCTACCGCTAAG", :alt "C"}
         {:tx-start 43044295, :strand :reverse}))))
