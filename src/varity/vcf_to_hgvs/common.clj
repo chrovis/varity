@@ -158,12 +158,13 @@
                                          :end (+ pos (count ref) -1)}
                                         100)
        (keep (fn [seq*]
-               (let [offset (- (count seq*) (count ref))
-                     nvar (normalize-variant* {:pos (inc offset), :ref ref, :alt alt} seq* :reverse)]
-                 (if (> (:pos nvar) (max (count ref) (count alt)))
-                   (-> nvar
-                       (assoc :chr chr)
-                       (update :pos + (- pos offset) -1))))))
+               (let [offset (- (count seq*) (count ref))]
+                 (when (>= offset 0)
+                   (let [nvar (normalize-variant* {:pos (inc offset), :ref ref, :alt alt} seq* :reverse)]
+                     (if (> (:pos nvar) (max (count ref) (count alt)))
+                       (-> nvar
+                           (assoc :chr chr)
+                           (update :pos + (- pos offset) -1))))))))
        (first)))
 
 (defn normalize-variant
