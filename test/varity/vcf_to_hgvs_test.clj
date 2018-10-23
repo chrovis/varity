@@ -183,7 +183,12 @@
         "chr1" 963222 "GCG" "G" '("p.A386Gfs*12")
         "chr2" 47478341 "T" "TGG" '("p.L762Gfs*2" "p.L696Gfs*2")
 
+        ;; frame shift with initiation codon change (e.g. NM_007298:c.-19_80del from BRCA Share)
+        "chr17" 43124016 "CCAGATGGGACACTCTAAGATTTTCTGCATAGCATTAATGACATTTTGTACTTCTTCAACGCGAAGAGCAGATAAATCCATTTCTTTCTGTTCCAATGAA" "C"
+        '("p.M1Sfs*13")
+
         ;; Extension
+        "chr2" 188974490 "A" "C" '("p.M1Lext-23")
         "chr2" 189011772 "T" "C" '("p.*1467Qext*45") ; cf. ClinVar 101338
         ;; NOTE: There are very few correct examples...
 

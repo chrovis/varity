@@ -39,6 +39,11 @@
         var))
     var))
 
+(defn- cds-affected?
+  [var rg]
+  (and (<= (:cds-start rg) (+ (:pos var) (count (:ref var))))
+       (<= (:pos var) (:cds-end rg))))
+
 ;;; -> cDNA HGVS
 
 (defmulti vcf-variant->cdna-hgvs
@@ -124,7 +129,7 @@
                   (assoc (select-variant {:chr chr, :pos pos, :ref ref, :alt alt}
                                          seq-rdr rg)
                          :rg rg)))
-           (filter #(rg/in-cds? (:pos %) (:rg %)))
+           (filter #(cds-affected? % (:rg %)))
            (keep #(prot/->hgvs % seq-rdr (:rg %)))
            distinct)
       (throw (Exception. (format "\"%s\" is not found on %s:%d" ref chr pos))))))
@@ -132,9 +137,9 @@
 (defmethod vcf-variant->protein-hgvs :ref-gene-entity
   [{:keys [pos ref alt]} seq-rdr {:keys [chr] :as rg}]
   (if (valid-ref? seq-rdr chr pos ref)
-    (let [{:keys [pos] :as nv} (select-variant {:chr chr, :pos pos, :ref ref, :alt alt}
-                                               seq-rdr rg)]
-      (if (rg/in-cds? pos rg)
+    (let [nv (select-variant {:chr chr, :pos pos, :ref ref, :alt alt}
+                             seq-rdr rg)]
+      (if (cds-affected? nv rg)
         (prot/->hgvs (assoc nv :rg rg) seq-rdr rg)))
     (throw (Exception. (format "\"%s\" is not found on %s:%d" ref chr pos)))))
 
@@ -178,9 +183,9 @@
                   (assoc (select-variant {:chr chr, :pos pos, :ref ref, :alt alt}
                                          seq-rdr rg)
                          :rg rg)))
-           (map (fn [{:keys [pos rg] :as m}]
+           (map (fn [{:keys [rg] :as m}]
                   {:cdna (cdna/->hgvs m seq-rdr rg)
-                   :protein (if (rg/in-cds? pos rg)
+                   :protein (if (cds-affected? m rg)
                               (prot/->hgvs m seq-rdr rg))}))
            distinct)
       (throw (Exception. (format "\"%s\" is not found on %s:%d" ref chr pos))))))
@@ -188,9 +193,9 @@
 (defmethod vcf-variant->hgvs :ref-gene-entity
   [{:keys [pos ref alt]} seq-rdr {:keys [chr] :as rg} & _]
   (if (valid-ref? seq-rdr chr pos ref)
-    (let [{:keys [pos] :as nv} (select-variant {:chr chr, :pos pos, :ref ref, :alt alt}
-                                               seq-rdr rg)]
+    (let [nv (select-variant {:chr chr, :pos pos, :ref ref, :alt alt}
+                             seq-rdr rg)]
       {:cdna (cdna/->hgvs nv seq-rdr rg)
-       :protein (if (rg/in-cds? pos rg)
+       :protein (if (cds-affected? nv rg)
                   (prot/->hgvs nv seq-rdr rg))})
     (throw (Exception. (format "\"%s\" is not found on %s:%d" ref chr pos)))))
