@@ -6,6 +6,7 @@
             [clj-hgvs.mutation :as mut]
             [cljam.io.sequence :as cseq]
             [cljam.util.sequence :as util-seq]
+            [proton.core :as proton]
             [varity.codon :as codon]
             [varity.ref-gene :as rg]
             [varity.vcf-to-hgvs.common :refer [diff-bases] :as common]))
@@ -24,7 +25,7 @@
   "Returns sequence a variant applied."
   [ref-seq seq-start pos ref alt]
   (let [pos* (inc (- pos seq-start))]
-    (str (subs ref-seq 0 (dec pos*))
+    (str (subs ref-seq 0 (max 0 (dec pos*)))
          alt
          (subs ref-seq (min (count ref-seq)
                             (+ (dec pos*) (count ref)))))))
@@ -120,14 +121,19 @@
                        3)}))
 
 (defn- protein-position
-  ([pos rg] (protein-position pos 0 rg))
-  ([pos offset rg]
-   (let [->protein-coord #(inc (quot (dec %) 3))
-         cds-coord (rg/cds-coord pos rg)
-         ppos (->protein-coord (+ (:position cds-coord) offset))]
-     (if (and (nil? (:region cds-coord))
-              (coord/in-exon? cds-coord))
-       ppos))))
+  "Converts genomic position to protein position. If pos is outside of CDS,
+  returns protein position of CDS start or CDS end. If pos is in intron, returns
+  the nearest next protein position."
+  [pos rg]
+  (let [->protein-coord #(inc (quot (dec %) 3))
+        pos (proton/clip pos (:cds-start rg) (:cds-end rg))
+        pos (->> (:exon-ranges rg)
+                 (some (fn [[s e]]
+                         (cond
+                           (<= s pos e) pos
+                           (< pos s) s))))
+        cds-coord (rg/cds-coord pos rg)]
+    (->protein-coord (:position cds-coord))))
 
 (defn format-alt-prot-seq
   [{:keys [alt-prot-seq alt-tx-prot-seq ini-offset]}]
@@ -154,54 +160,57 @@
         {:type :unknown, :pos nil, :ref nil, :alt nil})
 
     :else
-    (if-let [ppos (protein-position pos rg)]
-      (let [alt-prot-seq* (format-alt-prot-seq seq-info)
-            base-ppos (case strand
-                        :forward ppos
-                        :reverse (protein-position pos (- (count ref)) rg))
-            [_ pref ref-prot-rest] (split-string-at
-                                    ref-prot-seq
-                                    [(dec base-ppos)
-                                     (case strand
-                                       :forward (protein-position pos (dec (count ref)) rg)
-                                       :reverse ppos)])
-            [_ palt alt-prot-rest] (split-string-at
-                                    alt-prot-seq*
-                                    [(dec base-ppos)
-                                     (case strand
-                                       :forward (protein-position pos (dec (count alt)) rg)
-                                       :reverse (protein-position pos (- (count alt) (count ref)) rg))])
-            [pref-only palt-only offset _] (diff-bases pref palt)
-            nprefo (count pref-only)
-            npalto (count palt-only)
-            [unit ref-repeat ins-repeat] (common/repeat-info ref-prot-seq (+ base-ppos offset) palt-only)
-            t (cond
-                (or (= (+ base-ppos offset) 1)
-                    (= (+ base-ppos offset) (count ref-prot-seq))) :extension
-                (and (pos? nprefo) (= (first palt-only) \*)) :substitution
-                (not= ref-prot-rest alt-prot-rest) (if (or (and (empty? palt-only)
-                                                                (= (first alt-prot-rest) \*))
-                                                           (= (last palt-only) \*)) :fs-ter-substitution
+    (let [alt-prot-seq* (format-alt-prot-seq seq-info)
+          ppos (protein-position pos rg)
+          base-ppos (case strand
+                      :forward ppos
+                      :reverse (protein-position (+ pos (count ref) -1) rg))
+          [_ pref ref-prot-rest] (split-string-at
+                                  ref-prot-seq
+                                  [(dec base-ppos)
+                                   (case strand
+                                     :forward (protein-position (+ pos (count ref) -1) rg)
+                                     :reverse ppos)])
+          [_ palt alt-prot-rest] (split-string-at
+                                  alt-prot-seq*
+                                  [(min (dec base-ppos) (count alt-prot-seq*))
+                                   (min (case strand
+                                          :forward (protein-position (+ pos (count alt) -1) rg)
+                                          :reverse (protein-position (- pos (- (count alt) (count ref))) rg))
+                                        (count alt-prot-seq*))])
+          [pref-only palt-only offset _] (diff-bases pref palt)
+          nprefo (count pref-only)
+          npalto (count palt-only)
+          [unit ref-repeat ins-repeat] (common/repeat-info ref-prot-seq (+ base-ppos offset) palt-only)
+          t (cond
+              (= (+ base-ppos offset) (count ref-prot-seq)) :extension
+              (= (+ base-ppos offset) 1) (if (= ref-prot-rest alt-prot-rest)
+                                           :extension
+                                           :frame-shift)
+              (and (pos? nprefo) (= (first palt-only) \*)) :substitution
+              (not= ref-prot-rest alt-prot-rest) (if (or (and (empty? palt-only)
+                                                              (= (first alt-prot-rest) \*))
+                                                         (= (last palt-only) \*)) :fs-ter-substitution
                                                      :frame-shift)
-                (or (and (zero? nprefo) (zero? npalto))
-                    (and (= nprefo 1) (= npalto 1))) :substitution
-                (and (pos? nprefo) (zero? npalto)) :deletion
-                (and (pos? nprefo) (pos? npalto)) (if (= base-ppos 1)
-                                                    :extension
-                                                    :indel)
-                (some? unit) (cond
-                               (and (= ref-repeat 1) (= ins-repeat 1)) :duplication
-                               (or (> ref-repeat 1) (> ins-repeat 1)) :repeated-seqs)
-                (and (zero? nprefo) (pos? npalto)) :insertion
-                :else (throw (IllegalArgumentException. "Unsupported variant")))]
-        {:type (if (= t :fs-ter-substitution) :substitution t)
-         :pos base-ppos
-         :ref (if (= t :fs-ter-substitution)
-                (str pref (subs ref-prot-rest 0 (max 0 (inc (- (count palt) (count pref))))))
-                pref)
-         :alt (if (= t :fs-ter-substitution)
-                (str palt \*)
-                palt)}))))
+              (or (and (zero? nprefo) (zero? npalto))
+                  (and (= nprefo 1) (= npalto 1))) :substitution
+              (and (pos? nprefo) (zero? npalto)) :deletion
+              (and (pos? nprefo) (pos? npalto)) (if (= base-ppos 1)
+                                                  :extension
+                                                  :indel)
+              (some? unit) (cond
+                             (and (= ref-repeat 1) (= ins-repeat 1)) :duplication
+                             (or (> ref-repeat 1) (> ins-repeat 1)) :repeated-seqs)
+              (and (zero? nprefo) (pos? npalto)) :insertion
+              :else (throw (IllegalArgumentException. "Unsupported variant")))]
+      {:type (if (= t :fs-ter-substitution) :substitution t)
+       :pos base-ppos
+       :ref (if (= t :fs-ter-substitution)
+              (str pref (subs ref-prot-rest 0 (max 0 (inc (- (count palt) (count pref))))))
+              pref)
+       :alt (if (= t :fs-ter-substitution)
+              (str palt \*)
+              palt)})))
 
 (defn- protein-substitution
   [ppos pref palt]
@@ -282,8 +291,9 @@
                                    [(+ ppos i) (str r) (str a)])))
                            [ppos pref palt])
         [_ _ offset _] (diff-bases pref palt)
+        alt-prot-seq (format-alt-prot-seq seq-info)
         ref (nth (:ref-prot-seq seq-info) (dec (+ ppos offset)))
-        alt (nth (:alt-prot-seq seq-info) (dec (+ ppos offset)))
+        alt (nth alt-prot-seq (dec (+ ppos offset)))
         ter-site (-> seq-info
                      format-alt-prot-seq
                      (subs (dec (+ ppos offset)))

@@ -28,15 +28,21 @@
 
 (defn select-variant
   [var seq-rdr rg]
-  (let [nvar (normalize-variant var seq-rdr rg)
-        var-start-cds-coord (rg/cds-coord (:pos var) rg)
-        var-end-cds-coord (rg/cds-coord (+ (:pos var) (max (count (:ref var)) (count (:alt var)))) rg)
-        nvar-start-cds-coord (rg/cds-coord (:pos nvar) rg)
-        nvar-end-cds-coord (rg/cds-coord (+ (:pos nvar) (max (count (:ref nvar)) (count (:alt nvar)))) rg)]
-    (if (= (:region var-start-cds-coord) (:region nvar-start-cds-coord)
-           (:region var-end-cds-coord) (:region nvar-end-cds-coord))
-      nvar
-      var)))
+  (if-let [nvar (normalize-variant var seq-rdr rg)]
+    (let [var-start-cds-coord (rg/cds-coord (:pos var) rg)
+          var-end-cds-coord (rg/cds-coord (+ (:pos var) (max (count (:ref var)) (count (:alt var)))) rg)
+          nvar-start-cds-coord (rg/cds-coord (:pos nvar) rg) ;; !
+          nvar-end-cds-coord (rg/cds-coord (+ (:pos nvar) (max (count (:ref nvar)) (count (:alt nvar)))) rg)]
+      (if (= (:region var-start-cds-coord) (:region nvar-start-cds-coord)
+             (:region var-end-cds-coord) (:region nvar-end-cds-coord))
+        nvar
+        var))
+    var))
+
+(defn- cds-affected?
+  [var rg]
+  (and (<= (:cds-start rg) (+ (:pos var) (count (:ref var))))
+       (<= (:pos var) (:cds-end rg))))
 
 ;;; -> cDNA HGVS
 
@@ -123,7 +129,7 @@
                   (assoc (select-variant {:chr chr, :pos pos, :ref ref, :alt alt}
                                          seq-rdr rg)
                          :rg rg)))
-           (filter #(rg/in-cds? (:pos %) (:rg %)))
+           (filter #(cds-affected? % (:rg %)))
            (keep #(prot/->hgvs % seq-rdr (:rg %)))
            distinct)
       (throw (Exception. (format "\"%s\" is not found on %s:%d" ref chr pos))))))
@@ -131,9 +137,9 @@
 (defmethod vcf-variant->protein-hgvs :ref-gene-entity
   [{:keys [pos ref alt]} seq-rdr {:keys [chr] :as rg}]
   (if (valid-ref? seq-rdr chr pos ref)
-    (let [{:keys [pos] :as nv} (select-variant {:chr chr, :pos pos, :ref ref, :alt alt}
-                                               seq-rdr rg)]
-      (if (rg/in-cds? pos rg)
+    (let [nv (select-variant {:chr chr, :pos pos, :ref ref, :alt alt}
+                             seq-rdr rg)]
+      (if (cds-affected? nv rg)
         (prot/->hgvs (assoc nv :rg rg) seq-rdr rg)))
     (throw (Exception. (format "\"%s\" is not found on %s:%d" ref chr pos)))))
 
@@ -177,9 +183,9 @@
                   (assoc (select-variant {:chr chr, :pos pos, :ref ref, :alt alt}
                                          seq-rdr rg)
                          :rg rg)))
-           (map (fn [{:keys [pos rg] :as m}]
+           (map (fn [{:keys [rg] :as m}]
                   {:cdna (cdna/->hgvs m seq-rdr rg)
-                   :protein (if (rg/in-cds? pos rg)
+                   :protein (if (cds-affected? m rg)
                               (prot/->hgvs m seq-rdr rg))}))
            distinct)
       (throw (Exception. (format "\"%s\" is not found on %s:%d" ref chr pos))))))
@@ -187,9 +193,9 @@
 (defmethod vcf-variant->hgvs :ref-gene-entity
   [{:keys [pos ref alt]} seq-rdr {:keys [chr] :as rg} & _]
   (if (valid-ref? seq-rdr chr pos ref)
-    (let [{:keys [pos] :as nv} (select-variant {:chr chr, :pos pos, :ref ref, :alt alt}
-                                               seq-rdr rg)]
+    (let [nv (select-variant {:chr chr, :pos pos, :ref ref, :alt alt}
+                             seq-rdr rg)]
       {:cdna (cdna/->hgvs nv seq-rdr rg)
-       :protein (if (rg/in-cds? pos rg)
+       :protein (if (cds-affected? nv rg)
                   (prot/->hgvs nv seq-rdr rg))})
     (throw (Exception. (format "\"%s\" is not found on %s:%d" ref chr pos)))))

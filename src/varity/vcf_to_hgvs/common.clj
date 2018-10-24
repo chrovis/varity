@@ -23,16 +23,21 @@
      l
      r]))
 
+(def max-repeat-unit-size 100)
+
 ;; AGT => ["AGT"]
 ;; AGTAGT => ["AGT" "AGTAGT"]
 (defn- repeat-units
   [s]
-  (->> (range (count s))
-       (map inc)
-       (map #(partition-all % s))
-       (filter #(apply = %))
-       (map first)
-       (mapv #(apply str %))))
+  (case (count s)
+    0 []
+    1 [s]
+    (let [limit (min (/ (count s) 2) max-repeat-unit-size)
+          xf (comp (map #(partition-all % s))
+                   (filter #(apply = %))
+                   (map first)
+                   (map #(apply str %)))]
+      (conj (into [] xf (range 1 (inc limit))) s))))
 
 ;; seq*        pos bases
 ;; MVSTSTHQ... 3   ST    => 2
@@ -135,13 +140,15 @@
          :alt (str comm alt-only)})
       var)))
 
+(def normalization-read-sequence-step 1000)
+
 (defn- normalize-variant-forward
   [{:keys [chr pos ref alt]} seq-rdr rg]
   (->> (read-sequence-stepwise seq-rdr
                                {:chr chr
                                 :start pos
                                 :end (+ (:tx-end rg) rg/max-tx-margin)}
-                               100)
+                               normalization-read-sequence-step)
        (keep (fn [seq*]
                (let [nvar (normalize-variant* {:pos 1, :ref ref, :alt alt} seq* :forward)]
                  (if (<= (dec (:pos nvar)) (- (count seq*) (max (count ref) (count alt))))
@@ -156,7 +163,7 @@
                                         {:chr chr
                                          :start (- (:tx-start rg) rg/max-tx-margin)
                                          :end (+ pos (count ref) -1)}
-                                        100)
+                                        normalization-read-sequence-step)
        (keep (fn [seq*]
                (let [offset (- (count seq*) (count ref))]
                  (when (>= offset 0)
