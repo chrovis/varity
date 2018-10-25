@@ -1,5 +1,6 @@
 (ns varity.vcf-to-hgvs.protein
-  (:require [clojure.string :as string]
+  (:require [clojure.pprint :as pp]
+            [clojure.string :as string]
             [clojure.tools.logging :as log]
             [clj-hgvs.coordinate :as coord]
             [clj-hgvs.core :as hgvs]
@@ -336,3 +337,72 @@
   [{:keys [pos ref alt]} seq-rdr rg]
   (if-let [mutation (mutation seq-rdr rg pos ref alt)]
     (hgvs/hgvs nil :protein mutation)))
+
+(defn- prot-seq-pstring
+  [pref-seq palt-seq start end {:keys [ppos pref palt]}]
+  (let [[pref-up _ pref-down] (common/split-string-at pref-seq
+                                                      [(- ppos start)
+                                                       (min (count pref-seq)
+                                                            (+ (- ppos start) (count pref)))])
+        [palt-up _ palt-down] (common/split-string-at palt-seq
+                                                      [(- ppos start)
+                                                       (min (count palt-seq)
+                                                            (+ (- ppos start) (count palt)))])
+        frame-shift? (if (<= (count pref) (count palt))
+                       (or (empty? palt-down)
+                           (nil? (string/index-of pref-down palt-down)))
+                       (or (empty? pref-down)
+                           (nil? (string/index-of palt-down pref-down))))
+        palt-down (if-not frame-shift?
+                    (subs palt-down 0 (min (count pref-down) (count palt-down)))
+                    palt-down)
+        nmut (max (count pref) (count palt))
+        nmutseq (if-not frame-shift? nmut 0)
+        ticks (->> (iterate #(+ % 10) (inc (- start (mod start 10))))
+                   (take-while #(<= % end))
+                   (remove #(< % start)))
+        tick-intervals (conj
+                        (->> ticks
+                             (map #(+ % (if (< ppos %) (max 0 (- (count palt) (count pref))) 0)))
+                             (map #(- % start))
+                             (partition 2 1)
+                             (mapv #(- (second %) (first %))))
+                        0)]
+    (string/join
+     \newline
+     [(apply pp/cl-format nil
+             (apply str "~V@T" (repeat (count ticks) "~VA"))
+             (- (first ticks) start) (interleave tick-intervals ticks))
+      (pp/cl-format nil "~A~VA~A" pref-up nmutseq pref pref-down)
+      (pp/cl-format nil "~A~VA~A" palt-up nmutseq palt palt-down)
+      (pp/cl-format nil "~V@T~V@{~A~:*~}" (- ppos start) nmut "^")])))
+
+(defn debug-string
+  [{:keys [pos ref alt]} seq-rdr rg]
+  (let [seq-info (read-sequence-info seq-rdr rg pos ref alt)
+        alt-prot-seq* (format-alt-prot-seq seq-info)
+        ppos (protein-position pos rg)
+        base-ppos (case (:strand rg)
+                    :forward ppos
+                    :reverse (protein-position (+ pos (count ref) -1) rg))
+        pref (subs (:ref-prot-seq seq-info)
+                   (dec base-ppos)
+                   (case (:strand rg)
+                     :forward (protein-position (+ pos (count ref) -1) rg)
+                     :reverse ppos))
+        palt (subs alt-prot-seq*
+                   (dec base-ppos)
+                   (case (:strand rg)
+                     :forward (protein-position (+ pos (count alt) -1) rg)
+                     :reverse (protein-position (- pos (- (count alt) (count ref))) rg)))
+        start (max 1 (- base-ppos 20))
+        end (min (+ base-ppos 20) (count (:ref-prot-seq seq-info)))
+        pref-seq (subs (:ref-prot-seq seq-info) (dec start) end)
+        palt-seq (subs alt-prot-seq* (dec start) (+ end (max 0 (- (count palt) (count pref)))))
+        [ticks refs alts muts] (string/split-lines
+                                (prot-seq-pstring pref-seq palt-seq start end
+                                                  {:ppos base-ppos, :pref pref, :palt palt}))]
+    (string/join \newline [(str "         " ticks)
+                           (str "  p.ref: " refs)
+                           (str "  p.alt: " alts)
+                           (str "         " muts)])))

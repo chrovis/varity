@@ -1,20 +1,17 @@
 (ns varity.vcf-to-hgvs.protein-test
-  (:require [clojure.test :refer :all]
-            [varity.vcf-to-hgvs.protein :refer :all]))
-
-(def alt-sequence #'varity.vcf-to-hgvs.protein/alt-sequence)
+  (:require [clojure.string :as string]
+            [clojure.test :refer :all]
+            [varity.vcf-to-hgvs.protein :as prot]))
 
 (deftest alt-sequence-test
-  (are [st p r a e] (= (alt-sequence "ACGTACGTACGT" st p r a) e)
+  (are [st p r a e] (= (#'prot/alt-sequence "ACGTACGTACGT" st p r a) e)
     5 8 "T" "A" "ACGAACGTACGT"
     5 8 "T" "TT" "ACGTTACGTACGT"
     5 8 "TA" "T" "ACGTCGTACGT"))
 
-(def alt-exon-ranges #'varity.vcf-to-hgvs.protein/alt-exon-ranges)
-
 (deftest alt-exon-ranges-test
   ;; 1 [2 3 4] 5 6 7 [8 9 10 11] 12 13 14 15
-  (are [p r a e] (= (alt-exon-ranges [[2 4] [8 11]] p r a) e)
+  (are [p r a e] (= (#'prot/alt-exon-ranges [[2 4] [8 11]] p r a) e)
     3 "XXX" "XXX" [[2 4] [8 11]]
     3 "X" "XXX" [[2 6] [10 13]]
     6 "X" "XXX" [[2 4] [10 13]]
@@ -24,14 +21,10 @@
     3 "XXX" "X" [[2 3] [6 9]]
     1 "XXXXX" "X" [[4 7]]))
 
-(def exon-sequence #'varity.vcf-to-hgvs.protein/exon-sequence)
-
 (deftest exon-sequence-test
   ;; A  C G T  A C G  T A C  G   T  A  C  G
   ;; 1 [2 3 4] 5 6 7 [8 9 10 11] 12 13 14 15
-  (is (= (exon-sequence "ACGTACGTACGTACG" 1 [[2 4] [8 11]]) "CGTTACG")))
-
-(def protein-position #'varity.vcf-to-hgvs.protein/protein-position)
+  (is (= (#'prot/exon-sequence "ACGTACGTACGTACG" 1 [[2 4] [8 11]]) "CGTTACG")))
 
 (def ref-gene-EGFR
   {:bin 125
@@ -51,7 +44,7 @@
    :exon-frames [0 1 0 1 1 1 0 1 1 2 1 2 1 2 0 2 2 0 0 0 0 0 1 1 0 0 0 1]})
 
 (deftest protein-position-test
-  (are [pos ppos] (= (protein-position pos ref-gene-EGFR) ppos)
+  (are [pos ppos] (= (#'prot/protein-position pos ref-gene-EGFR) ppos)
     ;; exon
     55191822 858
     55181378 790
@@ -68,3 +61,38 @@
     (inc (:cds-end ref-gene-EGFR)) 1211
     (:tx-start ref-gene-EGFR) 1
     (:tx-end ref-gene-EGFR) 1211))
+
+(deftest prot-seq-pstring-test
+  (are [pref-seq palt-seq start end m e]
+      (= (#'prot/prot-seq-pstring pref-seq palt-seq start end m) e)
+    "LAARNVLVKTPQHVKITDFGLAKLLGAEEKEYHAEGGKVPI"
+    "LAARNVLVKTPQHVKITDFGRAKLLGAEEKEYHAEGGKVPI"
+    838 878 {:ppos 858, :pref "L", :palt "R"}
+    (string/join \newline ["   841       851       861       871"
+                           "LAARNVLVKTPQHVKITDFGLAKLLGAEEKEYHAEGGKVPI"
+                           "LAARNVLVKTPQHVKITDFGRAKLLGAEEKEYHAEGGKVPI"
+                           "                    ^"])
+
+    "MTILTYPFKNLPTASKWALRFS"
+    "MTTILTYPFKNLPTASKWALRFS"
+    1 22 {:ppos 2, :pref "T", :palt "TT"}
+    (string/join \newline ["1          11        21"
+                           "MT ILTYPFKNLPTASKWALRFS"
+                           "MTTILTYPFKNLPTASKWALRFS"
+                           " ^^"])
+
+    "KEGHQEGLVELPASFRELLTFFCTNATIHGAIRLVCSRGNR"
+    "KEGHQEGLVELPASFRELLTFCTNATIHGAIRLVCSRGNRL"
+    206 246 {:ppos 226, :pref "FF", :palt "F"}
+    (string/join \newline ["     211       221       231       241"
+                           "KEGHQEGLVELPASFRELLTFFCTNATIHGAIRLVCSRGNR"
+                           "KEGHQEGLVELPASFRELLTF CTNATIHGAIRLVCSRGNR"
+                           "                    ^^"])
+
+    "YDIGGPDQEFGVDVGPVCFL*"
+    "YDIGGPDQEFGVDVGPVCFLQ"
+    1447 1467 {:ppos 1467, :pref "*", :palt "Q"}
+    (string/join \newline ["    1451      1461"
+                           "YDIGGPDQEFGVDVGPVCFL*"
+                           "YDIGGPDQEFGVDVGPVCFLQ"
+                           "                    ^"])))
