@@ -11,16 +11,6 @@
             [varity.ref-gene :as rg]
             [varity.vcf-to-hgvs.common :refer [diff-bases] :as common]))
 
-(defn- split-string-at [s x]
-  (cond
-    (integer? x) [(subs s 0 x) (subs s x)]
-    (sequential? x) (let [[n & r] x]
-                      (if n
-                        (let [[s1 s2] (split-string-at s n)]
-                          (vec (cons s1 (split-string-at s2 (map #(- % n) r)))))
-                        [s]))
-    :else (throw (IllegalArgumentException.))))
-
 (defn- alt-sequence
   "Returns sequence a variant applied."
   [ref-seq seq-start pos ref alt]
@@ -141,7 +131,7 @@
     alt-prot-seq
     (let [s (subs alt-tx-prot-seq
                   ini-offset)
-          [s-head s-tail] (split-string-at s (count alt-prot-seq))]
+          [s-head s-tail] (common/split-string-at s (count alt-prot-seq))]
       (if-let [end (string/index-of s-tail \*)]
         (str s-head
              (subs s-tail 0 (inc end)))
@@ -165,13 +155,13 @@
           base-ppos (case strand
                       :forward ppos
                       :reverse (protein-position (+ pos (count ref) -1) rg))
-          [_ pref ref-prot-rest] (split-string-at
+          [_ pref ref-prot-rest] (common/split-string-at
                                   ref-prot-seq
                                   [(dec base-ppos)
                                    (case strand
                                      :forward (protein-position (+ pos (count ref) -1) rg)
                                      :reverse ppos)])
-          [_ palt alt-prot-rest] (split-string-at
+          [_ palt alt-prot-rest] (common/split-string-at
                                   alt-prot-seq*
                                   [(min (dec base-ppos) (count alt-prot-seq*))
                                    (min (case strand
