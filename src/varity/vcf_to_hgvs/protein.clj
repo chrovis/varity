@@ -12,16 +12,7 @@
             [varity.ref-gene :as rg]
             [varity.vcf-to-hgvs.common :refer [diff-bases] :as common]))
 
-(defn- alt-sequence
-  "Returns sequence a variant applied."
-  [ref-seq seq-start pos ref alt]
-  (let [pos* (inc (- pos seq-start))]
-    (str (subs ref-seq 0 (max 0 (dec pos*)))
-         alt
-         (subs ref-seq (min (count ref-seq)
-                            (+ (dec pos*) (count ref)))))))
-
-(defn- alt-exon-ranges
+(defn alt-exon-ranges
   "Returns exon ranges a variant applied."
   [exon-ranges pos ref alt]
   (let [nref (count ref)
@@ -51,7 +42,7 @@
                    :same [s e])))
          vec)))
 
-(defn- exon-sequence
+(defn exon-sequence
   "Extracts bases in exon from supplied sequence, returning the sequence of
   bases as string."
   ([sequence* start exon-ranges]
@@ -81,7 +72,7 @@
   [seq-rdr rg pos ref alt]
   (let [{:keys [chr tx-start tx-end cds-start cds-end exon-ranges strand]} rg
         ref-seq (cseq/read-sequence seq-rdr {:chr chr, :start cds-start, :end cds-end})
-        alt-seq (alt-sequence ref-seq cds-start pos ref alt)
+        alt-seq (common/alt-sequence ref-seq cds-start pos ref alt)
         alt-exon-ranges* (alt-exon-ranges exon-ranges pos ref alt)
         ref-exon-seq1 (exon-sequence ref-seq cds-start exon-ranges)
         ref-up-exon-seq1 (->> (read-exon-sequence seq-rdr chr tx-start (dec cds-start) exon-ranges)

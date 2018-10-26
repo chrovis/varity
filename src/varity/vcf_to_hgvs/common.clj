@@ -184,6 +184,15 @@
     :forward (normalize-variant-forward variant seq-rdr rg)
     :reverse (normalize-variant-backward variant seq-rdr rg)))
 
+(defn alt-sequence
+  "Returns sequence a variant applied."
+  [ref-seq seq-start pos ref alt]
+  (let [pos* (inc (- pos seq-start))]
+    (str (subs ref-seq 0 (max 0 (dec pos*)))
+         alt
+         (subs ref-seq (min (count ref-seq)
+                            (+ (dec pos*) (count ref)))))))
+
 (defn split-string-at [s x]
   (cond
     (integer? x) [(subs s 0 x) (subs s x)]

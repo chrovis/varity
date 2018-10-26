@@ -3,12 +3,6 @@
             [clojure.test :refer :all]
             [varity.vcf-to-hgvs.protein :as prot]))
 
-(deftest alt-sequence-test
-  (are [st p r a e] (= (#'prot/alt-sequence "ACGTACGTACGT" st p r a) e)
-    5 8 "T" "A" "ACGAACGTACGT"
-    5 8 "T" "TT" "ACGTTACGTACGT"
-    5 8 "TA" "T" "ACGTCGTACGT"))
-
 (deftest alt-exon-ranges-test
   ;; 1 [2 3 4] 5 6 7 [8 9 10 11] 12 13 14 15
   (are [p r a e] (= (#'prot/alt-exon-ranges [[2 4] [8 11]] p r a) e)
