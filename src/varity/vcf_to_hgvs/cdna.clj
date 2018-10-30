@@ -1,7 +1,11 @@
 (ns varity.vcf-to-hgvs.cdna
-  (:require [clj-hgvs.core :as hgvs]
+  (:require [clojure.pprint :as pp]
+            [clojure.string :as string]
+            [clj-hgvs.coordinate :as coord]
+            [clj-hgvs.core :as hgvs]
             [clj-hgvs.mutation :as mut]
             [cljam.util.sequence :as util-seq]
+            [cljam.io.sequence :as cseq]
             [varity.ref-gene :as rg]
             [varity.vcf-to-hgvs.common :refer [diff-bases] :as common]))
 
@@ -191,3 +195,80 @@
   (hgvs/hgvs (:name rg)
              :cdna
              (mutation seq-rdr rg pos ref alt)))
+
+(defn- sequence-pstring
+  [ref-seq alt-seq start end {:keys [pos ref alt]} rg]
+  (let [pos (case (:strand rg)
+              :forward pos
+              :reverse (if (= (count ref) (count alt))
+                         (+ pos (count ref) -1)
+                         (+ pos (count ref))))
+        pos* (case (:strand rg)
+               :forward (- pos start)
+               :reverse (- end pos))
+        ref-seq (cond-> ref-seq (= (:strand rg) :reverse) util-seq/revcomp)
+        alt-seq (cond-> alt-seq (= (:strand rg) :reverse) util-seq/revcomp)
+        [ref-up ref ref-down] (common/split-string-at ref-seq
+                                                      [pos*
+                                                       (+ pos* (count ref))])
+        [alt-up alt alt-down] (common/split-string-at alt-seq
+                                                      [pos*
+                                                       (+ pos* (count alt))])
+        nmut (max (count ref) (count alt))
+        ticks (->> (iterate #(+ % 10) (inc (- start (mod start 10))))
+                   (take-while #(<= % end))
+                   (remove #(< % start)))
+        ticks (cond->> ticks (= (:strand rg) :reverse) reverse)
+        ticks-cds (map #(coord/format (rg/cds-coord % rg)) ticks)
+        tick-intervals (conj
+                        (case (:strand rg)
+                          :forward (->> ticks
+                                        (map #(+ % (if (< pos %)
+                                                     (max 0 (- (count alt) (count ref)))
+                                                     0)))
+                                        (map #(- % start))
+                                        (partition 2 1)
+                                        (mapv #(- (second %) (first %))))
+                          :reverse (->> ticks
+                                        (map #(+ % (if (> pos %)
+                                                     (max 0 (- (count alt) (count ref)))
+                                                     0)))
+                                        (map #(- end %))
+                                        (partition 2 1)
+                                        (mapv #(- (second %) (first %)))))
+                        0)
+        ticks-offset (case (:strand rg)
+                       :forward (- (first ticks) start)
+                       :reverse (- end (first ticks)))]
+    (string/join
+     \newline
+     [(apply pp/cl-format nil
+             (apply str "~V@T" (repeat (count ticks-cds) "~VA"))
+             ticks-offset (interleave tick-intervals ticks-cds))
+      (pp/cl-format nil "~A~VA~A" ref-up nmut ref ref-down)
+      (pp/cl-format nil "~A~VA~A" alt-up nmut alt alt-down)
+      (pp/cl-format nil "~V@T~V@{~A~:*~}" pos*  nmut "^")])))
+
+(defn- lower-case-intron
+  [seq* start rg]
+  (->> (map vector seq* (range start (+ start (count seq*))))
+       (map (fn [[c i]]
+              (if (rg/in-exon? i rg) c (string/lower-case c))))
+       (apply str)))
+
+(defn debug-string
+  [{:keys [pos ref alt]} seq-rdr rg]
+  (let [start (max 1 (- pos 20))
+        end (+ pos (count ref) 20)
+        ref (lower-case-intron ref pos rg)
+        alt (lower-case-intron alt pos rg)
+        ref-seq (-> (cseq/read-sequence seq-rdr {:chr (:chr rg), :start start, :end end})
+                    (lower-case-intron start rg))
+        alt-seq (common/alt-sequence ref-seq start pos ref alt)
+        [ticks refs alts muts] (string/split-lines
+                                (sequence-pstring ref-seq alt-seq start end
+                                                  {:pos pos :ref ref :alt alt} rg))]
+    (string/join \newline [(str "         " ticks)
+                           (str "  c.ref: " refs)
+                           (str "  c.alt: " alts)
+                           (str "         " muts)])))

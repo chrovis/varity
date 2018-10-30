@@ -77,3 +77,9 @@
       (are [v rg] (map? (common/normalize-variant v seq-rdr rg))
         {:chr "chr17", :pos 43125270, :ref "CCTTTACCCAGAGCAGAGGGTGAAGGCCTCCTGAGCGCAGGGGCCCAGTTATCTGAGAAACCCCACAGCCTGTCCCCCGTCCAGGAAGTCTCAGCGAGCTCACGCCGCGCAGTCGCAGTTTTAATTTATCTGTAATTCCCGCGCTTTTCCGTTGCCACGGAAACCAAGGGGCTACCGCTAAG", :alt "C"}
         {:tx-start 43044295, :strand :reverse}))))
+
+(deftest alt-sequence-test
+  (are [st p r a e] (= (common/alt-sequence "ACGTACGTACGT" st p r a) e)
+    5 8 "T" "A" "ACGAACGTACGT"
+    5 8 "T" "TT" "ACGTTACGTACGT"
+    5 8 "TA" "T" "ACGTCGTACGT"))

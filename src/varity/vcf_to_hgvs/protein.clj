@@ -1,5 +1,6 @@
 (ns varity.vcf-to-hgvs.protein
-  (:require [clojure.string :as string]
+  (:require [clojure.pprint :as pp]
+            [clojure.string :as string]
             [clojure.tools.logging :as log]
             [clj-hgvs.coordinate :as coord]
             [clj-hgvs.core :as hgvs]
@@ -11,26 +12,7 @@
             [varity.ref-gene :as rg]
             [varity.vcf-to-hgvs.common :refer [diff-bases] :as common]))
 
-(defn- split-string-at [s x]
-  (cond
-    (integer? x) [(subs s 0 x) (subs s x)]
-    (sequential? x) (let [[n & r] x]
-                      (if n
-                        (let [[s1 s2] (split-string-at s n)]
-                          (vec (cons s1 (split-string-at s2 (map #(- % n) r)))))
-                        [s]))
-    :else (throw (IllegalArgumentException.))))
-
-(defn- alt-sequence
-  "Returns sequence a variant applied."
-  [ref-seq seq-start pos ref alt]
-  (let [pos* (inc (- pos seq-start))]
-    (str (subs ref-seq 0 (max 0 (dec pos*)))
-         alt
-         (subs ref-seq (min (count ref-seq)
-                            (+ (dec pos*) (count ref)))))))
-
-(defn- alt-exon-ranges
+(defn alt-exon-ranges
   "Returns exon ranges a variant applied."
   [exon-ranges pos ref alt]
   (let [nref (count ref)
@@ -60,7 +42,7 @@
                    :same [s e])))
          vec)))
 
-(defn- exon-sequence
+(defn exon-sequence
   "Extracts bases in exon from supplied sequence, returning the sequence of
   bases as string."
   ([sequence* start exon-ranges]
@@ -90,7 +72,7 @@
   [seq-rdr rg pos ref alt]
   (let [{:keys [chr tx-start tx-end cds-start cds-end exon-ranges strand]} rg
         ref-seq (cseq/read-sequence seq-rdr {:chr chr, :start cds-start, :end cds-end})
-        alt-seq (alt-sequence ref-seq cds-start pos ref alt)
+        alt-seq (common/alt-sequence ref-seq cds-start pos ref alt)
         alt-exon-ranges* (alt-exon-ranges exon-ranges pos ref alt)
         ref-exon-seq1 (exon-sequence ref-seq cds-start exon-ranges)
         ref-up-exon-seq1 (->> (read-exon-sequence seq-rdr chr tx-start (dec cds-start) exon-ranges)
@@ -141,7 +123,7 @@
     alt-prot-seq
     (let [s (subs alt-tx-prot-seq
                   ini-offset)
-          [s-head s-tail] (split-string-at s (count alt-prot-seq))]
+          [s-head s-tail] (common/split-string-at s (count alt-prot-seq))]
       (if-let [end (string/index-of s-tail \*)]
         (str s-head
              (subs s-tail 0 (inc end)))
@@ -165,13 +147,13 @@
           base-ppos (case strand
                       :forward ppos
                       :reverse (protein-position (+ pos (count ref) -1) rg))
-          [_ pref ref-prot-rest] (split-string-at
+          [_ pref ref-prot-rest] (common/split-string-at
                                   ref-prot-seq
                                   [(dec base-ppos)
                                    (case strand
                                      :forward (protein-position (+ pos (count ref) -1) rg)
                                      :reverse ppos)])
-          [_ palt alt-prot-rest] (split-string-at
+          [_ palt alt-prot-rest] (common/split-string-at
                                   alt-prot-seq*
                                   [(min (dec base-ppos) (count alt-prot-seq*))
                                    (min (case strand
@@ -346,3 +328,72 @@
   [{:keys [pos ref alt]} seq-rdr rg]
   (if-let [mutation (mutation seq-rdr rg pos ref alt)]
     (hgvs/hgvs nil :protein mutation)))
+
+(defn- prot-seq-pstring
+  [pref-seq palt-seq start end {:keys [ppos pref palt]}]
+  (let [[pref-up _ pref-down] (common/split-string-at pref-seq
+                                                      [(- ppos start)
+                                                       (min (count pref-seq)
+                                                            (+ (- ppos start) (count pref)))])
+        [palt-up _ palt-down] (common/split-string-at palt-seq
+                                                      [(- ppos start)
+                                                       (min (count palt-seq)
+                                                            (+ (- ppos start) (count palt)))])
+        frame-shift? (if (<= (count pref) (count palt))
+                       (or (empty? palt-down)
+                           (nil? (string/index-of pref-down palt-down)))
+                       (or (empty? pref-down)
+                           (nil? (string/index-of palt-down pref-down))))
+        palt-down (if-not frame-shift?
+                    (subs palt-down 0 (min (count pref-down) (count palt-down)))
+                    palt-down)
+        nmut (max (count pref) (count palt))
+        nmutseq (if-not frame-shift? nmut 0)
+        ticks (->> (iterate #(+ % 10) (inc (- start (mod start 10))))
+                   (take-while #(<= % end))
+                   (remove #(< % start)))
+        tick-intervals (conj
+                        (->> ticks
+                             (map #(+ % (if (< ppos %) (max 0 (- (count palt) (count pref))) 0)))
+                             (map #(- % start))
+                             (partition 2 1)
+                             (mapv #(- (second %) (first %))))
+                        0)]
+    (string/join
+     \newline
+     [(apply pp/cl-format nil
+             (apply str "~V@T" (repeat (count ticks) "~VA"))
+             (- (first ticks) start) (interleave tick-intervals ticks))
+      (pp/cl-format nil "~A~VA~A" pref-up nmutseq pref pref-down)
+      (pp/cl-format nil "~A~VA~A" palt-up nmutseq palt palt-down)
+      (pp/cl-format nil "~V@T~V@{~A~:*~}" (- ppos start) nmut "^")])))
+
+(defn debug-string
+  [{:keys [pos ref alt]} seq-rdr rg]
+  (let [seq-info (read-sequence-info seq-rdr rg pos ref alt)
+        alt-prot-seq* (format-alt-prot-seq seq-info)
+        ppos (protein-position pos rg)
+        base-ppos (case (:strand rg)
+                    :forward ppos
+                    :reverse (protein-position (+ pos (count ref) -1) rg))
+        pref (subs (:ref-prot-seq seq-info)
+                   (dec base-ppos)
+                   (case (:strand rg)
+                     :forward (protein-position (+ pos (count ref) -1) rg)
+                     :reverse ppos))
+        palt (subs alt-prot-seq*
+                   (dec base-ppos)
+                   (case (:strand rg)
+                     :forward (protein-position (+ pos (count alt) -1) rg)
+                     :reverse (protein-position (- pos (- (count alt) (count ref))) rg)))
+        start (max 1 (- base-ppos 20))
+        end (min (+ base-ppos 20) (count (:ref-prot-seq seq-info)))
+        pref-seq (subs (:ref-prot-seq seq-info) (dec start) end)
+        palt-seq (subs alt-prot-seq* (dec start) (+ end (max 0 (- (count palt) (count pref)))))
+        [ticks refs alts muts] (string/split-lines
+                                (prot-seq-pstring pref-seq palt-seq start end
+                                                  {:ppos base-ppos, :pref pref, :palt palt}))]
+    (string/join \newline [(str "         " ticks)
+                           (str "  p.ref: " refs)
+                           (str "  p.alt: " alts)
+                           (str "         " muts)])))
