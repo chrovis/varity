@@ -1,5 +1,16 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- Add debug printing option. [#19](https://github.com/chrovis/varity/pull/19)
+
+### Fixed
+
+- Fix normalization of a variant containing long ref. [#17](https://github.com/chrovis/varity/pull/17)
+- Support frame shift with initiation codon change. [#18](https://github.com/chrovis/varity/pull/18)
+
 ## [0.4.0] - 2018-10-03
 
 ### BREAKING
