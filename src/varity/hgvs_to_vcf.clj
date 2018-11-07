@@ -60,7 +60,8 @@
                (rg/ref-genes rs rgidx)
                (if-not (string/blank? gene)
                  (rg/ref-genes gene rgidx)
-                 (throw (IllegalArgumentException. "Transcript (NM_, NR_) or gene must be supplied"))))]
+                 (throw (ex-info "Transcript (NM_, NR_) or gene must be supplied."
+                                 {:type ::ref-gene-clue-not-found}))))]
      (convert hgvs seq-rdr rgs))))
 
 (defmethod hgvs->vcf-variants :ref-gene-entity

@@ -45,7 +45,7 @@
                                          (= strand :reverse) util-seq/revcomp)})))
                             (remove nil?))))
                (flatten)))))
-    (throw (IllegalArgumentException. "Unsupported mutation"))))
+    (throw (ex-info "Unsupported mutation" {:type ::unsupported-mutation}))))
 
 (defn ->vcf-variants
   [hgvs seq-rdr rg]

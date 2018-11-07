@@ -69,8 +69,8 @@
                        (and (= ref-repeat 1) (= ins-repeat 1)) :duplication
                        (or (> ref-repeat 1) (> ins-repeat 1)) :repeated-seqs)
         (and (zero? nrefo) (pos? nalto)) :insertion
-        :else (throw (IllegalArgumentException. "Unsupported variant"))))
-    (throw (IllegalArgumentException. "Unsupported variant"))))
+        :else (throw (ex-info "Unsupported variant" {:type ::unsupported-variant}))))
+    (throw (ex-info "Unsupported variant" {:type ::unsupported-variant}))))
 
 (defn- dna-substitution
   [rg pos ref alt]

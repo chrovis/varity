@@ -184,7 +184,7 @@
                              (and (= ref-repeat 1) (= ins-repeat 1)) :duplication
                              (or (> ref-repeat 1) (> ins-repeat 1)) :repeated-seqs)
               (and (zero? nprefo) (pos? npalto)) :insertion
-              :else (throw (IllegalArgumentException. "Unsupported variant")))]
+              :else (throw (ex-info "Unsupported variant" {:type ::unsupported-variant})))]
       {:type (if (= t :fs-ter-substitution) :substitution t)
        :pos base-ppos
        :ref (if (= t :fs-ter-substitution)

@@ -54,7 +54,11 @@
              count
              dec
              (* step))))
-    (throw (Exception. (str "\"" bases "\" is not found on " pos " th position")))))
+    (throw (ex-info "The bases is not found on the position."
+                    {:type ::invalid-bases
+                     :sequence seq*
+                     :position pos
+                     :bases bases}))))
 
 ;; seq*        pos bases
 ;; MVSTSTHQ... 5   ST    => 2
@@ -74,7 +78,11 @@
              (take-while #(= (apply str %) rbases))
              count
              tweak)))
-    (throw (Exception. (str "\"" bases "\" is not found on " pos " th position")))))
+    (throw (ex-info "The bases is not found on the position."
+                    {:type ::invalid-bases
+                     :sequence seq*
+                     :position pos
+                     :bases bases}))))
 
 ;; ...CAGTC... 8 AGT => ["AGT" 1 1]
 ;; ...CAGTC... 8 AGTAGT => ["AGT" 1 2]
@@ -201,4 +209,5 @@
                         (let [[s1 s2] (split-string-at s n)]
                           (vec (cons s1 (split-string-at s2 (map #(- % n) r)))))
                         [s]))
-    :else (throw (IllegalArgumentException.))))
+    :else (throw (IllegalArgumentException.
+                  "Splitting position should be an integer or list."))))
