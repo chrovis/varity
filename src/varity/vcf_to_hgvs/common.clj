@@ -150,11 +150,12 @@
                                 :end (+ (:tx-end rg) rg/max-tx-margin)}
                                normalization-read-sequence-step)
        (keep (fn [seq*]
-               (let [nvar (normalize-variant* {:pos 1, :ref ref, :alt alt} seq* :forward)]
-                 (if (<= (dec (:pos nvar)) (- (count seq*) (max (count ref) (count alt))))
-                   (-> nvar
-                       (assoc :chr chr)
-                       (update :pos + pos -1))))))
+               (when (>= (count seq*) (count ref))
+                 (let [nvar (normalize-variant* {:pos 1, :ref ref, :alt alt} seq* :forward)]
+                   (if (<= (dec (:pos nvar)) (- (count seq*) (max (count ref) (count alt))))
+                     (-> nvar
+                         (assoc :chr chr)
+                         (update :pos + pos -1)))))))
        (first)))
 
 (defn- normalize-variant-backward
