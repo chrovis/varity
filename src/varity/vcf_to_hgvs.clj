@@ -112,7 +112,9 @@
                     (print-debug-info m seq-rdr rg))
                   (cdna/->hgvs m seq-rdr rg)))
            distinct)
-      (throw (Exception. (format "\"%s\" is not found on %s:%d" ref chr pos))))))
+      (throw (ex-info "ref is not found on the position."
+                      {:type ::invalid-ref
+                       :variant {:chr chr, :pos pos, :ref ref, :alt alt}})))))
 
 (defmethod vcf-variant->cdna-hgvs :ref-gene-entity
   [{:keys [pos ref alt]} seq-rdr {:keys [chr] :as rg} & [options]]
@@ -122,7 +124,9 @@
       (when (:verbose? options)
         (print-debug-info nv seq-rdr rg))
       (cdna/->hgvs (assoc nv :rg rg) seq-rdr rg))
-    (throw (Exception. (format "\"%s\" is not found on %s:%d" ref chr pos)))))
+    (throw (ex-info "ref is not found on the position."
+                    {:type ::invalid-ref
+                     :variant {:chr chr, :pos pos, :ref ref, :alt alt}}))))
 
 ;;; -> protein HGVS
 
@@ -168,7 +172,9 @@
                      (print-debug-info m seq-rdr rg))
                    (prot/->hgvs m seq-rdr rg)))
            distinct)
-      (throw (Exception. (format "\"%s\" is not found on %s:%d" ref chr pos))))))
+      (throw (ex-info "ref is not found on the position."
+                      {:type ::invalid-ref
+                       :variant {:chr chr, :pos pos, :ref ref, :alt alt}})))))
 
 (defmethod vcf-variant->protein-hgvs :ref-gene-entity
   [{:keys [pos ref alt]} seq-rdr {:keys [chr] :as rg} & [options]]
@@ -179,7 +185,9 @@
         (when (:verbose? options)
           (print-debug-info nv seq-rdr rg))
         (prot/->hgvs (assoc nv :rg rg) seq-rdr rg)))
-    (throw (Exception. (format "\"%s\" is not found on %s:%d" ref chr pos)))))
+    (throw (ex-info "ref is not found on the position."
+                    {:type ::invalid-ref
+                     :variant {:chr chr, :pos pos, :ref ref, :alt alt}}))))
 
 ;;; -> Multiple HGVS
 
@@ -229,7 +237,9 @@
                    :protein (if (cds-affected? m rg)
                               (prot/->hgvs m seq-rdr rg))}))
            distinct)
-      (throw (Exception. (format "\"%s\" is not found on %s:%d" ref chr pos))))))
+      (throw (ex-info "ref is not found on the position."
+                      {:type ::invalid-ref
+                       :variant {:chr chr, :pos pos, :ref ref, :alt alt}})))))
 
 (defmethod vcf-variant->hgvs :ref-gene-entity
   [{:keys [pos ref alt]} seq-rdr {:keys [chr] :as rg} & options]
@@ -242,4 +252,6 @@
       {:cdna (cdna/->hgvs nv seq-rdr rg)
        :protein (if (cds-affected? nv rg)
                   (prot/->hgvs nv seq-rdr rg))})
-    (throw (Exception. (format "\"%s\" is not found on %s:%d" ref chr pos)))))
+    (throw (ex-info "ref is not found on the position."
+                    {:type ::invalid-ref
+                     :variant {:chr chr, :pos pos, :ref ref, :alt alt}}))))
