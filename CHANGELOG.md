@@ -1,5 +1,15 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- Use ex-info for varity specific exception. [#20](https://github.com/chrovis/varity/pull/20)
+
+### Fixed
+
+- Fix normalization of a variant containing long ref (strand: +). [#21](https://github.com/chrovis/varity/pull/21)
+
 ## [0.4.1] - 2018-11-04
 
 ### Added
