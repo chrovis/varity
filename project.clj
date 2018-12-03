@@ -25,6 +25,9 @@
   :deploy-repositories [["snapshots" {:url "https://clojars.org/repo/"
                                       :username [:env/clojars_username :gpg]
                                       :password [:env/clojars_password :gpg]}]]
+  :libra {:bench-selectors {:default (complement :slow)
+                            :slow :slow
+                            :all (constantly true)}}
   :codox {:namespaces [#"^varity\.[\w\-]+$"]
           :output-path "docs"
           :source-uri "https://github.com/chrovis/varity/blob/{version}/{filepath}#L{line}"})
