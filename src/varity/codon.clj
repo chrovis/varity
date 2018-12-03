@@ -101,8 +101,7 @@
 (defn amino-acid-sequence
   "Converts nucleotide sequence into amino acid sequence."
   [s]
-  {:pre [(string? s)]}
-  (->> (partition 3 s)
-       (map #(apply str %))
-       (map codon->amino-acid)
+  (->> (string/upper-case s)
+       (re-seq #".{3}")
+       (map codon-amino-acid-map)
        (apply str)))
