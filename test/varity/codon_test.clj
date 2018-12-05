@@ -27,4 +27,4 @@
     "ATGTCACTGTAA" "MSL*"
     "atgtcactgtaa" "MSL*"
     "" "")
-  (is (thrown? Error (amino-acid-sequence nil))))
+  (is (thrown? Throwable (amino-acid-sequence nil))))

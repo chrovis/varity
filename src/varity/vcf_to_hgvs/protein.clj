@@ -75,18 +75,11 @@
         alt-seq (common/alt-sequence ref-seq cds-start pos ref alt)
         alt-exon-ranges* (alt-exon-ranges exon-ranges pos ref alt)
         ref-exon-seq1 (exon-sequence ref-seq cds-start exon-ranges)
-        ref-up-exon-seq1 (->> (read-exon-sequence seq-rdr chr tx-start (dec cds-start) exon-ranges)
-                              reverse
-                              (partition 3)
-                              flatten
-                              reverse
-                              (apply str))
-        ref-down-exon-seq1 (->> (read-exon-sequence seq-rdr chr (inc cds-end) tx-end exon-ranges)
-                                reverse
-                                (partition 3)
-                                flatten
-                                reverse
-                                (apply str))
+        ref-up-exon-seq1 (read-exon-sequence seq-rdr chr tx-start (dec cds-start) exon-ranges)
+        ref-up-exon-seq1 (subs ref-up-exon-seq1 (mod (count ref-up-exon-seq1) 3))
+        ref-down-exon-seq1 (read-exon-sequence seq-rdr chr (inc cds-end) tx-end exon-ranges)
+        nref-down-exon-seq1 (count ref-down-exon-seq1)
+        ref-down-exon-seq1 (subs ref-down-exon-seq1 0 (- nref-down-exon-seq1 (mod nref-down-exon-seq1 3)))
         alt-exon-seq1 (exon-sequence alt-seq cds-start alt-exon-ranges*)]
     {:ref-exon-seq ref-exon-seq1
      :ref-prot-seq (codon/amino-acid-sequence (cond-> ref-exon-seq1
