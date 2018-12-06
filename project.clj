@@ -9,7 +9,7 @@
                  [clj-hgvs "0.3.0"]
                  [cljam "0.7.0"]
                  [org.apache.commons/commons-compress "1.18"]
-                 [proton "0.1.6"]]
+                 [proton "0.1.7"]]
   :plugins [[lein-cloverage "1.0.13"]
             [lein-codox "0.10.5"]
             [net.totakke/lein-libra "0.1.2"]]

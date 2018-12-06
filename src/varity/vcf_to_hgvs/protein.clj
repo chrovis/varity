@@ -8,6 +8,7 @@
             [cljam.io.sequence :as cseq]
             [cljam.util.sequence :as util-seq]
             [proton.core :as proton]
+            [proton.string :as pstring]
             [varity.codon :as codon]
             [varity.ref-gene :as rg]
             [varity.vcf-to-hgvs.common :refer [diff-bases] :as common]))
@@ -116,7 +117,7 @@
     alt-prot-seq
     (let [s (subs alt-tx-prot-seq
                   ini-offset)
-          [s-head s-tail] (common/split-string-at s (count alt-prot-seq))]
+          [s-head s-tail] (pstring/split-at s (count alt-prot-seq))]
       (if-let [end (string/index-of s-tail \*)]
         (str s-head
              (subs s-tail 0 (inc end)))
@@ -140,13 +141,13 @@
           base-ppos (case strand
                       :forward ppos
                       :reverse (protein-position (+ pos (count ref) -1) rg))
-          [_ pref ref-prot-rest] (common/split-string-at
+          [_ pref ref-prot-rest] (pstring/split-at
                                   ref-prot-seq
                                   [(dec base-ppos)
                                    (case strand
                                      :forward (protein-position (+ pos (count ref) -1) rg)
                                      :reverse ppos)])
-          [_ palt alt-prot-rest] (common/split-string-at
+          [_ palt alt-prot-rest] (pstring/split-at
                                   alt-prot-seq*
                                   [(min (dec base-ppos) (count alt-prot-seq*))
                                    (min (case strand
@@ -324,14 +325,14 @@
 
 (defn- prot-seq-pstring
   [pref-seq palt-seq start end {:keys [ppos pref palt]}]
-  (let [[pref-up _ pref-down] (common/split-string-at pref-seq
-                                                      [(- ppos start)
-                                                       (min (count pref-seq)
-                                                            (+ (- ppos start) (count pref)))])
-        [palt-up _ palt-down] (common/split-string-at palt-seq
-                                                      [(- ppos start)
-                                                       (min (count palt-seq)
-                                                            (+ (- ppos start) (count palt)))])
+  (let [[pref-up _ pref-down] (pstring/split-at pref-seq
+                                                [(- ppos start)
+                                                 (min (count pref-seq)
+                                                      (+ (- ppos start) (count pref)))])
+        [palt-up _ palt-down] (pstring/split-at palt-seq
+                                                [(- ppos start)
+                                                 (min (count palt-seq)
+                                                      (+ (- ppos start) (count palt)))])
         frame-shift? (if (<= (count pref) (count palt))
                        (or (empty? palt-down)
                            (nil? (string/index-of pref-down palt-down)))
