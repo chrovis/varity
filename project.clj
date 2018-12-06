@@ -6,7 +6,7 @@
   :min-lein-version "2.7.0"
   :dependencies [[org.clojure/clojure "1.9.0" :scope "provided"]
                  [org.clojure/tools.logging "0.4.1"]
-                 [clj-hgvs "0.2.4"]
+                 [clj-hgvs "0.3.0"]
                  [cljam "0.7.0"]
                  [org.apache.commons/commons-compress "1.18"]
                  [proton "0.1.6"]]
@@ -20,7 +20,8 @@
                                   [criterium "0.4.4"]
                                   [net.totakke/libra "0.1.1"]]}
              :repl {:source-paths ["bench"]}
-             :1.8 {:dependencies [[org.clojure/clojure "1.8.0"]]}
+             :1.8 {:dependencies [[org.clojure/clojure "1.8.0"]
+                                  [clojure-future-spec "1.9.0-beta4"]]}
              :1.10 {:dependencies [[org.clojure/clojure "1.10.0-alpha5"]]}}
   :deploy-repositories [["snapshots" {:url "https://clojars.org/repo/"
                                       :username [:env/clojars_username :gpg]
