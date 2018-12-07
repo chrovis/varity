@@ -30,10 +30,11 @@
                               (apply str))
               ref-codon (cond-> ref-codon1 (= strand :reverse) util-seq/revcomp)
               palt (mut/->short-amino-acid (:alt mut*))
-              codon-cands (codon/amino-acid->codons palt)]
+              codon-cands (codon/amino-acid->codons palt)
+              pos-cands* (cond-> pos-cands (= strand :reverse) reverse)]
           (->> codon-cands
                (keep (fn [codon*]
-                       (->> pos-cands
+                       (->> pos-cands*
                             (map-indexed
                              (fn [idx pos]
                                (if (one-character-substituted? ref-codon codon* idx)
