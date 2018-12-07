@@ -1,5 +1,16 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- Improve performance of vcf-variant->protein-hgvs. [#22](https://github.com/chrovis/varity/pull/22)
+- Update clj-hgvs and proton. [#23](https://github.com/chrovis/varity/pull/23)
+
+### Fixed
+
+- Fix pos of hgvs->vcf-variants for genes on reverse strand. [#24](https://github.com/chrovis/varity/pull/24)
+
 ## [0.4.2] - 2018-11-20
 
 ### Changed
