@@ -2,13 +2,13 @@
   (:require [clojure.pprint :as pp]
             [clojure.string :as string]
             [cljam.io.sequence :as cseq]
-            [varity.vcf-to-hgvs.common :as common]))
+            [proton.string :as pstring]))
 
 (defn- sequence-pstring
   [seq* start end {:keys [pos ref alt]}]
-  (let [[ref-up _ ref-down] (common/split-string-at seq*
-                                                    [(- pos start)
-                                                     (+ (- pos start) (count ref))])
+  (let [[ref-up _ ref-down] (pstring/split-at seq*
+                                              [(- pos start)
+                                               (+ (- pos start) (count ref))])
         nmut (max (count ref) (count alt))
         ticks (->> (iterate #(+ % 10) (inc (- start (mod start 10))))
                    (take-while #(<= % end))

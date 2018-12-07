@@ -135,6 +135,7 @@
 (defn- vcf-variant->protein-hgvs-texts
   [variant seq-rdr rgidx]
   (map #(hgvs/format % {:amino-acid-format :short
+                        :show-ter-site? true
                         :ter-format :short})
        (vcf-variant->protein-hgvs variant seq-rdr rgidx)))
 

@@ -6,6 +6,7 @@
             [clj-hgvs.mutation :as mut]
             [cljam.util.sequence :as util-seq]
             [cljam.io.sequence :as cseq]
+            [proton.string :as pstring]
             [varity.ref-gene :as rg]
             [varity.vcf-to-hgvs.common :refer [diff-bases] :as common]))
 
@@ -208,12 +209,12 @@
                :reverse (- end pos))
         ref-seq (cond-> ref-seq (= (:strand rg) :reverse) util-seq/revcomp)
         alt-seq (cond-> alt-seq (= (:strand rg) :reverse) util-seq/revcomp)
-        [ref-up ref ref-down] (common/split-string-at ref-seq
-                                                      [pos*
-                                                       (+ pos* (count ref))])
-        [alt-up alt alt-down] (common/split-string-at alt-seq
-                                                      [pos*
-                                                       (+ pos* (count alt))])
+        [ref-up ref ref-down] (pstring/split-at ref-seq
+                                                [pos*
+                                                 (+ pos* (count ref))])
+        [alt-up alt alt-down] (pstring/split-at alt-seq
+                                                [pos*
+                                                 (+ pos* (count alt))])
         nmut (max (count ref) (count alt))
         ticks (->> (iterate #(+ % 10) (inc (- start (mod start 10))))
                    (take-while #(<= % end))
