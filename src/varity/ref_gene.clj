@@ -86,7 +86,7 @@
                               [k (string/replace v #"\"" "")]))
                        (into {}))})))
 
-(defn load-genecode
+(defn load-gencode
   [f]
   (with-open [rdr (io/reader (util/compressor-input-stream f))]
     (let [features (->> (line-seq rdr)
