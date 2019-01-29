@@ -13,11 +13,20 @@ Variant translation library for Clojure.
 
 ## Installation
 
-With Leiningen/Boot:
+Clojure CLI/deps.edn:
 
 ```clojure
-[varity "0.4.2"]
+varity {:mvn/version "0.5.0"}
 ```
+
+Leiningen/Boot:
+
+```clojure
+[varity "0.5.0"]
+```
+
+To use varity with Clojure 1.8, you must include a dependency on
+[clojure-future-spec](https://github.com/tonsky/clojure-future-spec).
 
 ## Usage
 
@@ -113,6 +122,6 @@ To convert a genome coordinate between assemblies,
 
 ## License
 
-Copyright 2017-2018 [Xcoo, Inc.](https://xcoo.jp/)
+Copyright 2017-2019 [Xcoo, Inc.](https://xcoo.jp/)
 
 Licensed under the [Apache License, Version 2.0](LICENSE).

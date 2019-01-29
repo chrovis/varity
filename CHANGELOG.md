@@ -1,6 +1,12 @@
 # Changelog
 
-## [Unreleased]
+## [0.5.0] - 2019-01-29
+
+### BREAKING
+
+clj-hgvs 0.3.0 requires clojure 1.9+ because it uses clojure.spec for HGVS
+validation. To use varity with clojure 1.8, you must include a dependency on
+[clojure-future-spec](https://github.com/tonsky/clojure-future-spec).
 
 ### Changed
 
@@ -164,7 +170,8 @@ Strand representation is changed from string (`+`, `-`) to keyword (`:forward`,
 
 First release.
 
-[Unreleased]: https://github.com/chrovis/varity/compare/0.4.2...HEAD
+[Unreleased]: https://github.com/chrovis/varity/compare/0.5.0...HEAD
+[0.5.0]: https://github.com/chrovis/varity/compare/0.4.2...0.5.0
 [0.4.2]: https://github.com/chrovis/varity/compare/0.4.1...0.4.2
 [0.4.1]: https://github.com/chrovis/varity/compare/0.4.0...0.4.1
 [0.4.0]: https://github.com/chrovis/varity/compare/0.3.7...0.4.0
