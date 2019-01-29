@@ -17,6 +17,7 @@
                    :slow :slow
                    :all (constantly true)}
   :profiles {:dev {:dependencies [[cavia "0.5.1"]
+                                  [codox-theme-rdash "0.1.2"]
                                   [criterium "0.4.4"]
                                   [net.totakke/libra "0.1.1"]]}
              :repl {:source-paths ["bench"]}
@@ -29,6 +30,8 @@
   :libra {:bench-selectors {:default (complement :slow)
                             :slow :slow
                             :all (constantly true)}}
-  :codox {:namespaces [#"^varity\.[\w\-]+$"]
+  :codox {:project {:name "varity"}
+          :themes [:rdash]
+          :namespaces [#"^varity\.[\w\-]+$"]
           :output-path "docs"
           :source-uri "https://github.com/chrovis/varity/blob/{version}/{filepath}#L{line}"})
