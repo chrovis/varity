@@ -29,23 +29,26 @@
                               (map #(cseq/read-sequence seq-rdr {:chr chr, :start %, :end %}))
                               (apply str))
               ref-codon (cond-> ref-codon1 (= strand :reverse) util-seq/revcomp)
-              palt (mut/->short-amino-acid (:alt mut*))
-              codon-cands (codon/amino-acid->codons palt)
-              pos-cands* (cond-> pos-cands (= strand :reverse) reverse)]
-          (->> codon-cands
-               (keep (fn [codon*]
-                       (->> pos-cands*
-                            (map-indexed
-                             (fn [idx pos]
-                               (if (one-character-substituted? ref-codon codon* idx)
-                                 {:chr chr
-                                  :pos pos
-                                  :ref (cond-> (str (nth ref-codon idx))
-                                         (= strand :reverse) util-seq/revcomp)
-                                  :alt (cond-> (str (nth codon* idx))
-                                         (= strand :reverse) util-seq/revcomp)})))
-                            (remove nil?))))
-               (flatten)))))
+              ref-aa (codon/codon->amino-acid ref-codon)
+              mut-ref-aa (mut/->short-amino-acid (:ref mut*))]
+          (when (= mut-ref-aa ref-aa)
+            (let [palt (mut/->short-amino-acid (:alt mut*))
+                  codon-cands (codon/amino-acid->codons palt)
+                  pos-cands* (cond-> pos-cands (= strand :reverse) reverse)]
+              (->> codon-cands
+                   (keep (fn [codon*]
+                           (->> pos-cands*
+                                (map-indexed
+                                 (fn [idx pos]
+                                   (if (one-character-substituted? ref-codon codon* idx)
+                                     {:chr chr
+                                      :pos pos
+                                      :ref (cond-> (str (nth ref-codon idx))
+                                             (= strand :reverse) util-seq/revcomp)
+                                      :alt (cond-> (str (nth codon* idx))
+                                             (= strand :reverse) util-seq/revcomp)})))
+                                (remove nil?))))
+                   (flatten)))))))
     (throw (ex-info "Unsupported mutation" {:type ::unsupported-mutation}))))
 
 (defn ->vcf-variants
@@ -61,27 +64,30 @@
                               (map #(cseq/read-sequence seq-rdr {:chr chr, :start %, :end %}))
                               (apply str))
               ref-codon (cond-> ref-codon1 (= strand :reverse) util-seq/revcomp)
-              palt (mut/->short-amino-acid (:alt mut*))
-              codon-cands (codon/amino-acid->codons palt)
-              pos-cands (cond-> pos-cands (= strand :reverse) reverse)]
-          (->> codon-cands
-               (keep (fn [codon*]
-                       (->> pos-cands
-                            (map-indexed
-                             (fn [idx pos]
-                               (if (one-character-substituted? ref-codon codon* idx)
-                                 (let [ref (str (nth ref-codon idx))
-                                       alt (str (nth codon* idx))]
-                                   {:vcf {:chr chr
-                                          :pos pos
-                                          :ref (cond-> ref (= strand :reverse) util-seq/revcomp)
-                                          :alt (cond-> alt (= strand :reverse) util-seq/revcomp)}
-                                    :cdna (hgvs/hgvs (:name rg) :cdna (mut/dna-substitution (rg/cds-coord pos rg)
-                                                                                            ref
-                                                                                            (if (= ref alt) "=" ">")
-                                                                                            alt))}))))
-                            (remove nil?))))
-               (flatten)))))
+              ref-aa (codon/codon->amino-acid ref-codon)
+              mut-ref-aa (mut/->short-amino-acid (:ref mut*))]
+          (when (= mut-ref-aa ref-aa)
+            (let [palt (mut/->short-amino-acid (:alt mut*))
+                  codon-cands (codon/amino-acid->codons palt)
+                  pos-cands (cond-> pos-cands (= strand :reverse) reverse)]
+              (->> codon-cands
+                   (keep (fn [codon*]
+                           (->> pos-cands
+                                (map-indexed
+                                 (fn [idx pos]
+                                   (if (one-character-substituted? ref-codon codon* idx)
+                                     (let [ref (str (nth ref-codon idx))
+                                           alt (str (nth codon* idx))]
+                                       {:vcf {:chr chr
+                                              :pos pos
+                                              :ref (cond-> ref (= strand :reverse) util-seq/revcomp)
+                                              :alt (cond-> alt (= strand :reverse) util-seq/revcomp)}
+                                        :cdna (hgvs/hgvs (:name rg) :cdna (mut/dna-substitution (rg/cds-coord pos rg)
+                                                                                                ref
+                                                                                                (if (= ref alt) "=" ">")
+                                                                                                alt))}))))
+                                (remove nil?))))
+                   (flatten)))))))
     (throw (IllegalArgumentException. "Unsupported mutation"))))
 
 (defn ->vcf-variants-with-cdna-hgvs
