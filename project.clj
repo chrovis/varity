@@ -6,7 +6,7 @@
   :min-lein-version "2.7.0"
   :dependencies [[org.clojure/clojure "1.9.0" :scope "provided"]
                  [org.clojure/tools.logging "0.4.1"]
-                 [clj-hgvs "0.3.0"]
+                 [clj-hgvs "0.3.1"]
                  [cljam "0.7.1"]
                  [org.apache.commons/commons-compress "1.18"]
                  [proton "0.1.7"]]
