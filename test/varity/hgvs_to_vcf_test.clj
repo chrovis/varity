@@ -1,9 +1,11 @@
 (ns varity.hgvs-to-vcf-test
   (:require [clojure.test :refer :all]
             [clj-hgvs.core :as hgvs]
+            [cljam.io.sequence :as cseq]
             [varity.ref-gene :as rg]
             [varity.hgvs-to-vcf :refer :all]
-            [varity.t-common :refer :all]))
+            [varity.t-common :refer :all]
+            [varity.vcf-to-hgvs :as v2h]))
 
 (defslowtest hgvs->vcf-variants-test
   (cavia-testing "cDNA HGVS to vcf variants"
@@ -91,6 +93,7 @@
         "p.A222V" "MTHFR" '({:chr "chr1", :pos 11796321, :ref "G", :alt "A"}) ; cf. rs1801133
         "p.Q61K" "NRAS" '({:chr "chr1", :pos 114713909, :ref "G", :alt "T"}) ; cf. rs121913254
         "p.Q61K" "KRAS" '({:chr "chr12", :pos 25227343, :ref "G", :alt "T"}) ; cf. rs121913238
+        "p.K652T" "FGFR3" '({:chr "chr4", :pos 1806163, :ref "A", :alt "C"}) ; cf. rs121913105
         )))
   (cavia-testing "protein HGVS with gene to possible vcf variants with cDNA HGVS"
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
@@ -99,4 +102,30 @@
         "p.T790M" "EGFR" `({:vcf {:chr "chr7", :pos 55181378, :ref "C", :alt "T"} ; cf. rs121434569
                             :cdna ~(hgvs/parse "NM_005228:c.2369C>T")})
         "p.L1196M" "ALK" `({:vcf {:chr "chr2", :pos 29220765, :ref "G", :alt "T"} ; cf. rs1057519784
-                            :cdna ~(hgvs/parse "NM_004304:c.3586C>A")})))))
+                            :cdna ~(hgvs/parse "NM_004304:c.3586C>A")})
+        "p.K652T" "FGFR3" `({:vcf {:chr "chr4", :pos 1806163, :ref "A", :alt "C"},; cf. rs121913105
+                             :cdna ~(hgvs/parse "NM_001163213:c.1955A>C")})))))
+
+(defslowtest hgvs->vcf->hgvs-test
+  (cavia-testing "protein HGVS with gene to possible vcf variants which gives the same protein HGVS"
+    (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
+      (with-open [r (cseq/reader test-ref-seq-file)]
+        (are [?protein-hgvs ?gene-symbol]
+            (->> (map :name (rg/ref-genes ?gene-symbol rgidx))
+                 (mapcat
+                  (fn [nm]
+                    ;; hgvs -> variants with a specific accession number
+                    (protein-hgvs->vcf-variants-with-cdna-hgvs
+                     (hgvs/parse ?protein-hgvs) nm r rgidx)))
+                 (map
+                  (fn [{:keys [vcf] {:keys [transcript]} :cdna :as v}]
+                    (let [hgvs (->> rgidx
+                                    (rg/ref-genes transcript)
+                                    first
+                                    (v2h/vcf-variant->protein-hgvs vcf r))
+                          fmt (hgvs/format hgvs {:amino-acid-format :short})]
+                      ;; 1 variant & 1 transcript => 1 canonical hgvs
+                      (assoc v :hgvs (assoc hgvs :format fmt)))))
+                 (map (comp :format :hgvs))
+                 (apply = ?protein-hgvs))
+          "p.K652T" "FGFR3")))))
