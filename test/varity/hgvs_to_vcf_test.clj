@@ -119,13 +119,12 @@
                      (hgvs/parse ?protein-hgvs) nm r rgidx)))
                  (map
                   (fn [{:keys [vcf] {:keys [transcript]} :cdna :as v}]
-                    (let [[hgvs & xs] (->> rgidx
-                                           (rg/ref-genes transcript)
-                                           first
-                                           (v2h/vcf-variant->protein-hgvs vcf r))
+                    (let [hgvs (->> rgidx
+                                    (rg/ref-genes transcript)
+                                    first
+                                    (v2h/vcf-variant->protein-hgvs vcf r))
                           fmt (hgvs/format hgvs {:amino-acid-format :short})]
                       ;; 1 variant & 1 transcript => 1 canonical hgvs
-                      (assert (nil? xs))
                       (assoc v :hgvs (assoc hgvs :format fmt)))))
                  (map (comp :format :hgvs))
                  (apply = ?protein-hgvs))
