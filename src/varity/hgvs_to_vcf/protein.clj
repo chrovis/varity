@@ -35,9 +35,9 @@
     (let [[ps r a] (seq (trim-left-right positions ref alt))]
       (if (contiguous? ps)
         [ps (string/join r) (string/join a)]
-        (-> "Ignoring a candidate variant crossing an intron: %s %s %s"
-            (format ps ref alt)
-            log/warn)))))
+        (log/warnf
+         "A candidate variant crossing an intron is unsupported: %s %s %s"
+         ps r a)))))
 
 (defn- vcf-variants
   [seq-rdr {:keys [chr strand] :as rg} mut*]
