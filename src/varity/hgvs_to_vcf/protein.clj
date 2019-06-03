@@ -98,7 +98,7 @@
                         (let [cds-pos (rg/cds-coord (first ps) rg)
                               cds-end (rg/cds-coord (last ps) rg)
                               mut (if-not (= cds-pos cds-end)
-                                    (mut/dna-indel cds-pos cds-end nil alt)
+                                    (mut/dna-indel cds-pos cds-end ref alt)
                                     (mut/dna-substitution cds-pos ref ">" alt))]
                           {:vcf {:chr chr,
                                  :pos ((if reverse? last first) ps),
