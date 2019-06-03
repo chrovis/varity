@@ -1,6 +1,6 @@
 (ns varity.hgvs-to-vcf.protein
   (:require [clojure.string :as string]
-            [clojure.tools.logging :as logging]
+            [clojure.tools.logging :as log]
             [clj-hgvs.core :as hgvs]
             [clj-hgvs.mutation :as mut]
             [cljam.io.sequence :as cseq]
@@ -37,7 +37,7 @@
         [ps (string/join r) (string/join a)]
         (-> "Ignoring a candidate variant crossing an intron: %s %s %s"
             (format ps ref alt)
-            logging/warn)))))
+            log/warn)))))
 
 (defn- vcf-variants
   [seq-rdr {:keys [chr strand] :as rg} mut*]
