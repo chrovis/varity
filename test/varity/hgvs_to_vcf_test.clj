@@ -89,12 +89,24 @@
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
       (are [hgvs* gene e]
           (= (hgvs->vcf-variants (hgvs/parse hgvs*) gene test-ref-seq-file rgidx) e)
-        "p.L858R" "EGFR" '({:chr "chr7", :pos 55191822, :ref "T", :alt "G"}) ; cf. rs121434568
-        "p.A222V" "MTHFR" '({:chr "chr1", :pos 11796321, :ref "G", :alt "A"}) ; cf. rs1801133
-        "p.Q61K" "NRAS" '({:chr "chr1", :pos 114713909, :ref "G", :alt "T"}) ; cf. rs121913254
-        "p.Q61K" "KRAS" '({:chr "chr12", :pos 25227343, :ref "G", :alt "T"}) ; cf. rs121913238
-        "p.K652T" "FGFR3" '({:chr "chr4", :pos 1806163, :ref "A", :alt "C"}) ; cf. rs121913105
-        )))
+        "p.L858R" "EGFR" '({:chr "chr7", :pos 55191822, :ref "TG", :alt "GC"}
+                           {:chr "chr7", :pos 55191822, :ref "TG", :alt "GT"}  ; cf. rs1057519848
+                           {:chr "chr7", :pos 55191822, :ref "T", :alt "G"}    ; cf. rs121434568
+                           {:chr "chr7", :pos 55191822, :ref "TG", :alt "GA"}
+                           {:chr "chr7", :pos 55191821, :ref "CTG", :alt "AGA"}
+                           {:chr "chr7", :pos 55191821, :ref "CT", :alt "AG"}) ; cf. rs1057519847
+        "p.A222V" "MTHFR" '({:chr "chr1", :pos 11796320, :ref "GG", :alt "CA"}
+                            {:chr "chr1", :pos 11796320, :ref "GG", :alt "AA"}
+                            {:chr "chr1", :pos 11796320, :ref "GG", :alt "TA"}
+                            {:chr "chr1", :pos 11796321, :ref "G", :alt "A"})  ; cf. rs1801133
+        "p.Q61K" "NRAS" '({:chr "chr1", :pos 114713907, :ref "TTG", :alt "CTT"}
+                          {:chr "chr1", :pos 114713909, :ref "G", :alt "T"})   ; cf. rs121913254
+        "p.Q61K" "KRAS" '({:chr "chr12", :pos 25227341, :ref "TTG", :alt "CTT"}
+                          {:chr "chr12", :pos 25227343, :ref "G", :alt "T"})   ; cf. rs121913238
+        "p.K652T" "FGFR3" '({:chr "chr4", :pos 1806163, :ref "AG", :alt "CA"}
+                            {:chr "chr4", :pos 1806163, :ref "AG", :alt "CC"}
+                            {:chr "chr4", :pos 1806163, :ref "A", :alt "C"}    ; cf. rs121913105
+                            {:chr "chr4", :pos 1806163, :ref "AG", :alt "CT"}))))
   (cavia-testing "protein HGVS with gene to possible vcf variants with cDNA HGVS"
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
       (are [hgvs* gene e]
@@ -103,8 +115,26 @@
                             :cdna ~(hgvs/parse "NM_005228:c.2369C>T")})
         "p.L1196M" "ALK" `({:vcf {:chr "chr2", :pos 29220765, :ref "G", :alt "T"} ; cf. rs1057519784
                             :cdna ~(hgvs/parse "NM_004304:c.3586C>A")})
-        "p.K652T" "FGFR3" `({:vcf {:chr "chr4", :pos 1806163, :ref "A", :alt "C"},; cf. rs121913105
-                             :cdna ~(hgvs/parse "NM_001163213:c.1955A>C")})))))
+        "p.Q61L" "NRAS" `({:vcf {:chr "chr1", :pos 114713907, :ref "TT", :alt "CA"}, ; cf. rs1057519695
+                           :cdna ~(hgvs/parse "NM_002524:c.182_183delAAinsTG")}
+                          {:vcf {:chr "chr1", :pos 114713907, :ref "TT", :alt "GA"},
+                           :cdna ~(hgvs/parse "NM_002524:c.182_183delAAinsTC")}
+                          {:vcf {:chr "chr1", :pos 114713907, :ref "TT", :alt "AA"},
+                           :cdna ~(hgvs/parse "NM_002524:c.182_183delAAinsTT")}
+                          {:vcf {:chr "chr1", :pos 114713908, :ref "T", :alt "A"}, ; cf. rs11554290
+                           :cdna ~(hgvs/parse "NM_002524:c.182A>T")}
+                          {:vcf {:chr "chr1", :pos 114713907, :ref "TTG", :alt "CAA"},
+                           :cdna ~(hgvs/parse "NM_002524:c.181_183delCAAinsTTG")}
+                          {:vcf {:chr "chr1", :pos 114713908, :ref "TG", :alt "AA"},
+                           :cdna ~(hgvs/parse "NM_002524:c.181_182delCAinsTT")})
+        "p.K652T" "FGFR3" `({:vcf {:chr "chr4", :pos 1806163, :ref "AG", :alt "CA"},
+                             :cdna ~(hgvs/parse "NM_001163213:c.1955_1956delAGinsCA")}
+                            {:vcf {:chr "chr4", :pos 1806163, :ref "AG", :alt "CC"},
+                             :cdna ~(hgvs/parse "NM_001163213:c.1955_1956delAGinsCC")}
+                            {:vcf {:chr "chr4", :pos 1806163, :ref "A", :alt "C"},
+                             :cdna ~(hgvs/parse "NM_001163213:c.1955A>C")} ; cf. rs121913105
+                            {:vcf {:chr "chr4", :pos 1806163, :ref "AG", :alt "CT"},
+                             :cdna ~(hgvs/parse "NM_001163213:c.1955_1956delAGinsCT")})))))
 
 (defslowtest hgvs->vcf->hgvs-test
   (cavia-testing "protein HGVS with gene to possible vcf variants which gives the same protein HGVS"
