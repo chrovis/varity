@@ -106,7 +106,9 @@
         "p.K652T" "FGFR3" '({:chr "chr4", :pos 1806163, :ref "AG", :alt "CA"}
                             {:chr "chr4", :pos 1806163, :ref "AG", :alt "CC"}
                             {:chr "chr4", :pos 1806163, :ref "A", :alt "C"}    ; cf. rs121913105
-                            {:chr "chr4", :pos 1806163, :ref "AG", :alt "CT"}))))
+                            {:chr "chr4", :pos 1806163, :ref "AG", :alt "CT"})))))
+
+(defslowtest protein-hgvs->vcf-variants-with-cdna-hgvs-test
   (cavia-testing "protein HGVS with gene to possible vcf variants with cDNA HGVS"
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
       (are [hgvs* gene e]
