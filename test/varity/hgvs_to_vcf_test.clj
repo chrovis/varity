@@ -4,6 +4,7 @@
             [cljam.io.sequence :as cseq]
             [varity.ref-gene :as rg]
             [varity.hgvs-to-vcf :refer :all]
+            [varity.hgvs-to-vcf.cdna :as h2v-cdna]
             [varity.t-common :refer :all]
             [varity.vcf-to-hgvs :as v2h]))
 
@@ -107,6 +108,22 @@
                             {:chr "chr4", :pos 1806163, :ref "AG", :alt "CC"}
                             {:chr "chr4", :pos 1806163, :ref "A", :alt "C"}    ; cf. rs121913105
                             {:chr "chr4", :pos 1806163, :ref "AG", :alt "CT"}))))
+  (cavia-testing "conversion failure"
+    (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
+      (are [hgvs* error-type] (thrown-with-error-type?
+                               error-type
+                               (hgvs->vcf-variants (hgvs/parse hgvs*)
+                                                   test-ref-seq-file rgidx))
+        "NM_007294:c.1-?_80+?del"   ::h2v-cdna/ambiguous-coordinate
+        "NM_000546:c.-202_-29+?dup" ::h2v-cdna/ambiguous-coordinate)
+      (are [hgvs* gene error-type] (thrown-with-error-type?
+                                    error-type
+                                    (hgvs->vcf-variants (hgvs/parse hgvs*) gene
+                                                        test-ref-seq-file rgidx))
+        "c.1-?_80+?del"   "BRCA1" ::h2v-cdna/ambiguous-coordinate
+        "c.-202_-29+?dup" "TP53"  ::h2v-cdna/ambiguous-coordinate))))
+
+(defslowtest protein-hgvs->vcf-variants-with-cdna-hgvs-test
   (cavia-testing "protein HGVS with gene to possible vcf variants with cDNA HGVS"
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
       (are [hgvs* gene e]
