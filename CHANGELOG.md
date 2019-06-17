@@ -1,5 +1,19 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- Include MNVs in protein HGVS -> VCF conversion results. [#26](https://github.com/chrovis/varity/pull/26)
+
+### Changed
+
+- Throw ex-info on hgvs->vcf for a variant containing ambiguous coordinates. [#27](https://github.com/chrovis/varity/pull/27)
+
+### Fixed
+
+- Remove incorrect VCF variants from protein HGVS to VCF variants conversion results. [#25](https://github.com/chrovis/varity/pull/25)
+
 ## [0.5.0] - 2019-01-29
 
 ### BREAKING
