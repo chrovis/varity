@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.5.1] - 2019-07-12
 
 ### Added
 
@@ -9,6 +9,10 @@
 ### Changed
 
 - Throw ex-info on hgvs->vcf for a variant containing ambiguous coordinates. [#27](https://github.com/chrovis/varity/pull/27)
+- Update dependencies:
+    - clj-hgvs 0.3.1
+    - cljam 0.7.2
+    - proton 0.1.8
 
 ### Fixed
 
@@ -184,7 +188,8 @@ Strand representation is changed from string (`+`, `-`) to keyword (`:forward`,
 
 First release.
 
-[Unreleased]: https://github.com/chrovis/varity/compare/0.5.0...HEAD
+[Unreleased]: https://github.com/chrovis/varity/compare/0.5.1...HEAD
+[0.5.1]: https://github.com/chrovis/varity/compare/0.5.0...0.5.1
 [0.5.0]: https://github.com/chrovis/varity/compare/0.4.2...0.5.0
 [0.4.2]: https://github.com/chrovis/varity/compare/0.4.1...0.4.2
 [0.4.1]: https://github.com/chrovis/varity/compare/0.4.0...0.4.1
