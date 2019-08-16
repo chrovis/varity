@@ -267,7 +267,7 @@
 (deftest cds-coord->genomic-pos-test
   ;; 1 [2 3 4] 5 6 7 [8 9 10 11] 12 13 14 15
   (testing "strand +"
-    (are [c s e r] (= (rg/cds-coord->genomic-pos (coord/parse-cdna-coordinate c)
+    (are [c s e r] (= (rg/cds-coord->genomic-pos (coord/parse-coding-dna-coordinate c)
                                                  {:strand :forward
                                                   :cds-start s
                                                   :cds-end e
@@ -287,7 +287,7 @@
       "-5"   9 11 1
       "*7"   2 3  13))
   (testing "strand -"
-    (are [c s e r] (= (rg/cds-coord->genomic-pos (coord/parse-cdna-coordinate c)
+    (are [c s e r] (= (rg/cds-coord->genomic-pos (coord/parse-coding-dna-coordinate c)
                                                  {:strand :reverse
                                                   :cds-start s
                                                   :cds-end e

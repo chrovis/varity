@@ -8,7 +8,7 @@
 (defn- cds-coord->genomic-pos
   [coord rg]
   (cond
-    (instance? clj_hgvs.coordinate.CDNACoordinate coord)
+    (instance? clj_hgvs.coordinate.CodingDNACoordinate coord)
     (rg/cds-coord->genomic-pos coord rg)
 
     (or (instance? clj_hgvs.coordinate.UnknownCoordinate coord)

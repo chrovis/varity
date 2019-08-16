@@ -104,7 +104,7 @@
                                  :pos ((if reverse? last first) ps),
                                  :ref (cond-> ref reverse? util-seq/revcomp),
                                  :alt (cond-> alt reverse? util-seq/revcomp)},
-                           :cdna (hgvs/hgvs (:name rg) :cdna mut)}))))))))))
+                           :cdna (hgvs/hgvs (:name rg) :coding-dna mut)}))))))))))
     (throw (IllegalArgumentException. "Unsupported mutation"))))
 
 (defn ->vcf-variants-with-cdna-hgvs

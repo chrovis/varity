@@ -54,7 +54,7 @@
   ([hgvs seq-rdr rgidx] (hgvs->vcf-variants hgvs nil seq-rdr rgidx))
   ([hgvs gene seq-rdr rgidx]
    (let [convert (case (:kind hgvs)
-                   :cdna cdna-hgvs->vcf-variants
+                   :coding-dna cdna-hgvs->vcf-variants
                    :protein protein-hgvs->vcf-variants)
          rgs (if-let [[rs] (re-find #"^(NM|NR)_\d+" (str (:transcript hgvs)))]
                (rg/ref-genes rs rgidx)
@@ -68,7 +68,7 @@
   ([hgvs seq-rdr rg] (hgvs->vcf-variants hgvs nil seq-rdr rg))
   ([hgvs _ seq-rdr rg]
    (let [convert (case (:kind hgvs)
-                   :cdna cdna/->vcf-variant
+                   :coding-dna cdna/->vcf-variant
                    :protein prot/->vcf-variants)]
      (convert hgvs seq-rdr rg))))
 

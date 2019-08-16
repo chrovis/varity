@@ -285,7 +285,7 @@
                             (and tx-edge? (= region :upstream)) [(- cds-pos* offset) 0]
                             (and tx-edge? (= region :downstream)) [(+ cds-pos* offset) 0]
                             :else [cds-pos* offset])]
-    (coord/cdna-coordinate cds-pos* offset region)))
+    (coord/coding-dna-coordinate cds-pos* offset region)))
 
 ;;; Calculation of genomic coordinate
 

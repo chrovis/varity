@@ -194,7 +194,7 @@
 (defn ->hgvs
   [{:keys [pos ref alt]} seq-rdr rg]
   (hgvs/hgvs (:name rg)
-             :cdna
+             :coding-dna
              (mutation seq-rdr rg pos ref alt)))
 
 (defn- sequence-pstring
