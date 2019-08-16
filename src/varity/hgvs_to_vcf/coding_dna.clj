@@ -1,4 +1,4 @@
-(ns varity.hgvs-to-vcf.cdna
+(ns varity.hgvs-to-vcf.coding-dna
   (:require clj-hgvs.coordinate
             clj-hgvs.mutation
             [cljam.io.sequence :as cseq]

@@ -270,8 +270,8 @@
       :else [(inc (- pos* start*)) nil])))
 
 (defn cds-coord
-  "Converts the genomic position into the cDNA coordinate. The return value is
-  clj-hgvs.coordinate/CDNACoordinate record."
+  "Converts the genomic position into the coding DNA coordinate. The return
+  value is clj-hgvs.coordinate/CodingDNACoordinate record."
   [pos rg]
   (let [[pos* offset] (if (in-exon? pos rg)
                         [pos 0]
@@ -319,8 +319,8 @@
        :downstream (nth downstream-poss (dec cds-pos) nil)))))
 
 (defn cds-coord->genomic-pos
-  "Converts the cDNA coordinate into the genomic position. coord must be
-  clj-hgvs.coordinate/CDNACoordinate record."
+  "Converts the coding DNA coordinate into the genomic position. coord must be
+  clj-hgvs.coordinate/CodingDNACoordinate record."
   [coord {:keys [strand] :as rg}]
   (if-let [base-pos (cds->genomic-pos (:position coord) (:region coord) rg)]
     (+ base-pos (cond-> (:offset coord) (= strand :reverse) (-)))))

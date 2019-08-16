@@ -1,4 +1,4 @@
-(ns varity.vcf-to-hgvs.cdna
+(ns varity.vcf-to-hgvs.coding-dna
   (:require [clojure.pprint :as pp]
             [clojure.string :as string]
             [clj-hgvs.coordinate :as coord]
