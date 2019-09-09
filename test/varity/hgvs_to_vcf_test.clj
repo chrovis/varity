@@ -4,12 +4,12 @@
             [cljam.io.sequence :as cseq]
             [varity.ref-gene :as rg]
             [varity.hgvs-to-vcf :refer :all]
-            [varity.hgvs-to-vcf.cdna :as h2v-cdna]
+            [varity.hgvs-to-vcf.coding-dna :as h2v-coding-dna]
             [varity.t-common :refer :all]
             [varity.vcf-to-hgvs :as v2h]))
 
 (defslowtest hgvs->vcf-variants-test
-  (cavia-testing "cDNA HGVS to vcf variants"
+  (cavia-testing "coding DNA HGVS to vcf variants"
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
       (are [hgvs* e]
           (= (hgvs->vcf-variants (hgvs/parse hgvs*) test-ref-seq-file rgidx) e)
@@ -44,7 +44,7 @@
         "NM_144639:c.1510-122_1510-121[3]" '({:chr "chr3", :pos 126492636, :ref "C", :alt "CCTCT"}) ; cf. rs2307882 (-)
         "NM_004369:c.6063+6[9]" '({:chr "chr2", :pos 237363246, :ref "A", :alt "AA"}) ; cf. rs11385011 (-)
         )))
-  (cavia-testing "cDNA HGVS with gene to vcf variants"
+  (cavia-testing "coding DNA HGVS with gene to vcf variants"
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
       (are [hgvs* gene e]
           (= (hgvs->vcf-variants (hgvs/parse hgvs*) gene test-ref-seq-file rgidx) e)
@@ -114,44 +114,44 @@
                                error-type
                                (hgvs->vcf-variants (hgvs/parse hgvs*)
                                                    test-ref-seq-file rgidx))
-        "NM_007294:c.1-?_80+?del"   ::h2v-cdna/ambiguous-coordinate
-        "NM_000546:c.-202_-29+?dup" ::h2v-cdna/ambiguous-coordinate)
+        "NM_007294:c.1-?_80+?del"   ::h2v-coding-dna/ambiguous-coordinate
+        "NM_000546:c.-202_-29+?dup" ::h2v-coding-dna/ambiguous-coordinate)
       (are [hgvs* gene error-type] (thrown-with-error-type?
                                     error-type
                                     (hgvs->vcf-variants (hgvs/parse hgvs*) gene
                                                         test-ref-seq-file rgidx))
-        "c.1-?_80+?del"   "BRCA1" ::h2v-cdna/ambiguous-coordinate
-        "c.-202_-29+?dup" "TP53"  ::h2v-cdna/ambiguous-coordinate))))
+        "c.1-?_80+?del"   "BRCA1" ::h2v-coding-dna/ambiguous-coordinate
+        "c.-202_-29+?dup" "TP53"  ::h2v-coding-dna/ambiguous-coordinate))))
 
-(defslowtest protein-hgvs->vcf-variants-with-cdna-hgvs-test
-  (cavia-testing "protein HGVS with gene to possible vcf variants with cDNA HGVS"
+(defslowtest protein-hgvs->vcf-variants-with-coding-dna-hgvs-test
+  (cavia-testing "protein HGVS with gene to possible vcf variants with coding DNA HGVS"
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
       (are [hgvs* gene e]
-          (= (protein-hgvs->vcf-variants-with-cdna-hgvs (hgvs/parse hgvs*) gene test-ref-seq-file rgidx) e)
+          (= (protein-hgvs->vcf-variants-with-coding-dna-hgvs (hgvs/parse hgvs*) gene test-ref-seq-file rgidx) e)
         "p.T790M" "EGFR" `({:vcf {:chr "chr7", :pos 55181378, :ref "C", :alt "T"} ; cf. rs121434569
-                            :cdna ~(hgvs/parse "NM_005228:c.2369C>T")})
+                            :coding-dna ~(hgvs/parse "NM_005228:c.2369C>T")})
         "p.L1196M" "ALK" `({:vcf {:chr "chr2", :pos 29220765, :ref "G", :alt "T"} ; cf. rs1057519784
-                            :cdna ~(hgvs/parse "NM_004304:c.3586C>A")})
+                            :coding-dna ~(hgvs/parse "NM_004304:c.3586C>A")})
         "p.Q61L" "NRAS" `({:vcf {:chr "chr1", :pos 114713907, :ref "TT", :alt "CA"}, ; cf. rs1057519695
-                           :cdna ~(hgvs/parse "NM_002524:c.182_183delAAinsTG")}
+                           :coding-dna ~(hgvs/parse "NM_002524:c.182_183delAAinsTG")}
                           {:vcf {:chr "chr1", :pos 114713907, :ref "TT", :alt "GA"},
-                           :cdna ~(hgvs/parse "NM_002524:c.182_183delAAinsTC")}
+                           :coding-dna ~(hgvs/parse "NM_002524:c.182_183delAAinsTC")}
                           {:vcf {:chr "chr1", :pos 114713907, :ref "TT", :alt "AA"},
-                           :cdna ~(hgvs/parse "NM_002524:c.182_183delAAinsTT")}
+                           :coding-dna ~(hgvs/parse "NM_002524:c.182_183delAAinsTT")}
                           {:vcf {:chr "chr1", :pos 114713908, :ref "T", :alt "A"}, ; cf. rs11554290
-                           :cdna ~(hgvs/parse "NM_002524:c.182A>T")}
+                           :coding-dna ~(hgvs/parse "NM_002524:c.182A>T")}
                           {:vcf {:chr "chr1", :pos 114713907, :ref "TTG", :alt "CAA"},
-                           :cdna ~(hgvs/parse "NM_002524:c.181_183delCAAinsTTG")}
+                           :coding-dna ~(hgvs/parse "NM_002524:c.181_183delCAAinsTTG")}
                           {:vcf {:chr "chr1", :pos 114713908, :ref "TG", :alt "AA"},
-                           :cdna ~(hgvs/parse "NM_002524:c.181_182delCAinsTT")})
+                           :coding-dna ~(hgvs/parse "NM_002524:c.181_182delCAinsTT")})
         "p.K652T" "FGFR3" `({:vcf {:chr "chr4", :pos 1806163, :ref "AG", :alt "CA"},
-                             :cdna ~(hgvs/parse "NM_001163213:c.1955_1956delAGinsCA")}
+                             :coding-dna ~(hgvs/parse "NM_001163213:c.1955_1956delAGinsCA")}
                             {:vcf {:chr "chr4", :pos 1806163, :ref "AG", :alt "CC"},
-                             :cdna ~(hgvs/parse "NM_001163213:c.1955_1956delAGinsCC")}
+                             :coding-dna ~(hgvs/parse "NM_001163213:c.1955_1956delAGinsCC")}
                             {:vcf {:chr "chr4", :pos 1806163, :ref "A", :alt "C"},
-                             :cdna ~(hgvs/parse "NM_001163213:c.1955A>C")} ; cf. rs121913105
+                             :coding-dna ~(hgvs/parse "NM_001163213:c.1955A>C")} ; cf. rs121913105
                             {:vcf {:chr "chr4", :pos 1806163, :ref "AG", :alt "CT"},
-                             :cdna ~(hgvs/parse "NM_001163213:c.1955_1956delAGinsCT")})))))
+                             :coding-dna ~(hgvs/parse "NM_001163213:c.1955_1956delAGinsCT")})))))
 
 (defslowtest hgvs->vcf->hgvs-test
   (cavia-testing "protein HGVS with gene to possible vcf variants which gives the same protein HGVS"
@@ -162,10 +162,10 @@
                  (mapcat
                   (fn [nm]
                     ;; hgvs -> variants with a specific accession number
-                    (protein-hgvs->vcf-variants-with-cdna-hgvs
+                    (protein-hgvs->vcf-variants-with-coding-dna-hgvs
                      (hgvs/parse ?protein-hgvs) nm r rgidx)))
                  (map
-                  (fn [{:keys [vcf] {:keys [transcript]} :cdna :as v}]
+                  (fn [{:keys [vcf] {:keys [transcript]} :coding-dna :as v}]
                     (let [hgvs (->> rgidx
                                     (rg/ref-genes transcript)
                                     first

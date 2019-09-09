@@ -1,4 +1,4 @@
-(defproject varity "0.5.2-SNAPSHOT"
+(defproject varity "0.6.0-SNAPSHOT"
   :description "Variant translation library for Clojure"
   :url "https://github.com/chrovis/varity"
   :license {:name "Apache License, Version 2.0"
@@ -6,7 +6,7 @@
   :min-lein-version "2.7.0"
   :dependencies [[org.clojure/clojure "1.10.1" :scope "provided"]
                  [org.clojure/tools.logging "0.4.1"]
-                 [clj-hgvs "0.3.1"]
+                 [clj-hgvs "0.4.0"]
                  [cljam "0.7.2"]
                  [org.apache.commons/commons-compress "1.18"]
                  [proton "0.1.8"]]

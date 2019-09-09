@@ -72,7 +72,7 @@
   [hgvs seq-rdr rg]
   (vcf-variants seq-rdr rg (:mutation hgvs)))
 
-(defn- vcf-variants-with-cdna-hgvs
+(defn- vcf-variants-with-coding-dna-hgvs
   [seq-rdr {:keys [chr strand] :as rg} mut*]
   (if (instance? ProteinSubstitution mut*)
     (let [pos-cands (pos-candidates (:coord mut*) rg)]
@@ -104,9 +104,9 @@
                                  :pos ((if reverse? last first) ps),
                                  :ref (cond-> ref reverse? util-seq/revcomp),
                                  :alt (cond-> alt reverse? util-seq/revcomp)},
-                           :cdna (hgvs/hgvs (:name rg) :cdna mut)}))))))))))
+                           :coding-dna (hgvs/hgvs (:name rg) :coding-dna mut)}))))))))))
     (throw (IllegalArgumentException. "Unsupported mutation"))))
 
-(defn ->vcf-variants-with-cdna-hgvs
+(defn ->vcf-variants-with-coding-dna-hgvs
   [hgvs seq-rdr rg]
-  (vcf-variants-with-cdna-hgvs seq-rdr rg (:mutation hgvs)))
+  (vcf-variants-with-coding-dna-hgvs seq-rdr rg (:mutation hgvs)))

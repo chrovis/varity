@@ -1,4 +1,4 @@
-(ns varity.hgvs-to-vcf.cdna
+(ns varity.hgvs-to-vcf.coding-dna
   (:require clj-hgvs.coordinate
             clj-hgvs.mutation
             [cljam.io.sequence :as cseq]
@@ -8,7 +8,7 @@
 (defn- cds-coord->genomic-pos
   [coord rg]
   (cond
-    (instance? clj_hgvs.coordinate.CDNACoordinate coord)
+    (instance? clj_hgvs.coordinate.CodingDNACoordinate coord)
     (rg/cds-coord->genomic-pos coord rg)
 
     (or (instance? clj_hgvs.coordinate.UnknownCoordinate coord)

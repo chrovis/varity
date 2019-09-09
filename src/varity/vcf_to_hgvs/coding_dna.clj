@@ -1,4 +1,4 @@
-(ns varity.vcf-to-hgvs.cdna
+(ns varity.vcf-to-hgvs.coding-dna
   (:require [clojure.pprint :as pp]
             [clojure.string :as string]
             [clj-hgvs.coordinate :as coord]
@@ -194,7 +194,7 @@
 (defn ->hgvs
   [{:keys [pos ref alt]} seq-rdr rg]
   (hgvs/hgvs (:name rg)
-             :cdna
+             :coding-dna
              (mutation seq-rdr rg pos ref alt)))
 
 (defn- sequence-pstring

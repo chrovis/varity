@@ -7,18 +7,18 @@
 
 (use-fixtures :once disable-log-fixture)
 
-(defn- vcf-variant->cdna-hgvs-texts
+(defn- vcf-variant->coding-dna-hgvs-texts
   [variant seq-rdr rgidx & [options]]
   (map #(hgvs/format % {:show-bases? true
                         :range-format :coord})
-       (vcf-variant->cdna-hgvs variant seq-rdr rgidx options)))
+       (vcf-variant->coding-dna-hgvs variant seq-rdr rgidx options)))
 
-(defslowtest vcf-variant->cdna-hgvs-test
-  (cavia-testing "returns cDNA HGVS strings"
+(defslowtest vcf-variant->coding-dna-hgvs-test
+  (cavia-testing "returns coding DNA HGVS strings"
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
       (are [chr pos ref alt e]
-          (= (vcf-variant->cdna-hgvs-texts {:chr chr, :pos pos, :ref ref, :alt alt}
-                                           test-ref-seq-file rgidx) e)
+          (= (vcf-variant->coding-dna-hgvs-texts {:chr chr, :pos pos, :ref ref, :alt alt}
+                                                 test-ref-seq-file rgidx) e)
         ;; Substitution
         "chr7" 55191822 "T" "G" '("NM_005228:c.2573T>G") ; cf. rs121434568 (+)
         "chr1" 11796321 "G" "A" '("NM_005957:c.665C>T") ; cf. rs1801133 (-)
@@ -120,17 +120,17 @@
   (cavia-testing "tx-margin"
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
       (are [chr pos ref alt tx-margin e]
-          (= (vcf-variant->cdna-hgvs-texts {:chr chr, :pos pos, :ref ref, :alt alt}
-                                           test-ref-seq-file rgidx
-                                           {:tx-margin tx-margin}) e)
+          (= (vcf-variant->coding-dna-hgvs-texts {:chr chr, :pos pos, :ref ref, :alt alt}
+                                                 test-ref-seq-file rgidx
+                                                 {:tx-margin tx-margin}) e)
         "chr5" 1295113 "G" "A" 5000 '("NM_001193376:c.-124C>T"
                                       "NM_198253:c.-124C>T")
         "chr5" 1295113 "G" "A" 0 '())))
   (cavia-testing "throws Exception if inputs are illegal"
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
       (is (thrown? Exception
-                   (vcf-variant->cdna-hgvs {:chr "chr7", :pos 55191823, :ref "T", :alt "G"}
-                                           test-ref-seq-file rgidx))))))
+                   (vcf-variant->coding-dna-hgvs {:chr "chr7", :pos 55191823, :ref "T", :alt "G"}
+                                                 test-ref-seq-file rgidx))))))
 
 (defn- vcf-variant->protein-hgvs-texts
   [variant seq-rdr rgidx]

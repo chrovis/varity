@@ -7,7 +7,7 @@
             [proton.string :as pstring]
             [varity.ref-gene :as rg]
             [varity.vcf-to-hgvs.genome :as genome]
-            [varity.vcf-to-hgvs.cdna :as cdna]
+            [varity.vcf-to-hgvs.coding-dna :as coding-dna]
             [varity.vcf-to-hgvs.common :refer [normalize-variant]]
             [varity.vcf-to-hgvs.protein :as prot]))
 
@@ -26,7 +26,7 @@
       (instance? varity.ref_gene.RefGeneIndex ref-gene) :ref-gene-index
       (map? ref-gene) :ref-gene-entity)))
 
-(defn- cdna-ref-gene? [rg]
+(defn- coding-dna-ref-gene? [rg]
   (some? (re-matches #"NM_\d+(\.\d+)?" (:name rg))))
 
 (defn select-variant
@@ -58,7 +58,7 @@
     (newline)
     (println (genome/debug-string var seq-rdr rg))
     (newline)
-    (println (cdna/debug-string var seq-rdr rg))
+    (println (coding-dna/debug-string var seq-rdr rg))
     (when (cds-affected? var rg)
       (newline)
       (println (prot/debug-string var seq-rdr rg)))
@@ -66,15 +66,15 @@
     (catch Exception e
       (log/warn "Debug printing throws error" e))))
 
-;;; -> cDNA HGVS
+;;; -> Coding DNA HGVS
 
-(defmulti vcf-variant->cdna-hgvs
-  "Converts a VCF-style variant (:chr, :pos, :ref, and :alt) into cDNA HGVS. alt
-  must be a single alternation such as \"TG\". \"TG,T\", for example, is not
+(defmulti vcf-variant->coding-dna-hgvs
+  "Converts a VCF-style variant (:chr, :pos, :ref, and :alt) into coding DNA HGVS.
+  alt must be a single alternation such as \"TG\". \"TG,T\", for example, is not
   allowed. ref-seq must be a path to reference or an instance which implements
   cljam.io.protocols/ISequenceReader. ref-gene must be a path to
   refGene.txt(.gz), ref-gene index, or a ref-gene entity. A returned sequence
-  consists of cDNA HGVS defined in clj-hgvs.
+  consists of coding DNA HGVS defined in clj-hgvs.
 
   Options:
 
@@ -86,23 +86,23 @@
   (fn [_ ref-seq ref-gene & _]
     (dispatch ref-seq ref-gene)))
 
-(defmethod vcf-variant->cdna-hgvs :ref-seq-path
+(defmethod vcf-variant->coding-dna-hgvs :ref-seq-path
   [variant ref-seq ref-gene & [options]]
   (with-open [seq-rdr (cseq/reader ref-seq)]
-    (doall (vcf-variant->cdna-hgvs variant seq-rdr ref-gene options))))
+    (doall (vcf-variant->coding-dna-hgvs variant seq-rdr ref-gene options))))
 
-(defmethod vcf-variant->cdna-hgvs :ref-gene-path
+(defmethod vcf-variant->coding-dna-hgvs :ref-gene-path
   [variant seq-rdr ref-gene & [options]]
   (let [rgidx (rg/index (rg/load-ref-genes ref-gene))]
-    (vcf-variant->cdna-hgvs variant seq-rdr rgidx options)))
+    (vcf-variant->coding-dna-hgvs variant seq-rdr rgidx options)))
 
-(defmethod vcf-variant->cdna-hgvs :ref-gene-index
+(defmethod vcf-variant->coding-dna-hgvs :ref-gene-index
   [{:keys [chr pos ref alt]} seq-rdr rgidx & [options]]
   (let [{:keys [tx-margin] :or {tx-margin 5000}} options
         chr (normalize-chromosome-key chr)]
     (if (valid-ref? seq-rdr chr pos ref)
       (->> (rg/ref-genes chr pos rgidx tx-margin)
-           (filter cdna-ref-gene?)
+           (filter coding-dna-ref-gene?)
            (map (fn [rg]
                   (assoc (select-variant {:chr chr, :pos pos, :ref ref, :alt alt}
                                          seq-rdr rg)
@@ -110,20 +110,20 @@
            (map (fn [{:keys [rg] :as m}]
                   (when (:verbose? options)
                     (print-debug-info m seq-rdr rg))
-                  (cdna/->hgvs m seq-rdr rg)))
+                  (coding-dna/->hgvs m seq-rdr rg)))
            distinct)
       (throw (ex-info "ref is not found on the position."
                       {:type ::invalid-ref
                        :variant {:chr chr, :pos pos, :ref ref, :alt alt}})))))
 
-(defmethod vcf-variant->cdna-hgvs :ref-gene-entity
+(defmethod vcf-variant->coding-dna-hgvs :ref-gene-entity
   [{:keys [pos ref alt]} seq-rdr {:keys [chr] :as rg} & [options]]
   (if (valid-ref? seq-rdr chr pos ref)
     (let [nv (select-variant {:chr chr, :pos pos, :ref ref, :alt alt}
                              seq-rdr rg)]
       (when (:verbose? options)
         (print-debug-info nv seq-rdr rg))
-      (cdna/->hgvs (assoc nv :rg rg) seq-rdr rg))
+      (coding-dna/->hgvs (assoc nv :rg rg) seq-rdr rg))
     (throw (ex-info "ref is not found on the position."
                     {:type ::invalid-ref
                      :variant {:chr chr, :pos pos, :ref ref, :alt alt}}))))
@@ -161,7 +161,7 @@
   (let [chr (normalize-chromosome-key chr)]
     (if (valid-ref? seq-rdr chr pos ref)
       (->> (rg/ref-genes chr pos rgidx)
-           (filter cdna-ref-gene?)
+           (filter coding-dna-ref-gene?)
            (map (fn [rg]
                   (assoc (select-variant {:chr chr, :pos pos, :ref ref, :alt alt}
                                          seq-rdr rg)
@@ -197,7 +197,8 @@
   ref-seq must be a path to reference or an instance which implements
   cljam.io.protocols/ISequenceReader. ref-gene must be a path to
   refGene.txt(.gz), ref-gene index, or a ref-gene entity. A returned sequence
-  consists of maps, each having :cdna and :protein HGVS defined in clj-hgvs.
+  consists of maps, each having :coding-dna and :protein HGVS defined in
+  clj-hgvs.
 
   Options:
 
@@ -225,7 +226,7 @@
         chr (normalize-chromosome-key chr)]
     (if (valid-ref? seq-rdr chr pos ref)
       (->> (rg/ref-genes chr pos rgidx tx-margin)
-           (filter cdna-ref-gene?)
+           (filter coding-dna-ref-gene?)
            (map (fn [rg]
                   (assoc (select-variant {:chr chr, :pos pos, :ref ref, :alt alt}
                                          seq-rdr rg)
@@ -233,7 +234,7 @@
            (map (fn [{:keys [rg] :as m}]
                   (when (:verbose? options)
                     (print-debug-info m seq-rdr rg))
-                  {:cdna (cdna/->hgvs m seq-rdr rg)
+                  {:coding-dna (coding-dna/->hgvs m seq-rdr rg)
                    :protein (if (cds-affected? m rg)
                               (prot/->hgvs m seq-rdr rg))}))
            distinct)
@@ -249,7 +250,7 @@
       (when (:verbose? options)
         (print-debug-info nv seq-rdr rg))
 
-      {:cdna (cdna/->hgvs nv seq-rdr rg)
+      {:coding-dna (coding-dna/->hgvs nv seq-rdr rg)
        :protein (if (cds-affected? nv rg)
                   (prot/->hgvs nv seq-rdr rg))})
     (throw (ex-info "ref is not found on the position."

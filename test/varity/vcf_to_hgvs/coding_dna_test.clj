@@ -1,11 +1,11 @@
-(ns varity.vcf-to-hgvs.cdna-test
+(ns varity.vcf-to-hgvs.coding-dna-test
   (:require [clojure.string :as string]
             [clojure.test :refer :all]
-            [varity.vcf-to-hgvs.cdna :as cdna]))
+            [varity.vcf-to-hgvs.coding-dna :as coding-dna]))
 
 (deftest sequence-pstring-test
   (are [ref-seq alt-seq start end m rg e]
-      (= (#'cdna/sequence-pstring ref-seq alt-seq start end m rg) e)
+      (= (#'coding-dna/sequence-pstring ref-seq alt-seq start end m rg) e)
     ;; NM_005228:c.2573T>G
     "CAAGATCACAGATTTTGGGCTGGCCAAACTGCTGGGTGCGGA"
     "CAAGATCACAGATTTTGGGCGGGCCAAACTGCTGGGTGCGGA"
