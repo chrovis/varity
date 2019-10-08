@@ -1,5 +1,22 @@
 # Changelog
 
+## [Unreleased]
+
+### BREAKING
+
+- cdna is renamed to coding-dna to avoid misunderstanding. See [#28](https://github.com/chrovis/varity/pull/28) for more information.
+    - namespace:
+        - `varity.hgvs-to-vcf.cdna` → `varity.hgvs-to-vcf.coding-dna`
+        - `varity.vcf-to-hgvs.cdna` → `varity.vcf-to-hgvs.coding-dna`
+    - function:
+        - e.g. `cdna-hgvs->vcf-variants` → `coding-dna-hgvs->vcf-variants`
+    - return:
+        - `{:cdna ...}` → `{:coding-dna ...}`
+
+### Changed
+
+- Rename cdna to coding-dna. [#28](https://github.com/chrovis/varity/pull/28)
+
 ## [0.5.1] - 2019-07-12
 
 ### Added
