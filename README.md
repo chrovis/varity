@@ -16,17 +16,22 @@ Variant translation library for Clojure.
 Clojure CLI/deps.edn:
 
 ```clojure
-varity {:mvn/version "0.5.1"}
+varity {:mvn/version "0.6.0"}
 ```
 
 Leiningen/Boot:
 
 ```clojure
-[varity "0.5.1"]
+[varity "0.6.0"]
 ```
 
 To use varity with Clojure 1.8, you must include a dependency on
 [clojure-future-spec](https://github.com/tonsky/clojure-future-spec).
+
+## Breaking Changes in 0.6.0
+
+cdna is renamed to coding-dna to avoid misunderstanding. See
+[CHANGELOG](CHANGELOG.md) for more information.
 
 ## Usage
 
@@ -61,21 +66,8 @@ The returned HGVS is data structure of [clj-hgvs](https://github.com/chrovis/clj
 
 (v2h/vcf-variant->hgvs {:chr "chr7", :pos 55191822, :ref "T", :alt "G"}
                        "path/to/hg38.fa" "path/to/refGene.txt.gz")
-;;=> ({:cdna {:kind :cdna,
-;;            :mutation #clj_hgvs.mutation.DNASubstitution
-;;            {:alt "G",
-;;             :coord #clj_hgvs.coordinate.CDNACoordinate
-;;             {:offset 0, :position 2573, :region nil},
-;;             :ref "T",
-;;             :type ">"},
-;;            :transcript "NM_005228"},
-;;     :protein {:kind :protein,
-;;               :mutation #clj_hgvs.mutation.ProteinSubstitution
-;;               {:alt "Arg",
-;;                :coord #clj_hgvs.coordinate.ProteinCoordinate
-;;                {:position 858},
-;;                :ref "Leu"},
-;;               :transcript nil}})
+;;=> ({:coding-dna #clj-hgvs/hgvs "NM_005228:c.2573T>G",
+;;     :protein #clj-hgvs/hgvs "p.L858R"})
 ```
 
 Use `clj-hgvs.core/format` to obtain HGVS text.
@@ -87,8 +79,8 @@ Use `clj-hgvs.core/format` to obtain HGVS text.
                                               "path/to/hg38.fa" "path/to/refGene.txt.gz")
                first))
 
-(hgvs/format l858r {:amino-acid-format :short})
-;;=> p.L858R
+(hgvs/format l858r {:amino-acid-format :long})
+;;=> "p.Leu858Arg"
 ```
 
 ### HGVS to VCF variants
@@ -99,14 +91,17 @@ Use `clj-hgvs.core/format` to obtain HGVS text.
 (require '[varity.hgvs-to-vcf :as h2v]
          '[clj-hgvs.core :as hgvs])
 
-(h2v/hgvs->vcf-variants (hgvs/parse "NM_005228:c.2573T>G") "path/to/hg38.fa" "path/to/refGene.txt.gz")
+(h2v/hgvs->vcf-variants #clj-hgvs/hgvs "NM_005228:c.2573T>G" "path/to/hg38.fa" "path/to/refGene.txt.gz")
 ;;=> ({:chr "chr7", :pos 55191822, :ref "T", :alt "G"})
 
-(h2v/hgvs->vcf-variants (hgvs/parse "c.2573T>G") "EGFR" "path/to/hg38.fa" "path/to/refGene.txt.gz")
+(h2v/hgvs->vcf-variants #clj-hgvs/hgvs "c.2573T>G" "EGFR" "path/to/hg38.fa" "path/to/refGene.txt.gz")
 ;;=> ({:chr "chr7", :pos 55191822, :ref "T", :alt "G"})
 
-(h2v/hgvs->vcf-variants (hgvs/parse "p.A222V") "MTHFR" "path/to/hg38.fa" "path/to/refGene.txt.gz")
-;;=> ({:chr "chr1", :pos 11796321, :ref "G", :alt "A"})
+(h2v/hgvs->vcf-variants #clj-hgvs/hgvs "p.A222V" "MTHFR" "path/to/hg38.fa" "path/to/refGene.txt.gz")
+;;=> ({:chr "chr1", :pos 11796320, :ref "GG", :alt "CA"}
+;;    {:chr "chr1", :pos 11796320, :ref "GG", :alt "AA"}
+;;    {:chr "chr1", :pos 11796320, :ref "GG", :alt "TA"}
+;;    {:chr "chr1", :pos 11796321, :ref "G", :alt "A"})
 ```
 
 ### Conversion between assemblies
