@@ -41,7 +41,9 @@
 
         ;; repeated sequences
         "NM_005228:c.2571_2573[3]" '({:chr "chr7", :pos 55191822, :ref "T", :alt "TGCTGCT"})
+        "NM_005228:c.2571GCT[3]" '({:chr "chr7", :pos 55191822, :ref "T", :alt "TGCTGCT"})
         "NM_144639:c.1510-122_1510-121[3]" '({:chr "chr3", :pos 126492636, :ref "C", :alt "CCTCT"}) ; cf. rs2307882 (-)
+        "NM_144639:c.1510-122AG[3]" '({:chr "chr3", :pos 126492636, :ref "C", :alt "CCTCT"})
         "NM_004369:c.6063+6[9]" '({:chr "chr2", :pos 237363246, :ref "A", :alt "AA"}) ; cf. rs11385011 (-)
         )))
   (cavia-testing "coding DNA HGVS with gene to vcf variants"
@@ -81,7 +83,9 @@
 
         ;; repeated sequences
         "c.2571_2573[3]" "EGFR" '({:chr "chr7", :pos 55191822, :ref "T", :alt "TGCTGCT"})
+        "c.2571GCT[3]" "EGFR" '({:chr "chr7", :pos 55191822, :ref "T", :alt "TGCTGCT"})
         "c.1510-122_1510-121[3]" "UROC1" '({:chr "chr3", :pos 126492636, :ref "C", :alt "CCTCT"}) ; cf. rs2307882 (-)
+        "c.1510-122AG[3]" "UROC1" '({:chr "chr3", :pos 126492636, :ref "C", :alt "CCTCT"})
         "c.6063+6[9]" "COL6A3" '({:chr "chr2", :pos 237363246, :ref "A", :alt "AA"}
                                  {:chr "chr2", :pos 237341025, :ref "T", :alt "TGGGGG"}
                                  {:chr "chr2", :pos 237353343, :ref "G", :alt "GTTTTTT"}) ; cf. rs11385011 (-)

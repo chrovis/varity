@@ -144,7 +144,9 @@
   (let [start* (cds-coord->genomic-pos (:coord-start mut*) rg)
         end* (cond
                (:coord-end mut*) (cds-coord->genomic-pos (:coord-end mut*) rg)
-               (:ref mut*) (dec (+ start* (count (:ref mut*))))
+               (:ref mut*) (when start*
+                             (+ start* (cond-> (dec (count (:ref mut*)))
+                                         (= strand :reverse) -)))
                :else start*)]
     (if (and start* end*)
       (let [[start end] (cond-> [start* end*] (= strand :reverse) reverse)
