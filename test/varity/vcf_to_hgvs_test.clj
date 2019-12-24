@@ -60,12 +60,13 @@
                                   "NM_198317:c.1157_1158delCG"
                                   "NM_001160184:c.-3309_-3308delCG"
                                   "NM_032129:c.-3309_-3308delCG")
-        "chr3" 116193879 "ACAC" "A" '("NM_001318915:c.156-107326_156-107324delGTG"
-                                      "NM_002338:c.156-107326_156-107324delGTG") ; cf. rs17358
-        "chr16" 282999 "GTCTC" "G" '("NM_001176:c.*190_*193delTCTC"
-                                     "NM_006849:c.-166_-163delTCTC"
-                                     "NM_003502:c.*5119_*5122delGAGA"
-                                     "NM_181050:c.*5119_*5122delGAGA") ; cf. rs28365940 (deletion in UTR)
+        "chr7" 140800463 "CT" "C" '("NM_004333:c.878delA")
+        "chr16" 280533 "CTCTCTGCCGG" "C" '("NM_001286485:c.-4632_-4623delCCGGCAGAGA"
+                                           "NM_001286486:c.-5019_-5010delCCGGCAGAGA"
+                                           "NM_003834:c.-4706_-4697delCCGGCAGAGA"
+                                           "NM_183337:c.-4632_-4623delCCGGCAGAGA"
+                                           "NM_001176:c.-147_-138delTCTCTGCCGG"
+                                           "NM_006849:c.-2636_-2627delTCTCTGCCGG") ; cf. rs1460727826 (deletion in UTR)
         "chr6" 33086236 "TA" "T" '("NM_002121:c.776delA") ; cf. rs67523850 (deletion in border of UTR)
 
         ;; Duplication
@@ -82,6 +83,9 @@
                                          "NM_001243246:c.1383_1389dupGAACTCC"
                                          "NM_022356:c.1383_1389dupGAACTCC") ; cf. rs137853953 (-)
         "chr7" 152247986 "G" "GT" '("NM_170606:c.2447dupA") ; cf. rs150073007 (-)
+        "chr5" 112839958 "A" "AA" '("NM_001127511:c.4310dupA"
+                                    "NM_000038:c.4364dupA"
+                                    "NM_001127510:c.4364dupA") ; cf. COSV57323270 (neither repeated sequences nor insertion)
 
         ;; Insertion
         "chr1" 69567 "A" "AT" '("NM_001005484:c.477_478insT")
@@ -117,15 +121,20 @@
                                     "NM_057166:c.4242+6[9]"
                                     "NM_057167:c.5445+6[9]") ; cf. rs11385011 (-)
         )))
-  (cavia-testing "tx-margin"
+  (cavia-testing "options"
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
-      (are [chr pos ref alt tx-margin e]
-          (= (vcf-variant->coding-dna-hgvs-texts {:chr chr, :pos pos, :ref ref, :alt alt}
-                                                 test-ref-seq-file rgidx
-                                                 {:tx-margin tx-margin}) e)
-        "chr5" 1295113 "G" "A" 5000 '("NM_001193376:c.-124C>T"
-                                      "NM_198253:c.-124C>T")
-        "chr5" 1295113 "G" "A" 0 '())))
+      (are [chr pos ref alt opts e] (= (vcf-variant->coding-dna-hgvs-texts
+                                        {:chr chr, :pos pos, :ref ref, :alt alt}
+                                        test-ref-seq-file rgidx opts)
+                                       e)
+        ;; prefer-deletion?, cf. rs727502907 (-)
+        "chr7" 140924774 "GGGAGGC" "G" {:prefer-deletion? false} '("NM_004333:c.-95_-90[3]")
+        "chr7" 140924774 "GGGAGGC" "G" {:prefer-deletion? true} '("NM_004333:c.-77_-72delGCCTCC")
+
+        ;; tx-margin
+        "chr5" 1295113 "G" "A" {:tx-margin 5000} '("NM_001193376:c.-124C>T"
+                                                   "NM_198253:c.-124C>T")
+        "chr5" 1295113 "G" "A" {:tx-margin 0} '())))
   (cavia-testing "throws Exception if inputs are illegal"
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
       (is (thrown? Exception
@@ -133,11 +142,11 @@
                                                  test-ref-seq-file rgidx))))))
 
 (defn- vcf-variant->protein-hgvs-texts
-  [variant seq-rdr rgidx]
+  [variant seq-rdr rgidx & [options]]
   (map #(hgvs/format % {:amino-acid-format :short
                         :show-ter-site? true
                         :ter-format :short})
-       (vcf-variant->protein-hgvs variant seq-rdr rgidx)))
+       (vcf-variant->protein-hgvs variant seq-rdr rgidx options)))
 
 (defslowtest vcf-variant->protein-hgvs-test
   (cavia-testing "returns protein HGVS strings"
@@ -157,10 +166,10 @@
         "chr2" 47478341 "TG" "T" '("p.L762*" "p.L696*") ;; rs786204050 (+) frameshift with termination
 
         ;; deletion
-        "chr1" 1286041 "CCTT" "C" '("p.F227del")
-        "chr3" 198153259 "GGCAGCAGCA" "G" '("p.Q82_Q84del"); cf. rs56683636 (+)
+        "chr1" 240092288 "AGTC" "A" '("p.S61del") ; cf. rs772088733 (+)
+        "chr7" 55174771 "AGGAATTAAGAGAAGC" "A" '("p.E746_A750del") ; cf. rs121913421 (+)
         "chr1" 247815239 "AAGG" "A" '("p.S163del") ; cf. rs35979231 (-)
-        "chr1" 84574315 "CGCAGCGCCA" "C" '("p.L31_L33del"); cf. rs3217269 (-)
+        "chr2" 29223408 "AAGCAGT" "A" '("p.Y1096_C1097del") ; cf. rs776101205 (-)
 
         ;; Duplication
         "chr2" 26254257 "G" "GACT" '("p.T2dup") ; cf. rs3839049 (+)
@@ -176,7 +185,7 @@
         "chr1" 152111364 "TGC" "TCG" '("p.E617_Q618delinsDE") ; cf. rs35444647 (-)
 
         ;; repeated sequences
-        "chr7" 55191823 "G" "GCTGCTG" '("p.L858[3]") ; not actual example (+)
+        "chr1" 47438996 "T" "TCCGCAC" '("p.P286_H287[5]") ; cf. rs3046924 (+)
         "chr1" 11796319 "C" "CGGCGGC" '("p.A222[3]") ; not actual example (-)
 
         ;; Frame shift
@@ -201,6 +210,17 @@
         ;; unknown
         "chr12" 40393453 "G" "A" '("p.?") ; not actual example (+)
         )))
+
+  (cavia-testing "options"
+    (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
+      (are [chr pos ref alt opts e] (= (vcf-variant->protein-hgvs-texts
+                                        {:chr chr, :pos pos, :ref ref, :alt alt}
+                                        test-ref-seq-file rgidx opts)
+                                       e)
+        ;; prefer-deletion?, not actual example (+)
+        "chr1" 47439008 "CCCGCAC" "C" {:prefer-deletion? false} '("p.P286_H287[3]")
+        "chr1" 47439008 "CCCGCAC" "C" {:prefer-deletion? true} '("p.P292_H293del"))))
+
   (cavia-testing "throws Exception if inputs are illegal"
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
       (is (thrown? Exception

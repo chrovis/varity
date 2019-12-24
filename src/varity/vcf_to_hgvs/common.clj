@@ -84,21 +84,29 @@
                      :position pos
                      :bases bases}))))
 
-;; ...CAGTC... 8 AGT => ["AGT" 1 1]
-;; ...CAGTC... 8 AGTAGT => ["AGT" 1 2]
-;; ...CAGTAGTC... 11 AGTAGT => ["AGT" 2 2]
+;; ...CAGTC...    8  AGT    :ins => ["AGT" 1 2]
+;; ...CAGTC...    8  AGTAGT :ins => ["AGT" 1 3]
+;; ...CAGTAGTC... 11 AGTAGT :ins => ["AGT" 2 4]
+;; ...CAGTAGTC... 8  AGT    :del => ["AGT" 2 1]
 (defn repeat-info
-  [seq* pos ins]
-  (->> (repeat-units ins)
+  [seq* pos alt type]
+  {:pre [(#{:ins :del} type)]}
+  (->> (repeat-units alt)
        (map (fn [unit]
-              [unit
-               (->> (subs seq* 0 (dec pos))
-                    (reverse)
-                    (partition (count unit))
-                    (take-while #(= % (reverse unit)))
-                    (count))
-               (/ (count ins) (count unit))]))
-       (remove (comp zero? second))
+              (let [end (case type
+                          :ins (dec pos)
+                          :del (dec (+ pos (count alt))))]
+                (when (<= end (count seq*))
+                  (let [ref-repeat (->> (subs seq* 0 end)
+                                        (reverse)
+                                        (partition (count unit))
+                                        (take-while #(= % (reverse unit)))
+                                        (count))]
+                    [unit
+                     ref-repeat
+                     (+ ref-repeat (cond-> (/ (count alt) (count unit))
+                                     (= type :del) -))])))))
+       (remove (fn [[_ r a]] (or (zero? r) (zero? a))))
        (first)))
 
 ;; ("AGT" "AGTCTG" "AGTCTGAAA" ...)

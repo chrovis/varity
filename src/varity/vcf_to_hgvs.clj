@@ -66,6 +66,13 @@
     (catch Exception e
       (log/warn "Debug printing throws error" e))))
 
+(def ^:private default-options
+  {;; NOTE: Change default :prefer-deletion to false in the next major release
+   ;;       (0.7.0).
+   :prefer-deletion? true
+   :tx-margin 5000
+   :verbose? false})
+
 ;;; -> Coding DNA HGVS
 
 (defmulti vcf-variant->coding-dna-hgvs
@@ -78,9 +85,15 @@
 
   Options:
 
-    :tx-margin  The length of transcription margin, up to a maximum of 10000,
-                default 5000.
-    :verbose?   Print debug information, default false."
+    :prefer-deletion?  Prefer deletion (e.g. \"c.7_9del\") to repeated
+                       sequences (e.g. \"c.4_6[1]\"), default true for backward
+                       compatibility. The default value plans to be changed to
+                       false in the next major release.
+
+    :tx-margin         The length of transcription margin, up to a maximum of
+                       10000, default 5000.
+
+    :verbose?          Print debug information, default false."
   {:arglists '([variant ref-seq ref-gene]
                [variant ref-seq ref-gene options])}
   (fn [_ ref-seq ref-gene & _]
@@ -98,10 +111,10 @@
 
 (defmethod vcf-variant->coding-dna-hgvs :ref-gene-index
   [{:keys [chr pos ref alt]} seq-rdr rgidx & [options]]
-  (let [{:keys [tx-margin] :or {tx-margin 5000}} options
+  (let [options (merge default-options options)
         chr (normalize-chromosome-key chr)]
     (if (valid-ref? seq-rdr chr pos ref)
-      (->> (rg/ref-genes chr pos rgidx tx-margin)
+      (->> (rg/ref-genes chr pos rgidx (:tx-margin options))
            (filter coding-dna-ref-gene?)
            (map (fn [rg]
                   (assoc (select-variant {:chr chr, :pos pos, :ref ref, :alt alt}
@@ -110,7 +123,7 @@
            (map (fn [{:keys [rg] :as m}]
                   (when (:verbose? options)
                     (print-debug-info m seq-rdr rg))
-                  (coding-dna/->hgvs m seq-rdr rg)))
+                  (coding-dna/->hgvs m seq-rdr rg options)))
            distinct)
       (throw (ex-info "ref is not found on the position."
                       {:type ::invalid-ref
@@ -118,15 +131,16 @@
 
 (defmethod vcf-variant->coding-dna-hgvs :ref-gene-entity
   [{:keys [pos ref alt]} seq-rdr {:keys [chr] :as rg} & [options]]
-  (if (valid-ref? seq-rdr chr pos ref)
-    (let [nv (select-variant {:chr chr, :pos pos, :ref ref, :alt alt}
-                             seq-rdr rg)]
-      (when (:verbose? options)
-        (print-debug-info nv seq-rdr rg))
-      (coding-dna/->hgvs (assoc nv :rg rg) seq-rdr rg))
-    (throw (ex-info "ref is not found on the position."
-                    {:type ::invalid-ref
-                     :variant {:chr chr, :pos pos, :ref ref, :alt alt}}))))
+  (let [options (merge default-options options)]
+    (if (valid-ref? seq-rdr chr pos ref)
+      (let [nv (select-variant {:chr chr, :pos pos, :ref ref, :alt alt}
+                               seq-rdr rg)]
+        (when (:verbose? options)
+          (print-debug-info nv seq-rdr rg))
+        (coding-dna/->hgvs (assoc nv :rg rg) seq-rdr rg))
+      (throw (ex-info "ref is not found on the position."
+                      {:type ::invalid-ref
+                       :variant {:chr chr, :pos pos, :ref ref, :alt alt}})))))
 
 ;;; -> protein HGVS
 
@@ -140,7 +154,12 @@
 
   Options:
 
-    :verbose?  Print debug information, default false."
+    :prefer-deletion?  Prefer deletion (e.g. \"p.P7_H8del\") to repeated
+                       sequences (e.g. \"p.P5_H6[1]\"), default true for
+                       backward compatibility. The default value plans to be
+                       changed to false in the next major release.
+
+    :verbose?          Print debug information, default false."
   {:arglists '([variant ref-seq ref-gene]
                [variant ref-seq ref-gene options])}
   (fn [_ ref-seq ref-gene & _]
@@ -158,7 +177,8 @@
 
 (defmethod vcf-variant->protein-hgvs :ref-gene-index
   [{:keys [chr pos ref alt]} seq-rdr rgidx & [options]]
-  (let [chr (normalize-chromosome-key chr)]
+  (let [options (merge default-options options)
+        chr (normalize-chromosome-key chr)]
     (if (valid-ref? seq-rdr chr pos ref)
       (->> (rg/ref-genes chr pos rgidx)
            (filter coding-dna-ref-gene?)
@@ -170,7 +190,7 @@
            (keep (fn [{:keys [rg] :as m}]
                    (when (:verbose? options)
                      (print-debug-info m seq-rdr rg))
-                   (prot/->hgvs m seq-rdr rg)))
+                   (prot/->hgvs m seq-rdr rg options)))
            distinct)
       (throw (ex-info "ref is not found on the position."
                       {:type ::invalid-ref
@@ -178,16 +198,17 @@
 
 (defmethod vcf-variant->protein-hgvs :ref-gene-entity
   [{:keys [pos ref alt]} seq-rdr {:keys [chr] :as rg} & [options]]
-  (if (valid-ref? seq-rdr chr pos ref)
-    (let [nv (select-variant {:chr chr, :pos pos, :ref ref, :alt alt}
-                             seq-rdr rg)]
-      (when (cds-affected? nv rg)
-        (when (:verbose? options)
-          (print-debug-info nv seq-rdr rg))
-        (prot/->hgvs (assoc nv :rg rg) seq-rdr rg)))
-    (throw (ex-info "ref is not found on the position."
-                    {:type ::invalid-ref
-                     :variant {:chr chr, :pos pos, :ref ref, :alt alt}}))))
+  (let [options (merge default-options options)]
+    (if (valid-ref? seq-rdr chr pos ref)
+      (let [nv (select-variant {:chr chr, :pos pos, :ref ref, :alt alt}
+                               seq-rdr rg)]
+        (when (cds-affected? nv rg)
+          (when (:verbose? options)
+            (print-debug-info nv seq-rdr rg))
+          (prot/->hgvs (assoc nv :rg rg) seq-rdr rg options)))
+      (throw (ex-info "ref is not found on the position."
+                      {:type ::invalid-ref
+                       :variant {:chr chr, :pos pos, :ref ref, :alt alt}})))))
 
 ;;; -> Multiple HGVS
 
@@ -202,9 +223,15 @@
 
   Options:
 
-    :tx-margin  The length of transcription margin, up to a maximum of 10000,
-                default 5000.
-    :verbose?   Print debug information, default false."
+    :prefer-deletion?  Prefer deletion (e.g. \"c.7_9del\") to repeated
+                       sequences (e.g. \"c.4_6[1]\"), default true for backward
+                       compatibility. The default value plans to be changed to
+                       false in the next major release.
+
+    :tx-margin         The length of transcription margin, up to a maximum of
+                       10000, default 5000.
+
+    :verbose?          Print debug information, default false."
   {:arglists '([variant ref-seq ref-gene]
                [variant ref-seq ref-gene options])}
   (fn [_ ref-seq ref-gene & _]
@@ -222,10 +249,10 @@
 
 (defmethod vcf-variant->hgvs :ref-gene-index
   [{:keys [chr pos ref alt]} seq-rdr rgidx & [options]]
-  (let [{:keys [tx-margin] :or {tx-margin 5000}} options
+  (let [options (merge default-options options)
         chr (normalize-chromosome-key chr)]
     (if (valid-ref? seq-rdr chr pos ref)
-      (->> (rg/ref-genes chr pos rgidx tx-margin)
+      (->> (rg/ref-genes chr pos rgidx (:tx-margin options))
            (filter coding-dna-ref-gene?)
            (map (fn [rg]
                   (assoc (select-variant {:chr chr, :pos pos, :ref ref, :alt alt}
@@ -234,25 +261,26 @@
            (map (fn [{:keys [rg] :as m}]
                   (when (:verbose? options)
                     (print-debug-info m seq-rdr rg))
-                  {:coding-dna (coding-dna/->hgvs m seq-rdr rg)
+                  {:coding-dna (coding-dna/->hgvs m seq-rdr rg options)
                    :protein (if (cds-affected? m rg)
-                              (prot/->hgvs m seq-rdr rg))}))
+                              (prot/->hgvs m seq-rdr rg options))}))
            distinct)
       (throw (ex-info "ref is not found on the position."
                       {:type ::invalid-ref
                        :variant {:chr chr, :pos pos, :ref ref, :alt alt}})))))
 
 (defmethod vcf-variant->hgvs :ref-gene-entity
-  [{:keys [pos ref alt]} seq-rdr {:keys [chr] :as rg} & options]
-  (if (valid-ref? seq-rdr chr pos ref)
-    (let [nv (select-variant {:chr chr, :pos pos, :ref ref, :alt alt}
-                             seq-rdr rg)]
-      (when (:verbose? options)
-        (print-debug-info nv seq-rdr rg))
+  [{:keys [pos ref alt]} seq-rdr {:keys [chr] :as rg} & [options]]
+  (let [options (merge default-options options)]
+    (if (valid-ref? seq-rdr chr pos ref)
+      (let [nv (select-variant {:chr chr, :pos pos, :ref ref, :alt alt}
+                               seq-rdr rg)]
+        (when (:verbose? options)
+          (print-debug-info nv seq-rdr rg))
 
-      {:coding-dna (coding-dna/->hgvs nv seq-rdr rg)
-       :protein (if (cds-affected? nv rg)
-                  (prot/->hgvs nv seq-rdr rg))})
-    (throw (ex-info "ref is not found on the position."
-                    {:type ::invalid-ref
-                     :variant {:chr chr, :pos pos, :ref ref, :alt alt}}))))
+        {:coding-dna (coding-dna/->hgvs nv seq-rdr rg options)
+         :protein (if (cds-affected? nv rg)
+                    (prot/->hgvs nv seq-rdr rg options))})
+      (throw (ex-info "ref is not found on the position."
+                      {:type ::invalid-ref
+                       :variant {:chr chr, :pos pos, :ref ref, :alt alt}})))))
