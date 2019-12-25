@@ -194,7 +194,7 @@
                                                    ref-only alt-only)
         nunit (count unit)
         start (case strand
-                :forward (+ pos offset (- (* nunit ref-repeat)))
+                :forward (+ pos offset (- (* nunit (min ref-repeat alt-repeat))))
                 :reverse (+ pos offset (* nunit ref-repeat) -1))
         end (case strand
               :forward (dec (+ start nunit))
