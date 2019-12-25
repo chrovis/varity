@@ -31,6 +31,20 @@
        (map first)
        (mapv #(apply str %))))
 
+(defn- repeat-count
+  [seq-rdr chr pos unit strand]
+  (if (seq unit)
+    (->> (iterate #((case strand
+                      :forward +
+                      :reverse -)
+                    % (count unit)) pos)
+         (map #(cseq/read-sequence seq-rdr {:chr chr
+                                            :start %
+                                            :end (+ % (count unit) -1)}))
+         (take-while #(= % unit))
+         count)
+    (throw (IllegalArgumentException. "empty unit"))))
+
 (defmulti vcf-variant (fn [mut* seq-rdr rg] (class mut*)))
 
 (defmethod vcf-variant clj_hgvs.mutation.DNASubstitution
@@ -76,16 +90,18 @@
                                       :reverse (:coord-start mut*))
                                     rg)]
     (if (and start end)
-      (let [dup (cseq/read-sequence seq-rdr {:chr chr, :start start, :end end})
-            base (case strand
-                   :forward (subs dup (dec (count dup)))
-                   :reverse (cseq/read-sequence seq-rdr {:chr chr, :start (dec start), :end (dec start)}))]
-        {:chr chr
-         :pos (case strand
-                :forward end
-                :reverse (dec start))
-         :ref base
-         :alt (str base dup)}))))
+      (when-let [dup (cseq/read-sequence seq-rdr {:chr chr, :start start, :end end})]
+        (let [repeat (repeat-count seq-rdr chr start dup (case strand
+                                                           :forward :reverse
+                                                           :reverse :forward))
+              base-pos (case strand
+                         :forward (dec (- start (* (count dup) (dec repeat))))
+                         :reverse (dec start))
+              base (cseq/read-sequence seq-rdr {:chr chr, :start base-pos, :end base-pos})]
+          {:chr chr
+           :pos base-pos
+           :ref base
+           :alt (str base dup)})))))
 
 (defmethod vcf-variant clj_hgvs.mutation.DNAInsertion
   [mut* seq-rdr {:keys [chr strand] :as rg}]
@@ -139,6 +155,19 @@
            :alt (str (first ref) (cond-> (:alt mut*)
                                    (= strand :reverse) (util-seq/revcomp)))})))))
 
+(defn- valid-repeat?
+  [seq-rdr rg pos unit]
+  (let [r-start ((case (:strand rg)
+                   :forward -
+                   :reverse +)
+                 pos (count unit))
+        r-end (dec (+ r-start (count unit)))]
+    (and (= (count (repeat-units unit)) 1)
+         (not= (cseq/read-sequence seq-rdr {:chr (:chr rg)
+                                            :start r-start
+                                            :end r-end})
+               unit))))
+
 (defmethod vcf-variant clj_hgvs.mutation.DNARepeatedSeqs
   [mut* seq-rdr {:keys [chr strand] :as rg}]
   (let [start* (cds-coord->genomic-pos (:coord-start mut*) rg)
@@ -150,24 +179,22 @@
                :else start*)]
     (if (and start* end*)
       (let [[start end] (cond-> [start* end*] (= strand :reverse) reverse)
-            dup (cseq/read-sequence seq-rdr {:chr chr, :start start, :end end})]
-        (if (= (count (repeat-units dup)) 1)
-          (let [base (case strand
-                       :forward (subs dup (dec (count dup)))
-                       :reverse (cseq/read-sequence seq-rdr {:chr chr, :start (dec start), :end (dec start)}))
-                nunit (inc (- end start))
-                rep (case strand
-                      :forward (cseq/read-sequence seq-rdr {:chr chr, :start start, :end (dec (+ start (* nunit (:ncopy mut*))))})
-                      :reverse (cseq/read-sequence seq-rdr {:chr chr, :start (inc (- start (* nunit (:ncopy mut*)))), :end end}))
-                m (case strand
-                    :forward (count (filter #(= (apply str %) dup) (partition nunit rep)))
-                    :reverse (count (filter #(= % (reverse dup)) (partition nunit (reverse rep)))))]
+            unit (cseq/read-sequence seq-rdr {:chr chr, :start start, :end end})]
+        (if (valid-repeat? seq-rdr rg start unit)
+          (let [ref-repeat (repeat-count seq-rdr chr start unit strand)
+                alt-repeat (:ncopy mut*)
+                base-pos (case strand
+                           :forward (dec start)
+                           :reverse (dec (- start (* (count unit) (dec ref-repeat)))))
+                base (cseq/read-sequence seq-rdr {:chr chr, :start base-pos, :end base-pos})]
             {:chr chr
-             :pos (case strand
-                    :forward end
-                    :reverse (dec start))
-             :ref base
-             :alt (str base (apply str (repeat (- (:ncopy mut*) m) dup)))}))))))
+             :pos base-pos
+             :ref (if (<= ref-repeat alt-repeat)
+                    base
+                    (apply str base (repeat (- ref-repeat alt-repeat) unit)))
+             :alt (if (<= ref-repeat alt-repeat)
+                    (apply str base (repeat (- alt-repeat ref-repeat) unit))
+                    base)}))))))
 
 (defn ->vcf-variant
   [hgvs seq-rdr rg]

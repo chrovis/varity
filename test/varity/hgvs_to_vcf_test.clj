@@ -24,8 +24,8 @@
         "NM_002338:c.156-107326_156-107324delGTG" '({:chr "chr3", :pos 116193879, :ref "ACAC", :alt "A"}) ; cf. rs17358
 
         ;; duplication
-        "NM_000179:c.4062_4065dupGACT" '({:chr "chr2", :pos 47806842, :ref "T", :alt "TGACT"}) ; cf. rs55740729 (+)
-        "NM_000183:c.4_6dupACT" '({:chr "chr2", :pos 26254260, :ref "T", :alt "TACT"}) ; cf. rs3839049 (+)
+        "NM_000179:c.4062_4065dupGACT" '({:chr "chr2", :pos 47806838, :ref "T", :alt "TGACT"}) ; cf. rs55740729 (+)
+        "NM_000183:c.4_6dupACT" '({:chr "chr2", :pos 26254257, :ref "G", :alt "GACT"}) ; cf. rs3839049 (+)
         "NM_022356:c.1383_1389dupGAACTCC" '({:chr "chr1", :pos 42752620, :ref "T", :alt "TGGAGTTC"}) ; cf. rs137853953 (-)
 
         ;; insertion
@@ -40,11 +40,13 @@
         "NM_005529:c.862_863delCAinsG" '({:chr "chr1", :pos 21887514, :ref "CTG", :alt "CC"}) ; cf. rs2010297 (-)
 
         ;; repeated sequences
-        "NM_005228:c.2571_2573[3]" '({:chr "chr7", :pos 55191822, :ref "T", :alt "TGCTGCT"})
-        "NM_005228:c.2571GCT[3]" '({:chr "chr7", :pos 55191822, :ref "T", :alt "TGCTGCT"})
+        "NM_005228:c.2571_2573[3]" '({:chr "chr7", :pos 55191819, :ref "G", :alt "GGCTGCT"})
+        "NM_005228:c.2571GCT[3]" '({:chr "chr7", :pos 55191819, :ref "G", :alt "GGCTGCT"})
         "NM_144639:c.1510-122_1510-121[3]" '({:chr "chr3", :pos 126492636, :ref "C", :alt "CCTCT"}) ; cf. rs2307882 (-)
         "NM_144639:c.1510-122AG[3]" '({:chr "chr3", :pos 126492636, :ref "C", :alt "CCTCT"})
-        "NM_004369:c.6063+6[9]" '({:chr "chr2", :pos 237363246, :ref "A", :alt "AA"}) ; cf. rs11385011 (-)
+        "NM_004369:c.6063+6[9]" '({:chr "chr2", :pos 237363239, :ref "T", :alt "TA"}) ; cf. rs11385011 (-)
+        "NM_000059:c.18AG[2]" '({:chr "chr13", :pos 32316477, :ref "AAG", :alt "A"}) ; cf. rs397507623 (+)
+        "NM_004333:c.-95_-90[3]" '({:chr "chr7", :pos 140924774, :ref "GGGAGGC", :alt "G"}) ; cf. rs727502907 (-)
         )))
   (cavia-testing "coding DNA HGVS with gene to vcf variants"
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
@@ -64,9 +66,9 @@
         "c.156-107326_156-107324delGTG" "LSAMP" '({:chr "chr3", :pos 116193879, :ref "ACAC", :alt "A"}) ; cf. rs17358
 
         ;; duplication
-        "c.4062_4065dupGACT" "MSH6" '({:chr "chr2", :pos 47806842, :ref "T", :alt "TGACT"}) ; cf. rs55740729 (+)
-        "c.4_6dupACT" "HADHB" '({:chr "chr2", :pos 26254260, :ref "T", :alt "TACT"}
-                                {:chr "chr2", :pos 26261026, :ref "A", :alt "AACA"}) ; cf. rs3839049 (+)
+        "c.4062_4065dupGACT" "MSH6" '({:chr "chr2", :pos 47806838, :ref "T", :alt "TGACT"}) ; cf. rs55740729 (+)
+        "c.4_6dupACT" "HADHB" '({:chr "chr2", :pos 26254257, :ref "G", :alt "GACT"}
+                                {:chr "chr2", :pos 26261023, :ref "G", :alt "GACA"}) ; cf. rs3839049 (+)
         "c.1383_1389dupGAACTCC" "P3H1" '({:chr "chr1", :pos 42752620, :ref "T", :alt "TGGAGTTC"}) ; cf. rs137853953 (-)
 
         ;; insertion
@@ -82,13 +84,14 @@
         "c.862_863delCAinsG" "HSPG2" '({:chr "chr1", :pos 21887514, :ref "CTG", :alt "CC"}) ; cf. rs2010297 (-)
 
         ;; repeated sequences
-        "c.2571_2573[3]" "EGFR" '({:chr "chr7", :pos 55191822, :ref "T", :alt "TGCTGCT"})
-        "c.2571GCT[3]" "EGFR" '({:chr "chr7", :pos 55191822, :ref "T", :alt "TGCTGCT"})
+        "c.2571_2573[3]" "EGFR" '({:chr "chr7", :pos 55191819, :ref "G", :alt "GGCTGCT"})
+        "c.2571GCT[3]" "EGFR" '({:chr "chr7", :pos 55191819, :ref "G", :alt "GGCTGCT"})
         "c.1510-122_1510-121[3]" "UROC1" '({:chr "chr3", :pos 126492636, :ref "C", :alt "CCTCT"}) ; cf. rs2307882 (-)
         "c.1510-122AG[3]" "UROC1" '({:chr "chr3", :pos 126492636, :ref "C", :alt "CCTCT"})
-        "c.6063+6[9]" "COL6A3" '({:chr "chr2", :pos 237363246, :ref "A", :alt "AA"}
-                                 {:chr "chr2", :pos 237341025, :ref "T", :alt "TGGGGG"}
-                                 {:chr "chr2", :pos 237353343, :ref "G", :alt "GTTTTTT"}) ; cf. rs11385011 (-)
+        "c.6063+6[9]" "COL6A3" '({:chr "chr2", :pos 237363239, :ref "T", :alt "TA"}
+                                 {:chr "chr2", :pos 237353343, :ref "G", :alt "GTTTTTTTT"}) ; cf. rs11385011 (-)
+        "c.18AG[2]" "BRCA2" '({:chr "chr13", :pos 32316477, :ref "AAG", :alt "A"}) ; cf. rs397507623 (+)
+        "c.-95_-90[3]" "BRAF" '({:chr "chr7", :pos 140924774, :ref "GGGAGGC", :alt "G"}) ; cf. rs727502907 (-)
         )))
   (cavia-testing "protein HGVS with gene to possible vcf variants"
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
