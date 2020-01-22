@@ -11,16 +11,21 @@
             [varity.vcf-to-hgvs.common :refer [diff-bases] :as common]))
 
 (defn- repeat-info-forward
-  [seq-rdr rg pos ins]
+  [seq-rdr rg pos alt type]
   (->> (common/read-sequence-stepwise-backward
         seq-rdr
         {:chr (:chr rg)
          :start (- (:tx-start rg) rg/max-tx-margin)
-         :end (dec pos)}
+         :end (dec (cond-> pos
+                     (= type :del) (+ (count alt))))}
         100)
        (map (fn [seq*]
-              (let [nseq* (count seq*)]
-                (if-let [[unit ref-repeat :as ri] (common/repeat-info seq* (inc nseq*) ins)]
+              (let [nseq* (count seq*)
+                    pos* (case type
+                           :ins (inc nseq*)
+                           :del (inc (- nseq* (count alt))))]
+                (if-let [[unit ref-repeat :as ri] (common/repeat-info
+                                                   seq* pos* alt type)]
                   (let [nunit (count unit)]
                     (if (> (* nunit ref-repeat) (- nseq* nunit))
                       false
@@ -29,7 +34,7 @@
        (first)))
 
 (defn- repeat-info-backward
-  [seq-rdr rg pos ins]
+  [seq-rdr rg pos alt type]
   (->> (common/read-sequence-stepwise
         seq-rdr
         {:chr (:chr rg)
@@ -37,10 +42,15 @@
          :end (+ (:tx-end rg) rg/max-tx-margin)}
         100)
        (map (fn [seq*]
-              (let [nseq* (count seq*)]
-                (if-let [[unit ref-repeat :as ri] (common/repeat-info (util-seq/revcomp seq*)
-                                                                      (inc nseq*)
-                                                                      (util-seq/revcomp ins))]
+              (let [nseq* (count seq*)
+                    pos* (case type
+                           :ins (inc nseq*)
+                           :del (inc (- nseq* (count alt))))]
+                (if-let [[unit ref-repeat :as ri] (common/repeat-info
+                                                   (util-seq/revcomp seq*)
+                                                   pos*
+                                                   (util-seq/revcomp alt)
+                                                   type)]
                   (let [nunit (count unit)]
                     (if (> (* nunit ref-repeat) (- nseq* nunit))
                       false
@@ -49,26 +59,39 @@
        (first)))
 
 (defn- repeat-info*
-  [seq-rdr rg pos ins]
-  (case (:strand rg)
-    :forward (repeat-info-forward seq-rdr rg pos ins)
-    :reverse (repeat-info-backward seq-rdr rg pos ins)))
+  [seq-rdr rg pos ref-only alt-only]
+  (when-let [[alt type] (cond
+                          (and (empty? ref-only) (seq alt-only)) [alt-only :ins]
+                          (and (seq ref-only) (empty? alt-only)) [ref-only :del])]
+    (case (:strand rg)
+      :forward (repeat-info-forward seq-rdr rg pos alt type)
+      :reverse (repeat-info-backward seq-rdr rg pos alt type))))
 
 (defn- mutation-type
-  [seq-rdr rg pos ref alt]
+  [seq-rdr rg pos ref alt {:keys [prefer-deletion?]}]
   (if (re-matches #"[acgntACGNT]*" alt)
     (let [[ref-only alt-only offset _] (diff-bases ref alt)
           nrefo (count ref-only)
           nalto (count alt-only)
-          [unit ref-repeat ins-repeat] (repeat-info* seq-rdr rg (+ pos offset) alt-only)]
+          [unit ref-repeat alt-repeat] (repeat-info* seq-rdr rg (+ pos offset)
+                                                     ref-only alt-only)]
       (cond
         (or (= nrefo nalto 0) (= nrefo nalto 1)) :substitution
+        (and prefer-deletion? (pos? nrefo) (zero? nalto)) :deletion
         (= ref-only (util-seq/revcomp alt-only)) :inversion
+        (and (some? unit) (= ref-repeat 1) (= alt-repeat 2)) :duplication
+        (and (some? unit) (pos? alt-repeat)
+             ;; In the protein coding region, repeat descriptions are used only
+             ;; for repeat units with a length which is a multiple of 3, i.e.
+             ;; which can not affect the reading frame.
+             ;; See https://varnomen.hgvs.org/recommendations/DNA/variant/repeated/#note
+             (if (and (rg/in-exon? (+ pos offset) rg)
+                      (rg/in-exon? (+ pos offset (count ref-only) -1) rg))
+               (zero? (mod (count unit) 3))
+               true)) :repeated-seqs
         (and (pos? nrefo) (zero? nalto)) :deletion
         (and (pos? nrefo) (pos? nalto)) :indel
-        (some? unit) (cond
-                       (and (= ref-repeat 1) (= ins-repeat 1)) :duplication
-                       (or (> ref-repeat 1) (> ins-repeat 1)) :repeated-seqs)
+        (some? unit) :duplication
         (and (zero? nrefo) (pos? nalto)) :insertion
         :else (throw (ex-info "Unsupported variant" {:type ::unsupported-variant}))))
     (throw (ex-info "Unsupported variant" {:type ::unsupported-variant}))))
@@ -166,11 +189,12 @@
 (defn- dna-repeated-seqs
   [seq-rdr rg pos ref alt]
   (let [{:keys [strand]} rg
-        [_ ins offset _] (diff-bases ref alt)
-        [unit ref-repeat ins-repeat] (repeat-info* seq-rdr rg (+ pos offset) ins)
+        [ref-only alt-only offset _] (diff-bases ref alt)
+        [unit ref-repeat alt-repeat] (repeat-info* seq-rdr rg (+ pos offset)
+                                                   ref-only alt-only)
         nunit (count unit)
         start (case strand
-                :forward (+ pos offset (- (* nunit ref-repeat)))
+                :forward (+ pos offset (- (* nunit (min ref-repeat alt-repeat))))
                 :reverse (+ pos offset (* nunit ref-repeat) -1))
         end (case strand
               :forward (dec (+ start nunit))
@@ -178,11 +202,11 @@
     (mut/dna-repeated-seqs (rg/cds-coord start rg)
                            (rg/cds-coord end rg)
                            unit
-                           (+ ref-repeat ins-repeat))))
+                           alt-repeat)))
 
 (defn- mutation
-  [seq-rdr rg pos ref alt]
-  (case (mutation-type seq-rdr rg pos ref alt)
+  [seq-rdr rg pos ref alt options]
+  (case (mutation-type seq-rdr rg pos ref alt options)
     :substitution (dna-substitution rg pos ref alt)
     :deletion (dna-deletion rg pos ref alt)
     :duplication (dna-duplication rg pos ref alt)
@@ -192,10 +216,12 @@
     :repeated-seqs (dna-repeated-seqs seq-rdr rg pos ref alt)))
 
 (defn ->hgvs
-  [{:keys [pos ref alt]} seq-rdr rg]
-  (hgvs/hgvs (:name rg)
-             :coding-dna
-             (mutation seq-rdr rg pos ref alt)))
+  ([variant seq-rdr rg]
+   (->hgvs variant seq-rdr rg {}))
+  ([{:keys [pos ref alt]} seq-rdr rg options]
+   (hgvs/hgvs (:name rg)
+              :coding-dna
+              (mutation seq-rdr rg pos ref alt options))))
 
 (defn- sequence-pstring
   [ref-seq alt-seq start end {:keys [pos ref alt]} rg]

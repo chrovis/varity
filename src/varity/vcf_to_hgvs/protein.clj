@@ -123,9 +123,17 @@
              (subs s-tail 0 (inc end)))
         s))))
 
+(defn- repeat-info*
+  [seq* pos ref-only alt-only]
+  (when-let [[alt type] (cond
+                          (and (empty? ref-only) (seq alt-only)) [alt-only :ins]
+                          (and (seq ref-only) (empty? alt-only)) [ref-only :del])]
+    (common/repeat-info seq* pos alt type)))
+
 (defn- ->protein-variant
   [{:keys [strand] :as rg} pos ref alt
-   {:keys [ref-exon-seq ref-prot-seq alt-exon-seq] :as seq-info}]
+   {:keys [ref-exon-seq ref-prot-seq alt-exon-seq] :as seq-info}
+   {:keys [prefer-deletion?]}]
   (cond
     (= ref-exon-seq alt-exon-seq)
     {:type :no-effect, :pos 1, :ref nil, :alt nil}
@@ -157,7 +165,10 @@
           [pref-only palt-only offset _] (diff-bases pref palt)
           nprefo (count pref-only)
           npalto (count palt-only)
-          [unit ref-repeat ins-repeat] (common/repeat-info ref-prot-seq (+ base-ppos offset) palt-only)
+          [unit ref-repeat alt-repeat] (repeat-info* ref-prot-seq
+                                                     (+ base-ppos offset)
+                                                     pref-only
+                                                     palt-only)
           t (cond
               (= (+ base-ppos offset) (count ref-prot-seq)) :extension
               (= (+ base-ppos offset) 1) (if (= ref-prot-rest alt-prot-rest)
@@ -170,13 +181,13 @@
                                                      :frame-shift)
               (or (and (zero? nprefo) (zero? npalto))
                   (and (= nprefo 1) (= npalto 1))) :substitution
+              (and (some? unit) (= ref-repeat 1) (= alt-repeat 2)) :duplication
+              (and prefer-deletion? (pos? nprefo) (zero? npalto)) :deletion
+              (and (some? unit) (pos? alt-repeat)) :repeated-seqs
               (and (pos? nprefo) (zero? npalto)) :deletion
               (and (pos? nprefo) (pos? npalto)) (if (= base-ppos 1)
                                                   :extension
                                                   :indel)
-              (some? unit) (cond
-                             (and (= ref-repeat 1) (= ins-repeat 1)) :duplication
-                             (or (> ref-repeat 1) (> ins-repeat 1)) :repeated-seqs)
               (and (zero? nprefo) (pos? npalto)) :insertion
               :else (throw (ex-info "Unsupported variant" {:type ::unsupported-variant})))]
       {:type (if (= t :fs-ter-substitution) :substitution t)
@@ -244,16 +255,19 @@
 
 (defn- protein-repeated-seqs
   [ppos pref palt seq-info]
-  (let [[_ ins offset _] (diff-bases pref palt)
-        [unit ref-repeat ins-repeat] (common/repeat-info (:ref-prot-seq seq-info) (+ ppos offset) ins)
+  (let [[pref-only palt-only offset _] (diff-bases pref palt)
+        [unit ref-repeat alt-repeat] (repeat-info* (:ref-prot-seq seq-info)
+                                                   (+ ppos offset)
+                                                   pref-only
+                                                   palt-only)
         nunit (count unit)
-        start (+ ppos offset (- (* nunit ref-repeat)))
+        start (+ ppos offset (- (* nunit (min ref-repeat alt-repeat))))
         end (dec (+ start nunit))]
-    (mut/protein-repeated-seqs (mut/->long-amino-acid (first ins))
+    (mut/protein-repeated-seqs (mut/->long-amino-acid (first unit))
                                (coord/protein-coordinate start)
-                               (if (< start end) (mut/->long-amino-acid (last ins)))
+                               (if (< start end) (mut/->long-amino-acid (last unit)))
                                (if (< start end) (coord/protein-coordinate end))
-                               (+ ref-repeat ins-repeat))))
+                               alt-repeat)))
 
 (defn- protein-frame-shift
   [ppos pref palt seq-info]
@@ -302,10 +316,10 @@
                              (coord/unknown-coordinate)))))
 
 (defn- mutation
-  [seq-rdr rg pos ref alt]
+  [seq-rdr rg pos ref alt options]
   (let [seq-info (read-sequence-info seq-rdr rg pos ref alt)]
     (if-let [{mut-type :type, ppos :pos, pref :ref, palt :alt}
-             (->protein-variant rg pos ref alt seq-info)]
+             (->protein-variant rg pos ref alt seq-info options)]
       (case mut-type
         :substitution (protein-substitution ppos pref palt)
         :deletion (protein-deletion ppos pref palt)
@@ -319,9 +333,11 @@
         :unknown (mut/protein-unknown-mutation)))))
 
 (defn ->hgvs
-  [{:keys [pos ref alt]} seq-rdr rg]
-  (if-let [mutation (mutation seq-rdr rg pos ref alt)]
-    (hgvs/hgvs nil :protein mutation)))
+  ([variant seq-rdr rg]
+   (->hgvs variant seq-rdr rg {}))
+  ([{:keys [pos ref alt]} seq-rdr rg options]
+   (if-let [mutation (mutation seq-rdr rg pos ref alt options)]
+     (hgvs/hgvs nil :protein mutation))))
 
 (defn- prot-seq-pstring
   [pref-seq palt-seq start end {:keys [ppos pref palt]}]

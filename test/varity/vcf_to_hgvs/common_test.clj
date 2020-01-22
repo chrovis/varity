@@ -58,10 +58,16 @@
       "" 7 "A")))
 
 (deftest repeat-info-test
-  (are [s p i e] (= (common/repeat-info s p i) e)
-    "XXXCAGTCXXX" 8 "AGT" ["AGT" 1 1]
-    "XXXCAGTCXXX" 8 "AGTAGT" ["AGT" 1 2]
-    "XXXCAGTAGTCXXX" 11 "AGTAGT" ["AGT" 2 2]))
+  (are [s p a t e] (= (common/repeat-info s p a t) e)
+    "XXXCAGTCXXX"       8  "AGT"    :ins ["AGT" 1 2]
+    "XXXCAGTCXXX"       8  "AGTAGT" :ins ["AGT" 1 3]
+    "XXXCAGTAGTCXXX"    11 "AGTAGT" :ins ["AGT" 2 4]
+    "XXXCAGTAGTAGTCXXX" 11 "AGT"    :del ["AGT" 3 2]
+    "XXXCAGTAGTAGTCXXX" 8  "AGTAGT" :del ["AGT" 3 1])
+  (are [s p a t] (nil? (common/repeat-info s p a t))
+    "XXXCAGTCXXX"       8  "ATG" :ins
+    "XXXCAGTAGTAGTCXXX" 11 "ATG" :del
+    "XXXCAGTCXXX"       5  "ATG" :del))
 
 (deftest normalize-variant*-test
   (testing "normalize-variant* normalizes variant"
