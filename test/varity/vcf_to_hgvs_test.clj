@@ -131,6 +131,12 @@
         "chr7" 140924774 "GGGAGGC" "G" {:prefer-deletion? false} '("NM_004333:c.-95_-90[3]")
         "chr7" 140924774 "GGGAGGC" "G" {:prefer-deletion? true} '("NM_004333:c.-77_-72delGCCTCC")
 
+        ;; prefer-insertion?, cf. rs2307882 (-)
+        "chr3" 126492636 "C" "CCTCT" {:prefer-insertion? false} '("NM_001165974:c.1690-122_1690-121[3]"
+                                                                  "NM_144639:c.1510-122_1510-121[3]")
+        "chr3" 126492636 "C" "CCTCT" {:prefer-insertion? true} '("NM_001165974:c.1690-121_1690-120insAGAG"
+                                                                 "NM_144639:c.1510-121_1510-120insAGAG")
+
         ;; tx-margin
         "chr5" 1295113 "G" "A" {:tx-margin 5000} '("NM_001193376:c.-124C>T"
                                                    "NM_198253:c.-124C>T")
@@ -219,7 +225,11 @@
                                        e)
         ;; prefer-deletion?, not actual example (+)
         "chr1" 47439008 "CCCGCAC" "C" {:prefer-deletion? false} '("p.P286_H287[3]")
-        "chr1" 47439008 "CCCGCAC" "C" {:prefer-deletion? true} '("p.P292_H293del"))))
+        "chr1" 47439008 "CCCGCAC" "C" {:prefer-deletion? true} '("p.P292_H293del")
+
+        ;; prefer-insertion?, cf. rs3046924 (+)
+        "chr1" 47438996 "T" "TCCGCAC" {:prefer-insertion? false} '("p.P286_H287[5]")
+        "chr1" 47438996 "T" "TCCGCAC" {:prefer-insertion? true} '("p.H293_A294insPH"))))
 
   (cavia-testing "throws Exception if inputs are illegal"
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
