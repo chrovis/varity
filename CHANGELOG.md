@@ -1,5 +1,16 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- Support repeated sequences caused by deletion on VCF->HGVS. [#30](https://github.com/chrovis/varity/pull/30)
+- Support conversion from repeated sequences to VCF deletion. [#31](https://github.com/chrovis/varity/pull/31)
+
+### Fixed
+
+- Fix conversion from reverse-strand repeated sequences to VCF variant. [#29](https://github.com/chrovis/varity/pull/29)
+
 ## [0.6.0] - 2019-12-06
 
 ### BREAKING
