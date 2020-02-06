@@ -141,7 +141,7 @@
                                seq-rdr rg)]
         (when (:verbose? options)
           (print-debug-info nv seq-rdr rg))
-        (coding-dna/->hgvs (assoc nv :rg rg) seq-rdr rg))
+        (coding-dna/->hgvs (assoc nv :rg rg) seq-rdr rg options))
       (throw (ex-info "ref is not found on the position."
                       {:type ::invalid-ref
                        :variant {:chr chr, :pos pos, :ref ref, :alt alt}})))))
