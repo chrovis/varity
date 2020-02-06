@@ -133,7 +133,7 @@
 (defn- ->protein-variant
   [{:keys [strand] :as rg} pos ref alt
    {:keys [ref-exon-seq ref-prot-seq alt-exon-seq] :as seq-info}
-   {:keys [prefer-deletion?]}]
+   {:keys [prefer-deletion? prefer-insertion?]}]
   (cond
     (= ref-exon-seq alt-exon-seq)
     {:type :no-effect, :pos 1, :ref nil, :alt nil}
@@ -181,8 +181,9 @@
                                                      :frame-shift)
               (or (and (zero? nprefo) (zero? npalto))
                   (and (= nprefo 1) (= npalto 1))) :substitution
-              (and (some? unit) (= ref-repeat 1) (= alt-repeat 2)) :duplication
               (and prefer-deletion? (pos? nprefo) (zero? npalto)) :deletion
+              (and prefer-insertion? (zero? nprefo) (pos? npalto)) :insertion
+              (and (some? unit) (= ref-repeat 1) (= alt-repeat 2)) :duplication
               (and (some? unit) (pos? alt-repeat)) :repeated-seqs
               (and (pos? nprefo) (zero? npalto)) :deletion
               (and (pos? nprefo) (pos? npalto)) (if (= base-ppos 1)

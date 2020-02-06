@@ -70,6 +70,7 @@
   {;; NOTE: Change default :prefer-deletion to false in the next major release
    ;;       (0.7.0).
    :prefer-deletion? true
+   :prefer-insertion? false
    :tx-margin 5000
    :verbose? false})
 
@@ -89,6 +90,9 @@
                        sequences (e.g. \"c.4_6[1]\"), default true for backward
                        compatibility. The default value plans to be changed to
                        false in the next major release.
+
+    :prefer-insertion? Prefer insertion (e.g. \"c.9_10insAGG\") to repeated
+                       sequences (e.g. \"c.4_6[3]\"), default false.
 
     :tx-margin         The length of transcription margin, up to a maximum of
                        10000, default 5000.
@@ -159,6 +163,9 @@
                        backward compatibility. The default value plans to be
                        changed to false in the next major release.
 
+    :prefer-insertion? Prefer insertion (e.g. \"c.H9_L10insRPH\") to repeated
+                       sequences (e.g. \"c.R4_H6[3]\"), default false.
+
     :verbose?          Print debug information, default false."
   {:arglists '([variant ref-seq ref-gene]
                [variant ref-seq ref-gene options])}
@@ -227,6 +234,9 @@
                        sequences (e.g. \"c.4_6[1]\"), default true for backward
                        compatibility. The default value plans to be changed to
                        false in the next major release.
+
+    :prefer-insertion? Prefer insertion (e.g. \"c.9_10insAGG\") to repeated
+                       sequences (e.g. \"c.4_6[3]\"), default false.
 
     :tx-margin         The length of transcription margin, up to a maximum of
                        10000, default 5000.
