@@ -6,6 +6,8 @@
 
 - Support repeated sequences caused by deletion on VCF->HGVS. [#30](https://github.com/chrovis/varity/pull/30)
 - Support conversion from repeated sequences to VCF deletion. [#31](https://github.com/chrovis/varity/pull/31)
+- Add prefer-insertion? option to VCF->HGVS. [#32](https://github.com/chrovis/varity/pull/32)
+- Add function for finding alternative HGVS expressions. [#33](https://github.com/chrovis/varity/pull/33)
 
 ### Fixed
 
