@@ -9,20 +9,21 @@ Variant translation library for Clojure.
 ## Features
 
 * VCF variant ⇄ HGVS
-* Conversion between assemblies
+* Finding HGVS aliases
+* Conversion of a genomic coordinates between assemblies
 
 ## Installation
 
 Clojure CLI/deps.edn:
 
 ```clojure
-varity {:mvn/version "0.6.0"}
+varity {:mvn/version "0.6.1"}
 ```
 
 Leiningen/Boot:
 
 ```clojure
-[varity "0.6.0"]
+[varity "0.6.1"]
 ```
 
 To use varity with Clojure 1.8, you must include a dependency on
@@ -104,9 +105,23 @@ Use `clj-hgvs.core/format` to obtain HGVS text.
 ;;    {:chr "chr1", :pos 11796321, :ref "G", :alt "A"})
 ```
 
-### Conversion between assemblies
+### Finding HGVS aliases
 
-To convert a genome coordinate between assemblies,
+`varity.hgvs/find-aliases` finds alternative HGVS expressions for the same
+variant.
+
+```clojure
+(require '[varity.hgvs :as vhgvs])
+
+(vhgvs/find-aliases #clj-hgvs/hgvs "NM_000059:c.162CAA[1]"
+                    "path/to/hg38.fa" "path/to/refGene.txt.gz")
+;;=> (#clj-hgvs/hgvs "NM_000059:c.162CAA[1]"
+;;    #clj-hgvs/hgvs "NM_000059:c.165_167delCAA")
+```
+
+### Conversion of a genomic coordinate between assemblies
+
+To convert a genomic coordinate between assemblies,
 
 ```clojure
 (require '[varity.lift :as lift])
@@ -117,6 +132,6 @@ To convert a genome coordinate between assemblies,
 
 ## License
 
-Copyright 2017-2019 [Xcoo, Inc.](https://xcoo.jp/)
+Copyright 2017-2020 [Xcoo, Inc.](https://xcoo.jp/)
 
 Licensed under the [Apache License, Version 2.0](LICENSE).
