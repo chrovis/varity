@@ -78,7 +78,10 @@
          curr-q-start (inc (:q-start header))]
     (if-not d
       (persistent! results)
-      (recur (->> (assoc d :t-start curr-t-start :q-start curr-q-start)
+      (recur (->> (assoc d :t-start curr-t-start
+                         :q-start curr-q-start
+                         :t-end (+ curr-t-start (:size d))
+                         :q-end (+ curr-q-start (:size d)))
                   (conj! results))
              (first r)
              (next r)
@@ -122,3 +125,18 @@
   [chr pos chain-idx]
   (->> (chain-idx (normalize-chr chr))
        (keep (partial in-block? pos))))
+
+(defn search-containing-chains
+  "Calculates a list of chains that contain the given interval."
+  [chr start end chain-idx]
+  (->> (chain-idx (normalize-chr chr))
+       (filter #(and (<= (get-in % [:header :t-start]) start)
+                     (<= end (get-in % [:header :t-end]))))
+       (sort-by (comp :score :header) >)))
+
+(defn search-overlap-blocks
+  "Calculates a list of blocks that overlap the given interval."
+  [start end blocks-idx]
+  (->> (subseq blocks-idx <= end)
+       (map second)
+       (filter #(>= (:t-end %) start))))
