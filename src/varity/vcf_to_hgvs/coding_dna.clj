@@ -136,7 +136,8 @@
               :forward (dec (+ start (count ins)))
               :reverse (inc (- start (count ins))))]
     (mut/dna-duplication (rg/cds-coord start rg)
-                         (rg/cds-coord end rg)
+                         (if-not (= start end)
+                           (rg/cds-coord end rg))
                          (cond-> ins (= strand :reverse) util-seq/revcomp))))
 
 (defn- dna-insertion
@@ -146,7 +147,8 @@
         start (cond-> (+ pos offset) (= strand :forward) dec)
         end (cond-> (+ pos offset) (= strand :reverse) dec)]
     (mut/dna-insertion (rg/cds-coord start rg)
-                       (rg/cds-coord end rg)
+                       (if-not (= start end)
+                         (rg/cds-coord end rg))
                        (cond-> ins (= strand :reverse) util-seq/revcomp))))
 
 (defn- dna-inversion
@@ -162,7 +164,8 @@
               :forward right
               :reverse left)]
     (mut/dna-inversion (rg/cds-coord start rg)
-                       (rg/cds-coord end rg))))
+                       (if-not (= start end)
+                         (rg/cds-coord end rg)))))
 
 ;; e.g. ref alt
 ;;      CAG CTC
@@ -201,7 +204,8 @@
               :forward (dec (+ start nunit))
               :reverse (inc (- start nunit)))]
     (mut/dna-repeated-seqs (rg/cds-coord start rg)
-                           (rg/cds-coord end rg)
+                           (if-not (= start end)
+                             (rg/cds-coord end rg))
                            unit
                            alt-repeat)))
 
