@@ -1,5 +1,19 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- Update dependencies:
+    - clj-hgvs 0.4.3
+    - cljam 0.8.0
+    - commons-compress 1.20
+    - tools.logging 1.1.0
+
+### Fixed
+
+- Pass nil to cds-end if cds-start equals cds-end in vcf-to-hgvs. [#34](https://github.com/chrovis/varity/pull/34)
+
 ## [0.6.1] - 2020-02-19
 
 ### Added
