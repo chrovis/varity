@@ -8,7 +8,7 @@
                  [org.clojure/tools.logging "1.1.0"]
                  [clj-hgvs "0.4.3"]
                  [cljam "0.8.0"]
-                 [org.apache.commons/commons-compress "1.19"]
+                 [org.apache.commons/commons-compress "1.20"]
                  [proton "0.1.8"]]
   :plugins [[lein-cloverage "1.1.2"]
             [lein-codox "0.10.7"]
