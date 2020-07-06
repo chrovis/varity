@@ -18,7 +18,7 @@
                    :all (constantly true)}
   :profiles {:dev {:dependencies [[cavia "0.5.1"]
                                   [codox-theme-rdash "0.1.2"]
-                                  [criterium "0.4.5"]
+                                  [criterium "0.4.6"]
                                   [net.totakke/libra "0.1.1"]]}
              :repl {:source-paths ["bench"]}
              :1.8 {:dependencies [[org.clojure/clojure "1.8.0"]
