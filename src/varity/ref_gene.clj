@@ -219,16 +219,47 @@
           (ref-genes name rgidx)
           (ref-genes chr pos rgidx))
         (map (fn [rg]
-               (let [exon-ranges ((case (:strand rg)
-                                    :forward identity
-                                    :reverse reverse) (:exon-ranges rg))
-                     idx (->> exon-ranges
-                              (keep-indexed (fn [i [s e]] (if (<= s pos e) i)))
-                              first)]
-                 {:exon-index (if idx
-                                (inc idx) ; 1-origin
-                                nil)
-                  :exon-count (count exon-ranges)
+               (let [sgn (case (:strand rg)
+                           :forward identity
+                           :reverse reverse)
+                     exon-ranges (sgn (:exon-ranges rg))
+                     exon-idx (->> exon-ranges
+                                   (keep-indexed (fn [i [s e]] (if (<= s pos e) i)))
+                                   first)
+                     intron-ranges (if exon-idx nil
+                                       (->> (:exon-ranges rg)
+                                            ((fn [r]
+                                               (loop [intron-ranges []
+                                                      left (first r)
+                                                      right (second r)
+                                                      ranges (rest r)]
+                                                 (if (empty? (first ranges)) intron-ranges
+                                                     (recur (conj intron-ranges [(inc (second left)) (dec (first right))])
+                                                            right
+                                                            (second ranges)
+                                                            (rest ranges))))))
+                                            (sgn)))
+                     intron-idx (->> intron-ranges
+                                     (keep-indexed (fn [i [s e]] (if (<= s pos e) i)))
+                                     first)
+                     region-type (let [txs (:tx-start rg)
+                                       txe (:tx-end rg)]
+                                   (cond
+                                     (< pos txs) (first (sgn '({:type "UTR-5"} {:type "UTR-3"})))
+                                     (> pos txe) (second (sgn '({:type "UTR-5"} {:type "UTR-3"})))
+                                     :else (if exon-idx
+                                             {:type "exon" :idx exon-idx :count (count exon-ranges)}
+                                             {:type "intron" :idx intron-idx :count (count intron-ranges)}
+                                             ))
+                                   )]
+
+                 {:type (:type region-type) ; "exon", "intron", "UTR-5" or "UTR-3"
+                  :index (if (:idx region-type)
+                           (inc (:idx region-type))
+                           nil)
+                  :exon-idx exon-idx
+                  :intron-idx intron-idx
+                  :count (:count region-type)
                   :gene rg}))))))
 
 ;;; Calculation of CDS coordinate
