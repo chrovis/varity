@@ -245,20 +245,18 @@
                      region-type (let [txs (:tx-start rg)
                                        txe (:tx-end rg)]
                                    (cond
-                                     (< pos txs) (first (sgn '({:type "UTR-5"} {:type "UTR-3"})))
-                                     (> pos txe) (second (sgn '({:type "UTR-5"} {:type "UTR-3"})))
+                                     (< pos txs) (first (sgn '({:type "UTR-5" :idx 0 :count 1}
+                                                               {:type "UTR-3" :idx 0 :count 1})))
+                                     (> pos txe) (second (sgn '({:type "UTR-5" :idx 0 :count 1}
+                                                                {:type "UTR-3" :idx 0 :count 1})))
                                      :else (if exon-idx
                                              {:type "exon" :idx exon-idx :count (count exon-ranges)}
-                                             {:type "intron" :idx intron-idx :count (count intron-ranges)}
-                                             ))
-                                   )]
+                                             {:type "intron" :idx intron-idx :count (count intron-ranges)})))]
 
                  {:type (:type region-type) ; "exon", "intron", "UTR-5" or "UTR-3"
                   :index (if (:idx region-type)
                            (inc (:idx region-type))
                            nil)
-                  :exon-idx exon-idx
-                  :intron-idx intron-idx
                   :count (:count region-type)
                   :gene rg}))))))
 
