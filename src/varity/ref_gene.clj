@@ -213,8 +213,6 @@
   ([chr pos rgidx]
    (seek-gene-region chr pos rgidx nil))
   ([chr pos rgidx name]
-   ;; TODO seek intron region
-   ;; TODO seek UTR-5 or UTR-3 region
    (->> (if name
           (ref-genes name rgidx)
           (ref-genes chr pos rgidx))
@@ -245,15 +243,15 @@
                      region-type (let [txs (:tx-start rg)
                                        txe (:tx-end rg)]
                                    (cond
-                                     (< pos txs) (first (sgn '({:type "UTR-5" :idx 0 :count 1}
-                                                               {:type "UTR-3" :idx 0 :count 1})))
-                                     (> pos txe) (second (sgn '({:type "UTR-5" :idx 0 :count 1}
-                                                                {:type "UTR-3" :idx 0 :count 1})))
+                                     (< pos txs) (first (sgn '({:region "UTR-5" :idx 0 :count 1}
+                                                               {:region "UTR-3" :idx 0 :count 1})))
+                                     (> pos txe) (second (sgn '({:region "UTR-5" :idx 0 :count 1}
+                                                                {:region "UTR-3" :idx 0 :count 1})))
                                      :else (if exon-idx
-                                             {:type "exon" :idx exon-idx :count (count exon-ranges)}
-                                             {:type "intron" :idx intron-idx :count (count intron-ranges)})))]
+                                             {:region "exon" :idx exon-idx :count (count exon-ranges)}
+                                             {:region "intron" :idx intron-idx :count (count intron-ranges)})))]
 
-                 {:type (:type region-type) ; "exon", "intron", "UTR-5" or "UTR-3"
+                 {:region (:region region-type) 
                   :index (if (:idx region-type)
                            (inc (:idx region-type))
                            nil)
