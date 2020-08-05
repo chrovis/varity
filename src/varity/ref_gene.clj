@@ -208,6 +208,20 @@
            (map (partial read-exon-sequence seq-rdr))
            string/join))
 
+(defn exon-ranges->intron-ranges
+  [exon-ranges]
+  (->> exon-ranges
+       ((fn [r]
+          (loop [intron-ranges []
+                 left (first r)
+                 right (second r)
+                 ranges (rest r)]
+            (if (empty? (first ranges)) intron-ranges
+                (recur (conj intron-ranges [(inc (second left)) (dec (first right))])
+                       right
+                       (second ranges)
+                       (rest ranges))))))))
+
 (defn seek-gene-region
   "Seeks chr:pos through exon entries in refGene and returns those indices"
   ([chr pos rgidx]
@@ -220,43 +234,30 @@
                (let [sgn (case (:strand rg)
                            :forward identity
                            :reverse reverse)
-                     exon-ranges (sgn (:exon-ranges rg))
-                     exon-idx (->> exon-ranges
+                     exon-ranges (:exon-ranges rg)
+                     exon-idx (->> (sgn exon-ranges)
                                    (keep-indexed (fn [i [s e]] (if (<= s pos e) i)))
                                    first)
                      intron-ranges (if exon-idx nil
-                                       (->> (:exon-ranges rg)
-                                            ((fn [r]
-                                               (loop [intron-ranges []
-                                                      left (first r)
-                                                      right (second r)
-                                                      ranges (rest r)]
-                                                 (if (empty? (first ranges)) intron-ranges
-                                                     (recur (conj intron-ranges [(inc (second left)) (dec (first right))])
-                                                            right
-                                                            (second ranges)
-                                                            (rest ranges))))))
+                                       (->> exon-ranges
+                                            (exon-ranges->intron-ranges)
                                             (sgn)))
                      intron-idx (->> intron-ranges
                                      (keep-indexed (fn [i [s e]] (if (<= s pos e) i)))
                                      first)
-                     region-type (let [txs (:tx-start rg)
-                                       txe (:tx-end rg)]
-                                   (cond
-                                     (< pos txs) (first (sgn '({:region "UTR-5" :idx 0 :count 1}
-                                                               {:region "UTR-3" :idx 0 :count 1})))
-                                     (> pos txe) (second (sgn '({:region "UTR-5" :idx 0 :count 1}
-                                                                {:region "UTR-3" :idx 0 :count 1})))
-                                     :else (if exon-idx
-                                             {:region "exon" :idx exon-idx :count (count exon-ranges)}
-                                             {:region "intron" :idx intron-idx :count (count intron-ranges)})))]
-
-                 {:region (:region region-type) 
-                  :index (if (:idx region-type)
-                           (inc (:idx region-type))
-                           nil)
-                  :count (:count region-type)
-                  :gene rg}))))))
+                     region-type (cond
+                                   (< pos (:tx-start rg)) (first (sgn '({:region "UTR-5" :index 0 :count 1}
+                                                                        {:region "UTR-3" :index 0 :count 1})))
+                                   (> pos (:tx-end rg)) (second (sgn '({:region "UTR-5" :index 0 :count 1}
+                                                                       {:region "UTR-3" :index 0 :count 1})))
+                                   exon-idx {:region "exon" :index exon-idx :count (count exon-ranges)}
+                                   intron-idx {:region "intron" :index intron-idx :count (count intron-ranges)}
+                                   :else nil)]
+                 (-> region-type
+                     (update :index (fn [idx]
+                                      (if idx (inc idx)
+                                          nil)))
+                     (merge {:gene rg}))))))))
 
 ;;; Calculation of CDS coordinate
 ;;;
