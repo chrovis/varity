@@ -256,7 +256,7 @@
                  (-> region-type
                      (update :index (fn [idx]
                                       (when idx (inc idx))))
-                     (merge {:gene rg}))))))))
+                     (assoc :gene rg))))))))
 
 ;;; Calculation of CDS coordinate
 ;;;
