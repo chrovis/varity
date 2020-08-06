@@ -238,7 +238,7 @@
                      exon-idx (->> (sgn exon-ranges)
                                    (keep-indexed (fn [i [s e]] (if (<= s pos e) i)))
                                    first)
-                     intron-ranges (if exon-idx nil
+                     intron-ranges (if-not exon-idx
                                        (->> exon-ranges
                                             (exon-ranges->intron-ranges)
                                             (sgn)))
