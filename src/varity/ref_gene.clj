@@ -210,15 +210,9 @@
 
 (defn exon-ranges->intron-ranges
   [exon-ranges]
-  (loop [intron-ranges []
-         left (first exon-ranges)
-         right (second exon-ranges)
-         ranges (rest exon-ranges)]
-    (if (empty? (first ranges)) intron-ranges
-        (recur (conj intron-ranges [(inc (second left)) (dec (first right))])
-               right
-               (second ranges)
-               (rest ranges)))))
+  (mapv (fn [[left right]]
+          [(inc (second left)) (dec (first right))])
+        (partition 2 1 exon-ranges)))
 
 (defn seek-gene-region
   "Seeks chr:pos through exon entries in refGene and returns those indices"
