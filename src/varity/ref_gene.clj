@@ -211,9 +211,9 @@
 (defn exon-ranges->intron-ranges
   [exon-ranges]
   (loop [intron-ranges []
-         left (first r)
-         right (second r)
-         ranges (rest r)]
+         left (first exon-ranges)
+         right (second exon-ranges)
+         ranges (rest exon-ranges)]
     (if (empty? (first ranges)) intron-ranges
         (recur (conj intron-ranges [(inc (second left)) (dec (first right))])
                right
