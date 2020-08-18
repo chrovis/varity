@@ -237,18 +237,20 @@
                      intron-idx (->> intron-ranges
                                      (keep-indexed (fn [i [s e]] (if (<= s pos e) i)))
                                      first)
-                     region-type (cond
-                                   (< pos (:tx-start rg)) (first (sgn '({:region "UTR-5" :index 0 :count 1}
-                                                                        {:region "UTR-3" :index 0 :count 1})))
-                                   (> pos (:tx-end rg)) (second (sgn '({:region "UTR-5" :index 0 :count 1}
-                                                                       {:region "UTR-3" :index 0 :count 1})))
+                     utr (cond
+                           (< pos (:cds-start rg)) (first (sgn '({:region "UTR-5" :index 0 :count 1}
+                                                                 {:region "UTR-3" :index 0 :count 1})))
+                           (> pos (:cds-end rg)) (second (sgn '({:region "UTR-5" :index 0 :count 1}
+                                                                {:region "UTR-3" :index 0 :count 1})))
+                           :else nil)
+                     exon-intron (cond
                                    exon-idx {:region "exon" :index exon-idx :count (count exon-ranges)}
-                                   intron-idx {:region "intron" :index intron-idx :count (count intron-ranges)}
-                                   :else nil)]
-                 (-> region-type
-                     (update :index (fn [idx]
-                                      (when idx (inc idx))))
-                     (assoc :gene rg))))))))
+                                   intron-idx {:region "intron" :index intron-idx :count (count intron-ranges)})
+                     region-types (remove nil? (vector utr exon-intron))]
+                 (update {:region-types region-types :gene rg}
+                         :region-types
+                         (partial map #(update % :index (fn [idx]
+                                                          (when idx (inc idx))))))))))))
 
 ;;; Calculation of CDS coordinate
 ;;;
