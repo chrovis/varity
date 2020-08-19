@@ -203,7 +203,7 @@
   (cavia-testing "seek-gene-region (slow)"
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
       (are [c p tn exs] (= exs
-                           (->> (seek-gene-region c p rgidx tn)
+                           (->> (rg/seek-gene-region c p rgidx tn)
                                 (map :region-types)
                                 (mapv (fn [rt]
                                         (mapv #(vector (:region %) (:index %) (:count %))
@@ -214,7 +214,8 @@
         "chr3" 41224090 "NM_001904" [[["intron" 2 14]]]
         "chr5" 12575053 nil [[["UTR-5" 1 1] ["intron" 1 3]]]
         "chr10" 79512600 "NM_001099692" [[["UTR-5" 1 1]]]
-        "chr12" 101128642 "NM_001286615" [[["UTR-3" 1 1]] [["UTR-5" 1 1]]]))))
+        "chr12" 101128642 "NM_001286615" [[["UTR-3" 1 1]] [["UTR-5" 1 1]]]
+        ))))
 
 (deftest cds-coord-test
   ;; 1 [2 3 4] 5 6 7 [8 9 10 11] 12 13 14 15
