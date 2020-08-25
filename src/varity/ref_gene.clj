@@ -238,10 +238,10 @@
                                      (keep-indexed (fn [i [s e]] (if (<= s pos e) i)))
                                      first)
                      utr (cond
-                           (< pos (:cds-start rg)) (first (sgn '({:region "UTR-5" :index 0 :count 1}
-                                                                 {:region "UTR-3" :index 0 :count 1})))
-                           (> pos (:cds-end rg)) (second (sgn '({:region "UTR-5" :index 0 :count 1}
-                                                                {:region "UTR-3" :index 0 :count 1})))
+                           (< pos (:cds-start rg)) (first (sgn '({:region "UTR-5"}
+                                                                 {:region "UTR-3"})))
+                           (> pos (:cds-end rg)) (second (sgn '({:region "UTR-5"}
+                                                                {:region "UTR-3"})))
                            :else nil)
                      exon-intron (cond
                                    exon-idx {:region "exon" :index exon-idx :count (count exon-ranges)}
