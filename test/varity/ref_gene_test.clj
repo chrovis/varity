@@ -204,7 +204,7 @@
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
       (are [c p tn exs] (= exs
                            (->> (rg/seek-gene-region c p rgidx tn)
-                                (map :region-types)
+                                (map :regions)
                                 (mapv (fn [rt]
                                         (mapv #(vector (:region %) (:index %) (:count %))
                                               rt)))))
@@ -212,9 +212,9 @@
         "chr7" 116771976 "NM_000245" [[["exon" 14 21]]]
         "chrX" 61197987 nil []
         "chr3" 41224090 "NM_001904" [[["intron" 2 14]]]
-        "chr5" 12575053 nil [[["UTR-5" 1 1] ["intron" 1 3]]]
-        "chr10" 79512600 "NM_001099692" [[["UTR-5" 1 1]]]
-        "chr12" 101128642 "NM_001286615" [[["UTR-3" 1 1]] [["UTR-5" 1 1]]]
+        "chr5" 12575053 nil [[["UTR-5" nil nil] ["intron" 1 3]]]
+        "chr10" 79512600 "NM_001099692" [[["UTR-5" nil nil]]]
+        "chr12" 101128642 "NM_001286615" [[["UTR-3" nil nil]] [["UTR-5" nil nil]]]
         ))))
 
 (deftest cds-coord-test

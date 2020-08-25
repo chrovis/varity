@@ -244,13 +244,10 @@
                                                                 {:region "UTR-3"})))
                            :else nil)
                      exon-intron (cond
-                                   exon-idx {:region "exon" :index exon-idx :count (count exon-ranges)}
-                                   intron-idx {:region "intron" :index intron-idx :count (count intron-ranges)})
-                     region-types (remove nil? (vector utr exon-intron))]
-                 (update {:region-types region-types :gene rg}
-                         :region-types
-                         (partial map #(update % :index (fn [idx]
-                                                          (when idx (inc idx))))))))))))
+                                   exon-idx {:region "exon" :index (if exon-idx (inc exon-idx)) :count (count exon-ranges)}
+                                   intron-idx {:region "intron" :index (if intron-idx (inc intron-idx)) :count (count intron-ranges)})
+                     regions (remove nil? (vector utr exon-intron))]
+                 {:regions regions :gene rg}))))))
 
 ;;; Calculation of CDS coordinate
 ;;;
