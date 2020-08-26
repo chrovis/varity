@@ -194,10 +194,10 @@
 (deftest exon-ranges->intron-ranges-test
   (testing "exon-ranges->intron-ranges"
     (are [exon-ranges r] (= r (rg/exon-ranges->intron-ranges exon-ranges))
-             [] []
-             [[1 10] [20 30]] [[11 19]]
-             [[1000 2000] [3000 3500] [5000 6000]] [[2001 2999] [3501 4999]]
-             [[100 300]] [])))
+      [] []
+      [[1 10] [20 30]] [[11 19]]
+      [[1000 2000] [3000 3500] [5000 6000]] [[2001 2999] [3501 4999]]
+      [[100 300]] [])))
 
 (defslowtest seek-gene-region-test
   (cavia-testing "seek-gene-region (slow)"
@@ -215,7 +215,7 @@
         "chr5" 12575053 nil [[["UTR-5" nil nil] ["intron" 1 3]]]
         "chr10" 79512600 "NM_001099692" [[["UTR-5" nil nil]]]
         "chr12" 101128642 "NM_001286615" [[["UTR-3" nil nil]] [["UTR-5" nil nil]]]
-        ))))
+        "chr7" 140753336 "NM_004333" [[["exon" 15 18]]]))))
 
 (deftest cds-coord-test
   ;; 1 [2 3 4] 5 6 7 [8 9 10 11] 12 13 14 15
