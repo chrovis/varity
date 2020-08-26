@@ -191,16 +191,31 @@
           "NM_019063" "ATGGAC" "TCCTAA" 2946
           "NM_004304" "ATGGGA" "CCCTGA" 4863)))))
 
+(deftest exon-ranges->intron-ranges-test
+  (testing "exon-ranges->intron-ranges"
+    (are [exon-ranges r] (= r (rg/exon-ranges->intron-ranges exon-ranges))
+      [] []
+      [[1 10] [20 30]] [[11 19]]
+      [[1000 2000] [3000 3500] [5000 6000]] [[2001 2999] [3501 4999]]
+      [[100 300]] [])))
+
 (defslowtest seek-gene-region-test
   (cavia-testing "seek-gene-region (slow)"
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
       (are [c p tn exs] (= exs
                            (->> (rg/seek-gene-region c p rgidx tn)
-                                (map #(vector (:exon-index %) (:exon-count %)))))
-        "chr4" 54736520   nil        [[18 21] [18 21]]
-        "chr7" 116771976 "NM_000245" [[14 21]]
-        "chrX" 61197987   nil        []
-        "chr3" 41217131  "NM_001904" [[nil 15]]))))
+                                (map :regions)
+                                (mapv (fn [rt]
+                                        (mapv #(vector (:region %) (:index %) (:count %))
+                                              rt)))))
+        "chr4" 54736520 nil [[["exon" 18 21]] [["exon" 18 21]]]
+        "chr7" 116771976 "NM_000245" [[["exon" 14 21]]]
+        "chrX" 61197987 nil []
+        "chr3" 41224090 "NM_001904" [[["intron" 2 14]]]
+        "chr5" 12575053 nil [[["UTR-5" nil nil] ["intron" 1 3]]]
+        "chr10" 79512600 "NM_001099692" [[["UTR-5" nil nil]]]
+        "chr12" 101128642 "NM_001286615" [[["UTR-3" nil nil]] [["UTR-5" nil nil]]]
+        "chr7" 140753336 "NM_004333" [[["exon" 15 18]]]))))
 
 (deftest cds-coord-test
   ;; 1 [2 3 4] 5 6 7 [8 9 10 11] 12 13 14 15

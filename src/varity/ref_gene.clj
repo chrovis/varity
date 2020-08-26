@@ -208,28 +208,46 @@
            (map (partial read-exon-sequence seq-rdr))
            string/join))
 
+(defn exon-ranges->intron-ranges
+  [exon-ranges]
+  (mapv (fn [[left right]]
+          [(inc (second left)) (dec (first right))])
+        (partition 2 1 exon-ranges)))
+
 (defn seek-gene-region
   "Seeks chr:pos through exon entries in refGene and returns those indices"
   ([chr pos rgidx]
    (seek-gene-region chr pos rgidx nil))
   ([chr pos rgidx name]
-   ;; TODO seek intron region
-   ;; TODO seek UTR-5 or UTR-3 region
    (->> (if name
           (ref-genes name rgidx)
           (ref-genes chr pos rgidx))
         (map (fn [rg]
-               (let [exon-ranges ((case (:strand rg)
-                                    :forward identity
-                                    :reverse reverse) (:exon-ranges rg))
-                     idx (->> exon-ranges
-                              (keep-indexed (fn [i [s e]] (if (<= s pos e) i)))
-                              first)]
-                 {:exon-index (if idx
-                                (inc idx) ; 1-origin
-                                nil)
-                  :exon-count (count exon-ranges)
-                  :gene rg}))))))
+               (let [sgn (case (:strand rg)
+                           :forward identity
+                           :reverse reverse)
+                     exon-ranges (:exon-ranges rg)
+                     exon-idx (->> (sgn exon-ranges)
+                                   (keep-indexed (fn [i [s e]] (if (<= s pos e) i)))
+                                   first)
+                     intron-ranges (if-not exon-idx
+                                     (->> exon-ranges
+                                          (exon-ranges->intron-ranges)
+                                          (sgn)))
+                     intron-idx (->> intron-ranges
+                                     (keep-indexed (fn [i [s e]] (if (<= s pos e) i)))
+                                     first)
+                     utr (cond
+                           (< pos (:cds-start rg)) (first (sgn '({:region "UTR-5"}
+                                                                 {:region "UTR-3"})))
+                           (> pos (:cds-end rg)) (second (sgn '({:region "UTR-5"}
+                                                                {:region "UTR-3"})))
+                           :else nil)
+                     exon-intron (cond
+                                   exon-idx {:region "exon" :index (if exon-idx (inc exon-idx)) :count (count exon-ranges)}
+                                   intron-idx {:region "intron" :index (if intron-idx (inc intron-idx)) :count (count intron-ranges)})
+                     regions (remove nil? (vector utr exon-intron))]
+                 {:regions regions :gene rg}))))))
 
 ;;; Calculation of CDS coordinate
 ;;;
