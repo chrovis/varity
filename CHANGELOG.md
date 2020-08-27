@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- Seek intron, 3'-UTR, and 5'-UTR regions from genomic position. [#36](https://github.com/chrovis/varity/pull/36)
+
 ## [0.6.2] - 2020-07-06
 
 ### Changed
