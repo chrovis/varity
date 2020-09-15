@@ -204,10 +204,11 @@
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
       (are [c p tn exs] (= exs
                            (->> (rg/seek-gene-region c p rgidx tn)
-                                (map :regions)
+                                (mapv #(vector (get-in % [:regions :utr]) (get-in % [:regions :exon-intron])))
                                 (mapv (fn [rt]
                                         (mapv #(vector (:region %) (:index %) (:count %))
-                                              rt)))))
+                                              rt)))
+                                (mapv #(remove (partial every? nil?) %))))
         "chr4" 54736520 nil [[["exon" 18 21]] [["exon" 18 21]]]
         "chr7" 116771976 "NM_000245" [[["exon" 14 21]]]
         "chrX" 61197987 nil []

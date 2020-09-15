@@ -245,9 +245,9 @@
                            :else nil)
                      exon-intron (cond
                                    exon-idx {:region "exon" :index (if exon-idx (inc exon-idx)) :count (count exon-ranges)}
-                                   intron-idx {:region "intron" :index (if intron-idx (inc intron-idx)) :count (count intron-ranges)})
-                     regions (remove nil? (vector utr exon-intron))]
-                 {:regions regions :gene rg}))))))
+                                   intron-idx {:region "intron" :index (if intron-idx (inc intron-idx)) :count (count intron-ranges)})]
+                 {:regions {:utr utr :exon-intron exon-intron}
+                  :gene rg}))))))
 
 ;;; Calculation of CDS coordinate
 ;;;
