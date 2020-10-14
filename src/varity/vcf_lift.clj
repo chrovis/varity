@@ -48,7 +48,7 @@
 (defn liftover-variants
   "Lifts over variants data from chains applied chain/index and seq-reader.
   Variants that succeed in liftover will be put in :success,
-  and and those that failed will be put in :failure."
+  and those that failed will be put in :failure."
   [seq-reader indexed-chains variants]
   (let [separated-variants
         (group-by
@@ -60,7 +60,7 @@
     (->> (get separated-variants true)
          (map #(if-let [new-variant (liftover-variant seq-reader
                                                       indexed-chains %)]
-                 {:success (list (norm/realign seq-reader new-variant))}
+                 {:success (list new-variant)}
                  {:failure (list %)}))
          (cons {:failure (get separated-variants false)})
          (apply merge-with
