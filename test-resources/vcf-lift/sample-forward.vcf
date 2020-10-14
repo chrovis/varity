@@ -1,0 +1,7 @@
+##fileformat=VCFv4.1
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##INFO=<ID=END,Number=1,Type=Integer,Description="Stop position of the interval">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
+chr1	125	1	A	AT	100	PASS	END=125
+chr1	125	2	AT	ATA,G	100	PASS	.
+chr1	127	3	GC	GCG	100	PASS	END=128
