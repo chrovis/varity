@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Add support for vcf lift-over. [#35](https://github.com/chrovis/varity/pull/35)
+
 ### Changed
 
 - Seek intron, 3'-UTR, and 5'-UTR regions from genomic position. [#36](https://github.com/chrovis/varity/pull/36)
