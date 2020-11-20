@@ -1,5 +1,5 @@
 (ns varity.hgvs-test
-  (:require [clojure.test :refer [are]]
+  (:require [clojure.test :refer [are testing]]
             [clj-hgvs.core :as hgvs]
             [cljam.io.sequence :as cseq]
             [varity.hgvs :as vhgvs]
@@ -56,4 +56,12 @@
           "NM_144639:c.1510-122AG[3]" (find-rg "NM_144639") #{"NM_144639:c.1510-122AG[3]"
                                                               "NM_144639:c.1510-121_1510-120insAGAG"}
           "NM_144639:c.1510-121_1510-120insAGAG" (find-rg "NM_144639") #{"NM_144639:c.1510-122AG[3]"
-                                                                         "NM_144639:c.1510-121_1510-120insAGAG"})))))
+                                                                         "NM_144639:c.1510-121_1510-120insAGAG"})
+
+        (testing "false coordinate"
+          (are [s] (thrown-with-error-type?
+                    ::vhgvs/invalid-variant
+                    (vhgvs/find-aliases (hgvs/parse s) rdr rgidx))
+            "NM_001276760:c.559+1G>T" ; actually "NM_001276760:c.560G>T"
+            "NM_005228:c.2574-1T>G" ; actually "NM_005228:c.2573T>G"
+            ))))))

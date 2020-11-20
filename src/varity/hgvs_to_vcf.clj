@@ -20,7 +20,14 @@
 
 (defn- coding-dna-hgvs->vcf-variants
   [hgvs seq-rdr rgs]
-  (distinct (keep #(coding-dna/->vcf-variant hgvs seq-rdr %) rgs)))
+  (distinct
+   (keep (fn [rg]
+           (try
+             (coding-dna/->vcf-variant hgvs seq-rdr rg)
+             (catch Exception e
+               (when-not (= (:type (ex-data e)) ::rg/invalid-coordinate)
+                 (throw e)))))
+         rgs)))
 
 (defn- protein-hgvs->vcf-variants
   [hgvs seq-rdr rgs]

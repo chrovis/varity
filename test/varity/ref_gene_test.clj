@@ -320,4 +320,20 @@
       "-2+1" 2 3  7
       "*2-1" 9 11 5
       "-7"   2 3  13
-      "*5"   9 11 1)))
+      "*5"   9 11 1))
+  (testing "false coordinate"
+    (are [c s] (thrown-with-error-type?
+                ::rg/invalid-coordinate
+                (rg/cds-coord->genomic-pos (coord/parse-coding-dna-coordinate c)
+                                           {:strand s
+                                            :cds-start 2
+                                            :cds-end 11
+                                            :exon-ranges [[2 4] [8 11]]}))
+      "2+1" :forward
+      "5-1" :forward
+      "4+1" :forward
+      "3-1" :forward
+      "2-1" :reverse
+      "5+1" :reverse
+      "4-1" :reverse
+      "3+1" :reverse)))
