@@ -256,8 +256,9 @@
 (defn- nearest-edge-and-offset
   [pos {:keys [strand exon-ranges]}]
   (->> exon-ranges
-       (map (fn [[s e]] [[s (- pos s)] [e (- pos e)]]))
-       (apply concat)
+       (mapcat (fn [[s e]]
+                 [[s (- pos s) :left]
+                  [e (- pos e) :right]]))
        (sort-by (fn [[e ^long o]]
                   [(Math/abs o) (case strand
                                   :forward e
@@ -341,4 +342,18 @@
   clj-hgvs.coordinate/CodingDNACoordinate record."
   [coord {:keys [strand] :as rg}]
   (if-let [base-pos (cds->genomic-pos (:position coord) (:region coord) rg)]
-    (+ base-pos (cond-> (:offset coord) (= strand :reverse) (-)))))
+    (let [[_ edge-offset edge-side] (nearest-edge-and-offset base-pos rg)
+          offset (cond-> (or (:offset coord) 0)
+                   (= strand :reverse) -)]
+      (cond
+        (zero? offset)
+        base-pos
+
+        (and (zero? edge-offset)
+             (or (and (= edge-side :left) (neg? offset))
+                 (and (= edge-side :right) (pos? offset))))
+        (+ base-pos offset)
+
+        :else
+        (throw (ex-info "The coordinate is invalid for the refGene."
+                        {:type ::invalid-coordinate, :coordinate coord}))))))

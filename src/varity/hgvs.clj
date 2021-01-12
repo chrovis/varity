@@ -56,18 +56,26 @@
 (defmethod find-aliases :ref-gene-index
   [hgvs seq-rdr rgidx]
   {:pre [(= (:kind hgvs) :coding-dna)]}
-  (letfn [(vcf-variant->coding-dna-hgvs [variant]
-            (mapcat #(v2h/vcf-variant->coding-dna-hgvs variant seq-rdr rgidx %)
-                    option-patterns))]
-    (->> (h2v/hgvs->vcf-variants hgvs seq-rdr rgidx)
-         (mapcat vcf-variant->coding-dna-hgvs)
-         (filter #(= (:transcript %) (trim-version (:transcript hgvs))))
-         distinct)))
+  (let [variants (h2v/hgvs->vcf-variants hgvs seq-rdr rgidx)
+        vcf-variant->coding-dna-hgvs (fn [variant]
+                                       (mapcat #(v2h/vcf-variant->coding-dna-hgvs variant seq-rdr rgidx %)
+                                               option-patterns))]
+    (if (seq variants)
+      (->> variants
+           (mapcat vcf-variant->coding-dna-hgvs)
+           (filter #(= (:transcript %) (trim-version (:transcript hgvs))))
+           distinct)
+      (throw (ex-info "The VCF variant is not found."
+                      {:type ::invalid-variant
+                       :hgvs hgvs})))))
 
 (defmethod find-aliases :ref-gene-entity
   [hgvs seq-rdr rg]
   {:pre [(= (:kind hgvs) :coding-dna)]}
-  (when-let [variant (h2v/hgvs->vcf-variants hgvs seq-rdr rg)]
+  (if-let [variant (h2v/hgvs->vcf-variants hgvs seq-rdr rg)]
     (->> option-patterns
          (map #(v2h/vcf-variant->coding-dna-hgvs variant seq-rdr rg %))
-         distinct)))
+         distinct)
+    (throw (ex-info "The VCF variant is not found."
+                    {:type ::invalid-variant
+                     :hgvs hgvs}))))

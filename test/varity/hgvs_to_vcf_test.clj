@@ -44,7 +44,6 @@
         "NM_005228:c.2571GCT[3]" '({:chr "chr7", :pos 55191819, :ref "G", :alt "GGCTGCT"})
         "NM_144639:c.1510-122_1510-121[3]" '({:chr "chr3", :pos 126492636, :ref "C", :alt "CCTCT"}) ; cf. rs2307882 (-)
         "NM_144639:c.1510-122AG[3]" '({:chr "chr3", :pos 126492636, :ref "C", :alt "CCTCT"})
-        "NM_004369:c.6063+6[9]" '({:chr "chr2", :pos 237363239, :ref "T", :alt "TA"}) ; cf. rs11385011 (-)
         "NM_000059:c.18AG[2]" '({:chr "chr13", :pos 32316477, :ref "AAG", :alt "A"}) ; cf. rs397507623 (+)
         "NM_004333:c.-95_-90[3]" '({:chr "chr7", :pos 140924774, :ref "GGGAGGC", :alt "G"}) ; cf. rs727502907 (-)
         )))
@@ -88,8 +87,6 @@
         "c.2571GCT[3]" "EGFR" '({:chr "chr7", :pos 55191819, :ref "G", :alt "GGCTGCT"})
         "c.1510-122_1510-121[3]" "UROC1" '({:chr "chr3", :pos 126492636, :ref "C", :alt "CCTCT"}) ; cf. rs2307882 (-)
         "c.1510-122AG[3]" "UROC1" '({:chr "chr3", :pos 126492636, :ref "C", :alt "CCTCT"})
-        "c.6063+6[9]" "COL6A3" '({:chr "chr2", :pos 237363239, :ref "T", :alt "TA"}
-                                 {:chr "chr2", :pos 237353343, :ref "G", :alt "GTTTTTTTT"}) ; cf. rs11385011 (-)
         "c.18AG[2]" "BRCA2" '({:chr "chr13", :pos 32316477, :ref "AAG", :alt "A"}) ; cf. rs397507623 (+)
         "c.-95_-90[3]" "BRAF" '({:chr "chr7", :pos 140924774, :ref "GGGAGGC", :alt "G"}) ; cf. rs727502907 (-)
         )))
