@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.7.0] - 2021-01-12
 
 ### Added
 
@@ -9,6 +9,7 @@
 ### Changed
 
 - Seek intron, 3'-UTR, and 5'-UTR regions from genomic position. [#36](https://github.com/chrovis/varity/pull/36)
+- Update clj-hgvs to 0.4.4.
 
 ### Fixed
 
@@ -251,7 +252,8 @@ Strand representation is changed from string (`+`, `-`) to keyword (`:forward`,
 
 First release.
 
-[Unreleased]: https://github.com/chrovis/varity/compare/0.6.2...HEAD
+[Unreleased]: https://github.com/chrovis/varity/compare/0.7.0...HEAD
+[0.7.0]: https://github.com/chrovis/varity/compare/0.6.2...0.7.0
 [0.6.2]: https://github.com/chrovis/varity/compare/0.6.1...0.6.2
 [0.6.1]: https://github.com/chrovis/varity/compare/0.6.0...0.6.1
 [0.6.0]: https://github.com/chrovis/varity/compare/0.5.1...0.6.0

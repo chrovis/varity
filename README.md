@@ -17,22 +17,17 @@ Variant translation library for Clojure.
 Clojure CLI/deps.edn:
 
 ```clojure
-varity {:mvn/version "0.6.2"}
+varity {:mvn/version "0.7.0"}
 ```
 
 Leiningen/Boot:
 
 ```clojure
-[varity "0.6.2"]
+[varity "0.7.0"]
 ```
 
 To use varity with Clojure 1.8, you must include a dependency on
 [clojure-future-spec](https://github.com/tonsky/clojure-future-spec).
-
-## Breaking Changes in 0.6.0
-
-cdna is renamed to coding-dna to avoid misunderstanding. See
-[CHANGELOG](CHANGELOG.md) for more information.
 
 ## Usage
 
@@ -132,6 +127,6 @@ To convert a genomic coordinate between assemblies,
 
 ## License
 
-Copyright 2017-2020 [Xcoo, Inc.](https://xcoo.jp/)
+Copyright 2017-2021 [Xcoo, Inc.](https://xcoo.jp/)
 
 Licensed under the [Apache License, Version 2.0](LICENSE).
