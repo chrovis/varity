@@ -10,6 +10,10 @@
 
 - Seek intron, 3'-UTR, and 5'-UTR regions from genomic position. [#36](https://github.com/chrovis/varity/pull/36)
 
+### Fixed
+
+- Error handling in conversion of an invalid coordinate. [#37](https://github.com/chrovis/varity/pull/37)
+
 ## [0.6.2] - 2020-07-06
 
 ### Changed
