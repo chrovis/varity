@@ -170,6 +170,8 @@
         "chr7" 152247986 "G" "GT" '("p.Y816*") ; cf. rs150073007 (-, nonsense mutation)
         "chr17" 31159027 "TGC" "T" '("p.A75*") ; not actual example (+, nonsense in del case)
         "chr2" 47478341 "TG" "T" '("p.L762*" "p.L696*") ;; rs786204050 (+) frameshift with termination
+        "chr8" 42838217 "GAGATTAACAGGGGTCTGAAGAGGCGGCATTAGTAATCCAATAGCAGCATCAACCTGGGAAACAGGAGGCGGTAAAGGAGGTGGGGGAAGCTGTTCCTGTGGCTCCAGAAGATCTTCTTTCTAAAACAAAAATACAAAGTATGTTTGAATTTAGTAACTAAAAACAGTTTAAA" "G"
+        '("p.K90Lfs*5" "p.K25*") ; cf. VCV000965170.1 (-, frameshift with termination)
 
         ;; deletion
         "chr1" 240092288 "AGTC" "A" '("p.S61del") ; cf. rs772088733 (+)

@@ -194,7 +194,12 @@
       {:type (if (= t :fs-ter-substitution) :substitution t)
        :pos base-ppos
        :ref (if (= t :fs-ter-substitution)
-              (str pref (subs ref-prot-rest 0 (max 0 (inc (- (count palt) (count pref))))))
+              (let [pref-len (count pref)
+                    palt-len (count palt)
+                    palt-ter-len (inc palt-len)]
+                (if (<= pref-len palt-ter-len)
+                  (str pref (subs ref-prot-rest 0 (max 0 (inc (- palt-len pref-len)))))
+                  (subs pref 0 palt-ter-len)))
               pref)
        :alt (if (= t :fs-ter-substitution)
               (str palt \*)
