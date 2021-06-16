@@ -198,7 +198,7 @@
                     palt-len (count palt)
                     palt-ter-len (inc palt-len)]
                 (if (<= pref-len palt-ter-len)
-                  (str pref (subs ref-prot-rest 0 (max 0 (inc (- palt-len pref-len)))))
+                  (str pref (subs ref-prot-rest 0 (inc (- palt-len pref-len))))
                   (subs pref 0 palt-ter-len)))
               pref)
        :alt (if (= t :fs-ter-substitution)
