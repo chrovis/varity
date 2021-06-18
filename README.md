@@ -1,7 +1,7 @@
 # varity
 
 [![Clojars Project](https://img.shields.io/clojars/v/varity.svg)](https://clojars.org/varity)
-[![Build Status](https://travis-ci.org/chrovis/varity.svg?branch=master)](https://travis-ci.org/chrovis/varity)
+[![build](https://github.com/chrovis/varity/actions/workflows/build.yml/badge.svg)](https://github.com/chrovis/varity/actions/workflows/build.yml)
 [![codecov](https://codecov.io/gh/chrovis/varity/branch/master/graph/badge.svg)](https://codecov.io/gh/chrovis/varity)
 
 Variant translation library for Clojure.
