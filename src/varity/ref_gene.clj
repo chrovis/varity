@@ -66,90 +66,102 @@
          (map parse-ref-gene-line)
          doall)))
 
+(defn- ->gtf-attr
+  [attr-str]
+  (->> (string/split attr-str #";")
+       (map string/trim)
+       (mapcat #(string/split % #"\s"))
+       (partition-all 2)
+       (map (fn [[k v]]
+              [k (string/replace v #"\"" "")]))
+       (into {})))
+
 (defn parse-gtf-line
   [s]
-  (if-not (= \# (first s))
+  (when-not (= \# (first s))
     (let [row (string/split s #"\t")]
-      {:seqname (nth row 0)
-       :source (nth row 1)
-       :feature (nth row 2)
-       :start (as-long (nth row 3))
-       :end (as-long (nth row 4))
-       :score (as-float (nth row 5))
-       :strand (nth row 6)
-       :frame (nth row 7)
-       :attribute (->> (string/split (nth row 8) #";")
-                       (map string/trim)
-                       (mapcat #(string/split % #"\s"))
-                       (partition-all 2)
-                       (map (fn [[k v]]
-                              [k (string/replace v #"\"" "")]))
-                       (into {}))})))
+      (merge
+       {:seqname (nth row 0)
+        :source (nth row 1)
+        :feature (nth row 2)
+        :start (as-long (nth row 3))
+        :end (as-long (nth row 4))
+        :score (as-float (nth row 5))
+        :strand (nth row 6)
+        :frame (nth row 7)}
+       (when (= (count row) 9)
+         {:attribute (->gtf-attr (nth row 8))})))))
 
-(defn load-gencode
+(defn- ->feature-map
+  ([features]
+   (->feature-map features (zipmap [:transcript :exon :cds] (repeat {}))))
+  ([gtf-lines data]
+   (reduce (fn [data {:keys [seqname feature attribute] :as gtf}]
+             (let [base (merge (select-keys gtf [:start :end])
+                               {:chr seqname})
+                   t-id (get attribute "transcript_id")]
+               (case feature
+                 "transcript"
+                 (assoc-in data
+                           [:transcript t-id]
+                           (merge base
+                                  {:name3 (get attribute "transcript_name")
+                                   :name2 (get attribute "gene_name")
+                                   :name t-id
+                                   :id t-id
+                                   :strand (:strand gtf)
+                                   :score (:score gtf)}))
+
+                 "exon"
+                 (update-in data
+                            [:exon t-id]
+                            conj
+                            (merge base
+                                   {:exon-number (as-long (get attribute "exon_number"))
+                                    :frame (:frame gtf)
+                                    :strand (:strand gtf)}))
+                 "CDS"
+                 (assoc-in data [:cds t-id] base)
+
+                 data)))
+           data
+           gtf-lines)))
+
+(defn- ->region
+  [feature-map [transcript-id transcript]]
+  (let [exons (->> (get-in feature-map [:exon transcript-id])
+                   (filter :exon-number)
+                   (sort-by :exon-number))
+        exons (case (:strand transcript)
+                "+" exons
+                "-" (reverse exons))
+        cds (get-in feature-map [:cds transcript-id])]
+    (cond-> transcript
+      (seq exons) (assoc :exon-count (count exons)
+                         :exon-start (:start (first exons))
+                         :exon-end (:end (last exons))
+                         :exon-ranges (mapv #(vector (:start %) (:end %)) exons)
+                         :exon-frames (mapv :frame exons))
+      (empty? exons) (assoc :exon-count 0
+                            :exon-start nil
+                            :exon-end nil
+                            :exon-ranges []
+                            :exon-frames [])
+      cds (assoc :cds-start (:start cds)
+                 :cds-end (:end cds))
+      (not cds) (assoc :cds-start (:start transcript)
+                       :cds-end (:end transcript))
+      true (assoc :tx-start (:start transcript)
+                  :tx-end (:end transcript)))))
+
+(defn load-tgf
   [f]
   (with-open [rdr (io/reader (util/compressor-input-stream f))]
-    (let [features (->> (line-seq rdr)
-                        (keep parse-gtf-line))
-          feature-map (loop [features features
-                             data {:transcript {}
-                                   :exon {}
-                                   :cds {}}]
-                        (if-let [o (first features)]
-                          (recur (rest features)
-                                 (case (:feature o)
-                                   "transcript" (assoc-in data
-                                                          [:transcript (get-in o [:attribute "transcript_id"])]
-                                                          {:chr (:seqname o)
-                                                           :start (:start o)
-                                                           :end (:end o)
-                                                           :name3 (get-in o [:attribute "transcript_name"])
-                                                           :name2 (get-in o [:attribute "gene_name"])
-                                                           :name (get-in o [:attribute "transcript_id"])
-                                                           :id (get-in o [:attribute "transcript_id"])
-                                                           :strand (:strand o)
-                                                           :score (:score o)})
-                                   "exon" (update-in data
-                                                     [:exon (get-in o [:attribute "transcript_id"])]
-                                                     conj {:chr (:seqname o)
-                                                           :start (:start o)
-                                                           :end (:end o)
-                                                           :exon-number (as-long (get-in o [:attribute "exon_number"]))
-                                                           :frame (:frame o)
-                                                           :strand (:strand o)})
-                                   "CDS" (assoc-in data
-                                                   [:cds (get-in o [:attribute "transcript_id"])]
-                                                   {:chr (:seqname o)
-                                                    :start (:start o)
-                                                    :end (:end o)})
-                                   data))
-                          data))]
+    (let [feature-map (->> (line-seq rdr)
+                           (keep parse-gtf-line)
+                           ->feature-map)]
       (->> (:transcript feature-map)
-           (map (fn [[id t]]
-                  (let [exons (->> (get-in feature-map [:exon id])
-                                   (filter :exon-number)
-                                   (sort-by :exon-number))
-                        exons (case (:strand t)
-                                "+" exons
-                                "-" (reverse exons))
-                        cds (get-in feature-map [:cds id])]
-                    (cond-> t
-                      (not (empty? exons)) (assoc :exon-count (count exons)
-                                                  :exon-start (:start (first exons))
-                                                  :exon-end (:end (last exons))
-                                                  :exon-ranges (mapv #(vector (:start %) (:end %)) exons)
-                                                  :exon-frames (mapv :frame exons))
-                      (empty? exons) (assoc :exon-count 0
-                                            :exon-start nil
-                                            :exon-end nil
-                                            :exon-ranges []
-                                            :exon-frames [])
-                      cds (assoc :cds-start (:start cds)
-                                 :cds-end (:end cds))
-                      (not cds) (assoc :cds-start (:start t)
-                                       :cds-end (:end t))
-                      true (assoc :tx-start (:start t)
-                                  :tx-end (:end t))))))
+           (map #(->region feature-map %))
            doall))))
 
 ;; Indexing

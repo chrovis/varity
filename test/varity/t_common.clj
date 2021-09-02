@@ -57,3 +57,5 @@
 (def test-ref-gene-file (cavia/resource prof "test-refGene.txt.gz"))
 
 (def test-chain-file (io/resource "hg19ToHg38.over.chain.gz"))
+
+(def test-tgf-file (io/resource "gtf_test.gtf"))

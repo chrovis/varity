@@ -5,9 +5,14 @@
             [cljam.io.protocols :as p]
             [clj-hgvs.coordinate :as coord]
             [varity.ref-gene :as rg]
-            [varity.t-common :refer :all]))
+            [varity.t-common :refer [cavia-testing defslowtest
+                                     test-ref-gene-file
+                                     test-ref-seq-file
+                                     test-tgf-file]]))
 
 (def parse-ref-gene-line #'varity.ref-gene/parse-ref-gene-line)
+
+(def parse-gtf-line #'varity.ref-gene/parse-gtf-line)
 
 (def ^:private ^:const test-ref-gene
   {:bin 592
@@ -26,9 +31,31 @@
    :cds-end-stat :cmpl
    :exon-frames [1 1 0 -1]})
 
+(def ^:private ^:const test-gtf-row
+  {:attribute
+   {"transcript_id" "ENST00000456328.2",
+    "gene_id" "ENSG00000223972.5"},
+   :frame ".",
+   :strand "+",
+   :start 13221,
+   :source "HAVANA",
+   :score nil,
+   :seqname "chr1",
+   :end 14409,
+   :feature "exon"})
+
 (deftest parse-ref-gene-line-test
   (is (= (parse-ref-gene-line "592\tNM_001291366\tchr1\t-\t975198\t982117\t976171\t981029\t4\t975198,976498,978880,982064,\t976269,976624,981047,982117,\t0\tPERM1\tcmpl\tcmpl\t1,1,0,-1,")
          test-ref-gene)))
+
+(deftest parse-gtf-line-test
+  (is (= (parse-gtf-line "#comment") nil))
+  (is (= (parse-gtf-line "chr1\tHAVANA\texon\t13221\t14409\t.\t+\t.\tgene_id \"ENSG00000223972.5\"; transcript_id \"ENST00000456328.2\";")
+         test-gtf-row))
+  (is (= (parse-gtf-line "chr1\tHAVANA\texon\t13221\t14409\t.\t+\t.\t")
+         (dissoc test-gtf-row :attribute))))
+
+(deftest load-gtf)
 
 (defslowtest in-any-exon?-test
   (cavia-testing "in-any-exon? (slow)"
