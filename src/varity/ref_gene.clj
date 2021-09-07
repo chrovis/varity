@@ -105,9 +105,8 @@
                  (assoc-in data
                            [:transcript t-id]
                            (merge base
-                                  {:name3 (get attribute "transcript_name")
+                                  {:name (get attribute "transcript_name")
                                    :name2 (get attribute "gene_name")
-                                   :name t-id
                                    :id t-id
                                    :strand (:strand gtf)
                                    :score (:score gtf)}))
@@ -121,7 +120,7 @@
                                     :frame (:frame gtf)
                                     :strand (:strand gtf)}))
                  "CDS"
-                 (assoc-in data [:cds t-id] base)
+                 (update-in data [:cds t-id] conj base)
 
                  data)))
            data
@@ -147,10 +146,10 @@
                             :exon-end nil
                             :exon-ranges []
                             :exon-frames [])
-      cds (assoc :cds-start (:start cds)
-                 :cds-end (:end cds))
-      (not cds) (assoc :cds-start (:start transcript)
-                       :cds-end (:end transcript))
+      (seq cds) (assoc :cds-start (apply min (map :start cds))
+                       :cds-end (apply max (map :end cds)))
+      (empty? cds) (assoc :cds-start (:start transcript)
+                          :cds-end (:end transcript))
       true (assoc :tx-start (:start transcript)
                   :tx-end (:end transcript)))))
 
