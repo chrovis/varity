@@ -66,18 +66,22 @@
          (map parse-ref-gene-line)
          doall)))
 
-(defn- ->gtf-attr
-  [attr-str]
+(defn- ->gencode-attr
+  [attr-str kv-sep]
   (->> (string/split attr-str #";")
        (map string/trim)
-       (mapcat #(string/split % #"\s"))
+       (mapcat #(string/split % kv-sep))
        (partition-all 2)
        (map (fn [[k v]]
               [k (string/replace v #"\"" "")]))
        (into {})))
 
-(defn parse-gtf-line
-  [s]
+(def ^:private gencode-attr-kv-sep
+  {:gtf #"\s"
+   :gff3 #"="})
+
+(defn parse-gencode-line
+  [s & {:keys [attr-kv-sep] :or {attr-kv-sep (gencode-attr-kv-sep :gtf)}}]
   (when-not (= \# (first s))
     (let [row (string/split s #"\t")]
       (merge
@@ -90,7 +94,7 @@
         :strand (nth row 6)
         :frame (nth row 7)}
        (when (= (count row) 9)
-         {:attribute (->gtf-attr (nth row 8))})))))
+         {:attribute (->gencode-attr (nth row 8) attr-kv-sep)})))))
 
 (defn- ->feature-map
   ([features]
@@ -122,19 +126,37 @@
                  "CDS"
                  (update-in data [:cds t-id] conj base)
 
+                 "stop_codon"
+                 (assoc-in data [:stop-codon t-id] base)
+
                  data)))
            data
            gtf-lines)))
+
+(defn- extend-cds
+  "Extend 3'-most cds's `:end` or `:start` depending on the `strand` value
+   if the cds doesn't include stop codon in its value"
+  [strand {:keys [start end] :as stop-codon} cdss]
+  (let [last-cds (last cdss)]
+    (when (and (not= start (:start last-cds))
+               (not= end (:end last-cds)))
+      (update (vec cdss)
+              (dec (count cdss))
+              (if (= strand :forward)
+                #(merge % (select-keys stop-codon [:end]))
+                #(merge % (select-keys stop-codon [:start])))))))
 
 (defn- ->region
   [feature-map [transcript-id transcript]]
   (let [exons (->> (get-in feature-map [:exon transcript-id])
                    (filter :exon-number)
                    (sort-by :exon-number))
-        exons (case (:strand transcript)
-                "+" exons
-                "-" (reverse exons))
-        cds (get-in feature-map [:cds transcript-id])]
+        [exons strand] (case (:strand transcript)
+                         "+" [exons :forward]
+                         "-" [(reverse exons) :reverse])
+        cds (extend-cds strand
+                        (get-in feature-map [:stop-codon transcript-id])
+                        (get-in feature-map [:cds transcript-id]))]
     (cond-> transcript
       (seq exons) (assoc :exon-count (count exons)
                          :exon-start (:start (first exons))
@@ -151,17 +173,26 @@
       (empty? cds) (assoc :cds-start (:start transcript)
                           :cds-end (:end transcript))
       true (assoc :tx-start (:start transcript)
-                  :tx-end (:end transcript)))))
+                  :tx-end (:end transcript)
+                  :strand strand))))
 
-(defn load-tgf
-  [f]
+(defn load-gencode
+  [f parse-line]
   (with-open [rdr (io/reader (util/compressor-input-stream f))]
     (let [feature-map (->> (line-seq rdr)
-                           (keep parse-gtf-line)
+                           (keep parse-line)
                            ->feature-map)]
       (->> (:transcript feature-map)
            (map #(->region feature-map %))
            doall))))
+
+(defn load-gtf
+  [f]
+  (load-gencode f parse-gencode-line))
+
+(defn load-gff3
+  [f]
+  (load-gencode f #(parse-gencode-line % :attr-kv-sep (:gff3 gencode-attr-kv-sep))))
 
 ;; Indexing
 ;; --------
