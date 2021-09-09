@@ -80,7 +80,7 @@
   {:gtf #"\s"
    :gff3 #"="})
 
-(defn parse-gencode-line
+(defn- parse-gencode-line
   [s & {:keys [attr-kv-sep] :or {attr-kv-sep (gencode-attr-kv-sep :gtf)}}]
   (when-not (= \# (first s))
     (let [row (string/split s #"\t")]

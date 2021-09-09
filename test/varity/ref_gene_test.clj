@@ -8,11 +8,12 @@
             [varity.t-common :refer [cavia-testing defslowtest
                                      test-ref-gene-file
                                      test-ref-seq-file
-                                     test-tgf-file]]))
+                                     test-gff3-file
+                                     test-gtf-file]]))
 
 (def parse-ref-gene-line #'varity.ref-gene/parse-ref-gene-line)
 
-(def parse-gtf-line #'varity.ref-gene/parse-gtf-line)
+(def parse-gencode-line #'varity.ref-gene/parse-gencode-line)
 
 (def ^:private ^:const test-ref-gene
   {:bin 592
@@ -48,14 +49,42 @@
   (is (= (parse-ref-gene-line "592\tNM_001291366\tchr1\t-\t975198\t982117\t976171\t981029\t4\t975198,976498,978880,982064,\t976269,976624,981047,982117,\t0\tPERM1\tcmpl\tcmpl\t1,1,0,-1,")
          test-ref-gene)))
 
-(deftest parse-gtf-line-test
-  (is (= (parse-gtf-line "#comment") nil))
-  (is (= (parse-gtf-line "chr1\tHAVANA\texon\t13221\t14409\t.\t+\t.\tgene_id \"ENSG00000223972.5\"; transcript_id \"ENST00000456328.2\";")
-         test-gtf-row))
-  (is (= (parse-gtf-line "chr1\tHAVANA\texon\t13221\t14409\t.\t+\t.\t")
-         (dissoc test-gtf-row :attribute))))
+(deftest parse-gencode-line-test
+  (testing "GTF"
+    (is (= (parse-gencode-line "#comment") nil))
+    (is (= (parse-gencode-line "chr1\tHAVANA\texon\t13221\t14409\t.\t+\t.\tgene_id \"ENSG00000223972.5\"; transcript_id \"ENST00000456328.2\";")
+           test-gtf-row))
+    (is (= (parse-gencode-line "chr1\tHAVANA\texon\t13221\t14409\t.\t+\t.\t")
+           (dissoc test-gtf-row :attribute))))
+  (testing "GFF3"
+    (is (= (parse-gencode-line "#comment") nil))
+    (is (= (parse-gencode-line "chr1\tHAVANA\texon\t13221\t14409\t.\t+\t.\tgene_id=ENSG00000223972.5;transcript_id=ENST00000456328.2"
+                               :attr-kv-sep #"=")
+           test-gtf-row))
+    (is (= (parse-gencode-line "chr1\tHAVANA\texon\t13221\t14409\t.\t+\t.\t"
+                               :attr-kv-sep #"=")
+           (dissoc test-gtf-row :attribute)))))
 
-(deftest load-gtf)
+(def parsed-gtf-region (first (rg/load-gtf test-gtf-file)))
+
+(def parsed-gff3-region (first (rg/load-gff3 test-gff3-file)))
+
+(deftest load-gencode
+  (let [extract (fn [region] (select-keys region [:name2
+                                                  :exon-ranges
+                                                  :tx-start
+                                                  :strand
+                                                  :cds-start
+                                                  :tx-end
+                                                  :exon-count
+                                                  :chr
+                                                  :cds-end]))]
+    (testing "load-gff3"
+      (is (= (extract parsed-gff3-region)
+             (extract test-ref-gene))))
+    (testing "load-gtf"
+      (is (= (extract parsed-gtf-region)
+             (extract test-ref-gene))))))
 
 (defslowtest in-any-exon?-test
   (cavia-testing "in-any-exon? (slow)"
@@ -65,28 +94,52 @@
 
 (deftest regions
   (testing "tx-region"
-    (are [?ref-gene ?output]
-        (= ?output (rg/tx-region ?ref-gene))
-      test-ref-gene {:chr "chr1", :start 975199, :end 982117, :strand :reverse}
-      (merge test-ref-gene {:cds-start 982118 :cds-end 982117}) {:chr "chr1", :start 975199, :end 982117, :strand :reverse}))
+    (let [output {:chr "chr1", :start 975199, :end 982117, :strand :reverse}]
+      (are [?ref-gene ?output]
+          (= ?output (rg/tx-region ?ref-gene))
+        test-ref-gene output
+        (merge test-ref-gene {:cds-start 982118 :cds-end 982117}) output)
+      (testing "with GENCODE files "
+        (is (= output
+               (rg/tx-region parsed-gff3-region)))
+        (is (= output
+               (rg/tx-region parsed-gtf-region))))))
   (testing "cds-region"
-    (are [?ref-gene ?output]
-        (= ?output (rg/cds-region ?ref-gene))
-      test-ref-gene {:chr "chr1", :start 976172, :end 981029, :strand :reverse}
-      (merge test-ref-gene {:cds-start 982118 :cds-end 982117}) nil))
+    (let [output {:chr "chr1", :start 976172, :end 981029, :strand :reverse}]
+      (are [?ref-gene ?output]
+          (= ?output (rg/cds-region ?ref-gene))
+        test-ref-gene output
+        (merge test-ref-gene {:cds-start 982118 :cds-end 982117}) nil)
+      (testing "with GENCODE files "
+        (is (= output
+               (rg/cds-region parsed-gff3-region)))
+        (is (= output
+               (rg/cds-region parsed-gtf-region))))))
   (testing "exon-seq"
-    (are [?ref-gene ?output]
-        (= ?output (rg/exon-seq ?ref-gene))
-      test-ref-gene [{:exon-index 1, :exon-count 4, :chr "chr1", :start 982065, :end 982117, :strand :reverse}
-                     {:exon-index 2, :exon-count 4, :chr "chr1", :start 978881, :end 981047, :strand :reverse}
-                     {:exon-index 3, :exon-count 4, :chr "chr1", :start 976499, :end 976624, :strand :reverse}
-                     {:exon-index 4, :exon-count 4, :chr "chr1", :start 975199, :end 976269, :strand :reverse}]))
+    (let [output [{:exon-index 1, :exon-count 4, :chr "chr1", :start 982065, :end 982117, :strand :reverse}
+                  {:exon-index 2, :exon-count 4, :chr "chr1", :start 978881, :end 981047, :strand :reverse}
+                  {:exon-index 3, :exon-count 4, :chr "chr1", :start 976499, :end 976624, :strand :reverse}
+                  {:exon-index 4, :exon-count 4, :chr "chr1", :start 975199, :end 976269, :strand :reverse}]]
+      (are [?ref-gene ?output]
+          (= ?output (rg/exon-seq ?ref-gene))
+        test-ref-gene output)
+      (testing "with GENCODE files "
+        (is (= output
+               (rg/exon-seq parsed-gff3-region)))
+        (is (= output
+               (rg/exon-seq parsed-gtf-region))))))
   (testing "cds-seq"
-    (are [?ref-gene ?output]
-        (= ?output (rg/cds-seq ?ref-gene))
-      test-ref-gene [{:exon-index 2, :exon-count 4, :chr "chr1", :start 978881, :end 981029, :strand :reverse}
-                     {:exon-index 3, :exon-count 4, :chr "chr1", :start 976499, :end 976624, :strand :reverse}
-                     {:exon-index 4, :exon-count 4, :chr "chr1", :start 976172, :end 976269, :strand :reverse}])))
+    (let [output [{:exon-index 2, :exon-count 4, :chr "chr1", :start 978881, :end 981029, :strand :reverse}
+                  {:exon-index 3, :exon-count 4, :chr "chr1", :start 976499, :end 976624, :strand :reverse}
+                  {:exon-index 4, :exon-count 4, :chr "chr1", :start 976172, :end 976269, :strand :reverse}]]
+      (are [?ref-gene ?output]
+          (= ?output (rg/cds-seq ?ref-gene))
+        test-ref-gene output)
+      (testing "with GENCODE files "
+        (is (= output
+               (rg/cds-seq parsed-gff3-region)))
+        (is (= output
+               (rg/cds-seq parsed-gtf-region)))))))
 
 (defslowtest regions-slow
   (cavia-testing "exon-seq"
