@@ -109,9 +109,9 @@
                  (assoc-in data
                            [:transcript t-id]
                            (merge base
-                                  {:name (get attribute "transcript_name")
+                                  {:name t-id
                                    :name2 (get attribute "gene_name")
-                                   :id t-id
+                                   :gene_id (get attribute "gene_id")
                                    :strand (:strand gtf)
                                    :score (:score gtf)}))
 
