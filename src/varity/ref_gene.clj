@@ -6,7 +6,7 @@
             [cljam.io.sequence :as cseq]
             [cljam.util.chromosome :refer [normalize-chromosome-key]]
             [cljam.util.sequence :as util-seq]
-            [proton.core :refer [as-long]]
+            [proton.core :refer [as-long as-float]]
             [varity.util :as util]))
 
 ;;; Utility
@@ -65,6 +65,134 @@
     (->> (line-seq rdr)
          (map parse-ref-gene-line)
          doall)))
+
+(defn- ->gencode-attr
+  [attr-str kv-sep]
+  (->> (string/split attr-str #";")
+       (map string/trim)
+       (mapcat #(string/split % kv-sep))
+       (partition-all 2)
+       (map (fn [[k v]]
+              [k (string/replace v #"\"" "")]))
+       (into {})))
+
+(def ^:private gencode-attr-kv-sep
+  {:gtf #"\s"
+   :gff3 #"="})
+
+(defn- parse-gencode-line
+  [s & {:keys [attr-kv-sep] :or {attr-kv-sep (gencode-attr-kv-sep :gtf)}}]
+  (when-not (= \# (first s))
+    (let [row (string/split s #"\t")]
+      (merge
+       {:seqname (nth row 0)
+        :source (nth row 1)
+        :feature (nth row 2)
+        :start (as-long (nth row 3))
+        :end (as-long (nth row 4))
+        :score (as-float (nth row 5))
+        :strand (nth row 6)
+        :frame (nth row 7)}
+       (when (= (count row) 9)
+         {:attribute (->gencode-attr (nth row 8) attr-kv-sep)})))))
+
+(defn- ->feature-map
+  ([features]
+   (->feature-map features (zipmap [:transcript :exon :cds] (repeat {}))))
+  ([gtf-lines data]
+   (reduce (fn [data {:keys [seqname feature attribute] :as gtf}]
+             (let [base (merge (select-keys gtf [:start :end])
+                               {:chr seqname})
+                   t-id (get attribute "transcript_id")]
+               (case feature
+                 "transcript"
+                 (assoc-in data
+                           [:transcript t-id]
+                           (merge base
+                                  {:name t-id
+                                   :name2 (get attribute "gene_name")
+                                   :gene_id (get attribute "gene_id")
+                                   :strand (:strand gtf)
+                                   :score (:score gtf)}))
+
+                 "exon"
+                 (update-in data
+                            [:exon t-id]
+                            conj
+                            (merge base
+                                   {:exon-number (as-long (get attribute "exon_number"))
+                                    :frame (:frame gtf)
+                                    :strand (:strand gtf)}))
+                 "CDS"
+                 (update-in data [:cds t-id] conj base)
+
+                 "stop_codon"
+                 (assoc-in data [:stop-codon t-id] base)
+
+                 data)))
+           data
+           gtf-lines)))
+
+(defn- extend-cds
+  "Extend 3'-most cds's `:end` or `:start` depending on the `strand` value
+   if the cds doesn't include stop codon in its value"
+  [strand {:keys [start end] :as stop-codon} cdss]
+  (let [last-cds (last cdss)]
+    (when (and (not= start (:start last-cds))
+               (not= end (:end last-cds)))
+      (update (vec cdss)
+              (dec (count cdss))
+              (if (= strand :forward)
+                #(merge % (select-keys stop-codon [:end]))
+                #(merge % (select-keys stop-codon [:start])))))))
+
+(defn- ->region
+  [feature-map [transcript-id transcript]]
+  (let [exons (->> (get-in feature-map [:exon transcript-id])
+                   (filter :exon-number)
+                   (sort-by :exon-number))
+        [exons strand] (case (:strand transcript)
+                         "+" [exons :forward]
+                         "-" [(reverse exons) :reverse])
+        cds (extend-cds strand
+                        (get-in feature-map [:stop-codon transcript-id])
+                        (get-in feature-map [:cds transcript-id]))]
+    (cond-> transcript
+      (seq exons) (assoc :exon-count (count exons)
+                         :exon-start (:start (first exons))
+                         :exon-end (:end (last exons))
+                         :exon-ranges (mapv #(vector (:start %) (:end %)) exons)
+                         :exon-frames (mapv :frame exons))
+      (empty? exons) (assoc :exon-count 0
+                            :exon-start nil
+                            :exon-end nil
+                            :exon-ranges []
+                            :exon-frames [])
+      (seq cds) (assoc :cds-start (apply min (map :start cds))
+                       :cds-end (apply max (map :end cds)))
+      (empty? cds) (assoc :cds-start (:start transcript)
+                          :cds-end (:end transcript))
+      true (assoc :tx-start (:start transcript)
+                  :tx-end (:end transcript)
+                  :strand strand))))
+
+(defn load-gencode
+  [f parse-line]
+  (with-open [rdr (io/reader (util/compressor-input-stream f))]
+    (let [feature-map (->> (line-seq rdr)
+                           (keep parse-line)
+                           ->feature-map)]
+      (->> (:transcript feature-map)
+           (map #(->region feature-map %))
+           doall))))
+
+(defn load-gtf
+  [f]
+  (load-gencode f parse-gencode-line))
+
+(defn load-gff3
+  [f]
+  (load-gencode f #(parse-gencode-line % :attr-kv-sep (:gff3 gencode-attr-kv-sep))))
 
 ;; Indexing
 ;; --------
