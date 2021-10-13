@@ -59,17 +59,24 @@
 
 (defmethod hgvs->vcf-variants :ref-gene-index
   ([hgvs seq-rdr rgidx] (hgvs->vcf-variants hgvs nil seq-rdr rgidx))
-  ([hgvs gene seq-rdr rgidx]
-   (let [convert (case (:kind hgvs)
+  ([{:keys [kind transcript] :as hgvs} gene seq-rdr rgidx]
+   (let [convert (condp = kind
                    :coding-dna coding-dna-hgvs->vcf-variants
-                   :protein protein-hgvs->vcf-variants)
-         rgs (if-let [[rs] (re-find #"^(NM|NR)_\d+" (str (:transcript hgvs)))]
+                   :protein protein-hgvs->vcf-variants
+                   (throw (ex-info "supported HGVS kinds are only `:coding-dna` and `:protein`"
+                                   {:type ::unsopprted-hgvs-kind
+                                    :hgvs-kind kind})))
+         rgs (if-let [[rs] (re-find #"^(NM|NR)_\d+\.?(\d+)?$" (str transcript))]
                (rg/ref-genes rs rgidx)
                (if-not (string/blank? gene)
                  (rg/ref-genes gene rgidx)
                  (throw (ex-info "Transcript (NM_, NR_) or gene must be supplied."
                                  {:type ::ref-gene-clue-not-found}))))]
-     (convert hgvs seq-rdr rgs))))
+     (if (seq rgs)
+       (convert hgvs seq-rdr rgs)
+       (throw (ex-info "Could not find specified gene in `rgidx`"
+                       {:type ::gene-not-found
+                        :transcript transcript :gene gene}))))))
 
 (defmethod hgvs->vcf-variants :ref-gene-entity
   ([hgvs seq-rdr rg] (hgvs->vcf-variants hgvs nil seq-rdr rg))

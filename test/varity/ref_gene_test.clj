@@ -8,6 +8,9 @@
             [varity.t-common :refer [cavia-testing defslowtest
                                      test-ref-gene-file
                                      test-ref-seq-file
+                                     test-ncbi-ref-seq-file
+                                     test-load-refgene-file
+                                     test-load-refseq-file
                                      test-gff3-file
                                      test-gtf-file]]))
 
@@ -65,6 +68,12 @@
                                :attr-kv-sep #"=")
            (dissoc test-gtf-row :attribute)))))
 
+(deftest load-ncbi-file-test
+  (testing "refSeq.txt and ncbiRefGene.txt produces identical data instead of its accession number"
+    (is (apply = (map #(-> % first (dissoc :name))
+                      [(#'rg/load-ncbi-file test-load-refgene-file)
+                       (#'rg/load-ncbi-file test-load-refseq-file)])))))
+
 (def parsed-gtf-region (first (rg/load-gtf test-gtf-file)))
 
 (def parsed-gff3-region (first (rg/load-gff3 test-gff3-file)))
@@ -90,7 +99,10 @@
   (cavia-testing "in-any-exon? (slow)"
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
       (is (true? (rg/in-any-exon? "chr7" 55191822 rgidx)))
-      (is (false? (rg/in-any-exon? "chr7" 55019367 rgidx))))))
+      (is (false? (rg/in-any-exon? "chr7" 55019367 rgidx))))
+    (let [rsidx (rg/index (rg/load-ref-seqs test-ncbi-ref-seq-file))]
+      (is (true? (rg/in-any-exon? "chr7" 55191822 rsidx)))
+      (is (false? (rg/in-any-exon? "chr7" 55019367 rsidx))))))
 
 (deftest regions
   (testing "tx-region"
@@ -142,40 +154,69 @@
                (rg/cds-seq parsed-gtf-region)))))))
 
 (defslowtest regions-slow
-  (cavia-testing "exon-seq"
-    (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
-      (are [?nm ?output]
-          (= (some->> ?output (map (partial zipmap [:exon-index :exon-count :chr :start :end :strand])))
-             (rg/exon-seq (first (rg/ref-genes ?nm rgidx))))
-        "NM_000024" [[1 1 "chr5" 148826593 148828634 :forward]]
-        "NM_000361" [[1 1 "chr20" 23045633 23049664 :reverse]]
-        "NM_000015" [[1 2 "chr8" 18391245 18391345 :forward]
-                     [2 2 "chr8" 18399998 18401213 :forward]]
-        "NM_000025" [[1 2 "chr8" 37965265 37966666 :reverse]
-                     [2 2 "chr8" 37962996 37964239 :reverse]]
-        "NR_024420" [[1 2 "chr12" 8390270 8390752 :reverse]
-                     [2 2 "chr12" 8356964 8357141 :reverse]]
-        "NR_037934" [[1 2 "chr4" 25160672 25160753 :forward]
-                     [2 2 "chr4" 25197468 25198505 :forward]]
-        "NM_020403" [[1 4 "chr13" 67229780 67230336 :reverse]
-                     [2 4 "chr13" 67225405 67228575 :reverse]
-                     [3 4 "chr13" 66631210 66631411 :reverse]
-                     [4 4 "chr13" 66302834 66305028 :reverse]])))
-  (cavia-testing "cds-seq"
-    (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
-      (are [?nm ?output]
-          (= (some->> ?output (map (partial zipmap [:exon-index :exon-count :chr :start :end :strand])))
-             (rg/cds-seq (first (rg/ref-genes ?nm rgidx))))
-        "NM_000024" [[1 1 "chr5" 148826832 148828073 :forward]]
-        "NM_000361" [[1 1 "chr20" 23047777 23049504 :reverse]]
-        "NM_000015" [[2 2 "chr8" 18400004 18400876 :forward]]
-        "NM_000025" [[1 2 "chr8" 37965265 37966469 :reverse]
-                     [2 2 "chr8" 37964218 37964239 :reverse]]
-        "NR_024420" nil
-        "NR_037934" nil
-        "NM_020403" [[2 4 "chr13" 67225405 67228440 :reverse]
-                     [3 4 "chr13" 66631210 66631411 :reverse]
-                     [4 4 "chr13" 66304655 66305028 :reverse]]))))
+  (cavia-testing "region-tests"
+    (let [->actual #(some->> % (map (partial zipmap
+                                             [:exon-index :exon-count :chr :start :end :strand])))
+          ref-gene-idx (rg/index (rg/load-ref-genes test-ref-gene-file))
+          ncbi-ref-seq-idx (rg/index (rg/load-ref-seqs test-ncbi-ref-seq-file))]
+      (testing "exon-seq"
+        (are [?idx ?nm ?output]
+            (= (->actual ?output)
+               (rg/exon-seq (first (rg/ref-genes ?nm ?idx))))
+          ref-gene-idx "NM_000024" [[1 1 "chr5" 148826593 148828634 :forward]]
+          ref-gene-idx "NM_000361" [[1 1 "chr20" 23045633 23049664 :reverse]]
+          ref-gene-idx "NM_000015" [[1 2 "chr8" 18391245 18391345 :forward]
+                                    [2 2 "chr8" 18399998 18401213 :forward]]
+          ref-gene-idx "NM_000025" [[1 2 "chr8" 37965265 37966666 :reverse]
+                                    [2 2 "chr8" 37962996 37964239 :reverse]]
+          ref-gene-idx "NR_024420" [[1 2 "chr12" 8390270 8390752 :reverse]
+                                    [2 2 "chr12" 8356964 8357141 :reverse]]
+          ref-gene-idx "NR_037934" [[1 2 "chr4" 25160672 25160753 :forward]
+                                    [2 2 "chr4" 25197468 25198505 :forward]]
+          ref-gene-idx "NM_020403" [[1 4 "chr13" 67229780 67230336 :reverse]
+                                    [2 4 "chr13" 67225405 67228575 :reverse]
+                                    [3 4 "chr13" 66631210 66631411 :reverse]
+                                    [4 4 "chr13" 66302834 66305028 :reverse]]
+
+          ncbi-ref-seq-idx "NM_000024.6" [[1 1 "chr5" 148826611 148828623 :forward]]
+          ncbi-ref-seq-idx "NM_000361.3" [[1 1 "chr20" 23045633 23049672 :reverse]]
+          ncbi-ref-seq-idx "NM_000015.3" [[1 2 "chr8" 18391282 18391345 :forward]
+                                          [2 2 "chr8" 18399998 18401218 :forward]]
+          ncbi-ref-seq-idx "NM_000025.3" [[1 2 "chr8" 37965265 37966599 :reverse]
+                                          [2 2 "chr8" 37962990 37964239 :reverse]]
+          ncbi-ref-seq-idx "NR_024420.1" [[1 2 "chr12" 8390270 8390752 :reverse]
+                                          [2 2 "chr12" 8356963 8357141 :reverse]]
+          ncbi-ref-seq-idx "NR_037934.1" [[1 2 "chr4" 25160672 25160753 :forward]
+                                          [2 2 "chr4" 25197468 25198506 :forward]]
+          ncbi-ref-seq-idx "NM_020403.5" [[1 4 "chr13" 67229780 67230336 :reverse]
+                                          [2 4 "chr13" 67225405 67228575 :reverse]
+                                          [3 4 "chr13" 66631210 66631411 :reverse]
+                                          [4 4 "chr13" 66302834 66305028 :reverse]]))
+      (testing "cds-seq"
+        (are [?idx ?nm ?output]
+            (= (->actual ?output)
+               (rg/cds-seq (first (rg/ref-genes ?nm ?idx))))
+          ref-gene-idx "NM_000024" [[1 1 "chr5" 148826832 148828073 :forward]]
+          ref-gene-idx "NM_000361" [[1 1 "chr20" 23047777 23049504 :reverse]]
+          ref-gene-idx "NM_000015" [[2 2 "chr8" 18400004 18400876 :forward]]
+          ref-gene-idx "NM_000025" [[1 2 "chr8" 37965265 37966469 :reverse]
+                                    [2 2 "chr8" 37964218 37964239 :reverse]]
+          ref-gene-idx "NR_024420" nil
+          ref-gene-idx "NR_037934" nil
+          ref-gene-idx "NM_020403" [[2 4 "chr13" 67225405 67228440 :reverse]
+                                    [3 4 "chr13" 66631210 66631411 :reverse]
+                                    [4 4 "chr13" 66304655 66305028 :reverse]]
+          ;; NOTE"" cds seq was not updated
+          ncbi-ref-seq-idx "NM_000024.6" [[1 1 "chr5" 148826832 148828073 :forward]]
+          ncbi-ref-seq-idx "NM_000361.3" [[1 1 "chr20" 23047777 23049504 :reverse]]
+          ncbi-ref-seq-idx "NM_000015.3" [[2 2 "chr8" 18400004 18400876 :forward]]
+          ncbi-ref-seq-idx "NM_000025.3" [[1 2 "chr8" 37965265 37966469 :reverse]
+                                          [2 2 "chr8" 37964218 37964239 :reverse]]
+          ncbi-ref-seq-idx "NR_024420.1" nil
+          ncbi-ref-seq-idx "NR_037934.1" nil
+          ncbi-ref-seq-idx "NM_020403.5" [[2 4 "chr13" 67225405 67228440 :reverse]
+                                          [3 4 "chr13" 66631210 66631411 :reverse]
+                                          [4 4 "chr13" 66304655 66305028 :reverse]])))))
 
 (deftest read-sequences
   (testing "read-transcript-sequence"
@@ -218,58 +259,82 @@
                      test-ref-gene "ATGGAA" "TCCTAG"))))
 
 (defslowtest read-sequences-rg-slow
-  (cavia-testing "read-transcript-sequence"
-    (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
-      (with-open [r (cseq/reader test-ref-seq-file)]
-        (are [?nm ?prefix ?suffix ?length]
-            (= {:prefix ?prefix :suffix ?suffix :length ?length}
-               (->> rgidx
-                    (rg/ref-genes ?nm)
-                    first
-                    (rg/read-transcript-sequence r)
-                    ((juxt #(string/join (take 6 %))
-                           #(string/join (take-last 6 %))
-                           count))
-                    (zipmap [:prefix :suffix :length])))
-          "NM_000024" "GCACAT" "ATTGCA" 2042
-          "NM_000361" "GGCTGC" "ATCCCA" 4032
-          "NM_000015" "TGAGAT" "TTGTGG" 1317
-          "NM_000025" "GCTACT" "TTACAA" 2646
-          "NR_024420" "CAGGCA" "TATCAA" 661
-          "NR_037934" "AGTTAA" "TAATAA" 1120
-          "NM_020403" "AGTTCA" "TCCTGA" 6125
-          "NM_201282" "CCCCGG" "ATTTGA" 2239
-          "NM_004333" "CGCCTC" "TTATAA" 2946
-          "NM_000314" "CCTCCC" "TGACTA" 8702
-          "NM_000546" "GATGGG" "GGGGTG" 2591
-          "NM_019063" "GGGGCG" "TTCTAA" 5561
-          "NM_004304" "AGCTGC" "GACTAA" 6265))))
-  (cavia-testing "read-coding-sequence"
-    (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
-      (with-open [r (cseq/reader test-ref-seq-file)]
-        (are [?nm ?prefix ?suffix ?length]
-            (= {:prefix ?prefix :suffix ?suffix :length ?length}
-               (->> rgidx
-                    (rg/ref-genes ?nm)
-                    first
-                    (rg/read-coding-sequence r)
-                    ((juxt #(string/join (take 6 %))
-                           #(string/join (take-last 6 %))
-                           count))
-                    (zipmap [:prefix :suffix :length])))
-          "NM_000024" "ATGGGG" "CTGTAA" 1242
-          "NM_000361" "ATGCTT" "CTCTGA" 1728
-          "NM_000015" "ATGGAC" "ATTTAG" 873
-          "NM_000025" "ATGGCT" "TCTTAG" 1227
-          "NR_024420" "" "" 0
-          "NR_037934" "" "" 0
-          "NM_020403" "ATGGAC" "CTCTAA" 3612
-          "NM_201282" "ATGCGA" "TCCTAA" 1887
-          "NM_004333" "ATGGCG" "CACTGA" 2301
-          "NM_000314" "ATGACA" "GTCTGA" 1212
-          "NM_000546" "ATGGAG" "GACTGA" 1182
-          "NM_019063" "ATGGAC" "TCCTAA" 2946
-          "NM_004304" "ATGGGA" "CCCTGA" 4863)))))
+  (cavia-testing "read-sequence"
+    (let [->actual (fn [f]
+                     (fn [idx refseq nm]
+                       (->> idx
+                            (rg/ref-genes nm)
+                            first
+                            (f refseq)
+                            ((juxt #(string/join (take 6 %))
+                                   #(string/join (take-last 6 %))
+                                   count)))))
+          ref-gene-idx (rg/index (rg/load-ref-genes test-ref-gene-file))
+          ncbi-ref-seq-idx (rg/index (rg/load-ref-seqs test-ncbi-ref-seq-file))]
+      (testing "read-transcript-sequence"
+        (let [->actual* (->actual rg/read-transcript-sequence)]
+          (with-open [refseq (cseq/reader test-ref-seq-file)]
+            (are [?idx ?nm ?prefix ?suffix ?length]
+                (= [?prefix ?suffix ?length] (->actual* ?idx refseq ?nm))
+              ref-gene-idx "NM_000015" "TGAGAT" "TTGTGG" 1317
+              ref-gene-idx "NM_000024" "GCACAT" "ATTGCA" 2042
+              ref-gene-idx "NM_000025" "GCTACT" "TTACAA" 2646
+              ref-gene-idx "NM_000314" "CCTCCC" "TGACTA" 8702
+              ref-gene-idx "NM_000361" "GGCTGC" "ATCCCA" 4032
+              ref-gene-idx "NM_000546" "GATGGG" "GGGGTG" 2591
+              ref-gene-idx "NM_004304" "AGCTGC" "GACTAA" 6265
+              ref-gene-idx "NM_004333" "CGCCTC" "TTATAA" 2946
+              ref-gene-idx "NM_019063" "GGGGCG" "TTCTAA" 5561
+              ref-gene-idx "NM_020403" "AGTTCA" "TCCTGA" 6125
+              ref-gene-idx "NM_201282" "CCCCGG" "ATTTGA" 2239
+              ref-gene-idx "NR_024420" "CAGGCA" "TATCAA" 661
+              ref-gene-idx "NR_037934" "AGTTAA" "TAATAA" 1120
+
+              ncbi-ref-seq-idx "NM_000015.3" "ACTTTA" "GAAAAA" 1285
+              ncbi-ref-seq-idx "NM_000024.6" "GCACTG" "ACCATG" 2013
+              ncbi-ref-seq-idx "NM_000025.3" "GGGACA" "ATTTGA" 2585
+              ncbi-ref-seq-idx "NM_000314.8" "GTTCTC" "TGACTA" 8515
+              ncbi-ref-seq-idx "NM_000361.3" "ATGTCA" "ATCCCA" 4040
+              ncbi-ref-seq-idx "NM_000546.6" "CTCAAA" "CTGCCA" 2512
+              ncbi-ref-seq-idx "NM_004304.5" "AGATGC" "GACTAA" 6240
+              ncbi-ref-seq-idx "NM_004333.6" "CTTCCC" "AATGCA" 6459
+              ncbi-ref-seq-idx "NM_019063.5" "GCGGCG" "TTCTAA" 5546
+              ncbi-ref-seq-idx "NM_020403.5" "AGTTCA" "TCCTGA" 6125
+              ncbi-ref-seq-idx "NM_201282.2" "AGACGT" "ATTTGA" 2254
+              ncbi-ref-seq-idx "NR_024420.1" "CAGGCA" "ATCAAA" 662
+              ncbi-ref-seq-idx "NR_037934.1" "AGTTAA" "AATAAA" 1121))))
+      (testing "read-coding-sequence"
+        (let [->actual* (->actual rg/read-coding-sequence)]
+          (with-open [refseq (cseq/reader test-ref-seq-file)]
+            (are [?idx ?nm ?prefix ?suffix ?length]
+                (= [?prefix ?suffix ?length] (->actual* ?idx refseq ?nm))
+              ref-gene-idx "NM_000024" "ATGGGG" "CTGTAA" 1242
+              ref-gene-idx "NM_000361" "ATGCTT" "CTCTGA" 1728
+              ref-gene-idx "NM_000015" "ATGGAC" "ATTTAG" 873
+              ref-gene-idx "NM_000025" "ATGGCT" "TCTTAG" 1227
+              ref-gene-idx "NR_024420" "" "" 0
+              ref-gene-idx "NR_037934" "" "" 0
+              ref-gene-idx "NM_020403" "ATGGAC" "CTCTAA" 3612
+              ref-gene-idx "NM_201282" "ATGCGA" "TCCTAA" 1887
+              ref-gene-idx "NM_004333" "ATGGCG" "CACTGA" 2301
+              ref-gene-idx "NM_000314" "ATGACA" "GTCTGA" 1212
+              ref-gene-idx "NM_000546" "ATGGAG" "GACTGA" 1182
+              ref-gene-idx "NM_019063" "ATGGAC" "TCCTAA" 2946
+              ref-gene-idx "NM_004304" "ATGGGA" "CCCTGA" 4863
+
+              ncbi-ref-seq-idx "NM_000024.6" "ATGGGG" "CTGTAA" 1242
+              ncbi-ref-seq-idx "NM_000361.3" "ATGCTT" "CTCTGA" 1728
+              ncbi-ref-seq-idx "NM_000015.3" "ATGGAC" "ATTTAG" 873
+              ncbi-ref-seq-idx "NM_000025.3" "ATGGCT" "TCTTAG" 1227
+              ncbi-ref-seq-idx "NR_024420.1" "" "" 0
+              ncbi-ref-seq-idx "NR_037934.1" "" "" 0
+              ncbi-ref-seq-idx "NM_020403.5" "ATGGAC" "CTCTAA" 3612
+              ncbi-ref-seq-idx "NM_201282.2" "ATGCGA" "TCCTAA" 1887
+              ncbi-ref-seq-idx "NM_004333.6" "ATGGCG" "CACTGA" 2301
+              ncbi-ref-seq-idx "NM_000314.8" "ATGACA" "GTCTGA" 1212
+              ncbi-ref-seq-idx "NM_000546.6" "ATGGAG" "GACTGA" 1182
+              ncbi-ref-seq-idx "NM_019063.5" "ATGGAC" "TCCTAA" 2946
+              ncbi-ref-seq-idx "NM_004304.5" "ATGGGA" "CCCTGA" 4863)))))))
 
 (deftest exon-ranges->intron-ranges-test
   (testing "exon-ranges->intron-ranges"
@@ -281,21 +346,30 @@
 
 (defslowtest seek-gene-region-test
   (cavia-testing "seek-gene-region (slow)"
-    (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
-      (are [c p tn exs] (= exs
-                           (->> (rg/seek-gene-region c p rgidx tn)
+    (let [ref-gene-idx (rg/index (rg/load-ref-genes test-ref-gene-file))
+          ncbi-ref-seq-idx (rg/index (rg/load-ref-seqs test-ncbi-ref-seq-file))]
+      (are [idx c p tn exs] (= exs
+                           (->> (rg/seek-gene-region c p idx tn)
                                 (map :regions)
                                 (mapv (fn [rt]
-                                        (mapv #(vector (:region %) (:index %) (:count %))
-                                              rt)))))
-        "chr4" 54736520 nil [[["exon" 18 21]] [["exon" 18 21]]]
-        "chr7" 116771976 "NM_000245" [[["exon" 14 21]]]
-        "chrX" 61197987 nil []
-        "chr3" 41224090 "NM_001904" [[["intron" 2 14]]]
-        "chr5" 12575053 nil [[["UTR-5" nil nil] ["intron" 1 3]]]
-        "chr10" 79512600 "NM_001099692" [[["UTR-5" nil nil]]]
-        "chr12" 101128642 "NM_001286615" [[["UTR-3" nil nil]] [["UTR-5" nil nil]]]
-        "chr7" 140753336 "NM_004333" [[["exon" 15 18]]]))))
+                                        (mapv (juxt :region :index :count) rt)))))
+        ref-gene-idx "chr4" 54736520 nil [[["exon" 18 21]] [["exon" 18 21]]]
+        ref-gene-idx "chr7" 116771976 "NM_000245" [[["exon" 14 21]]]
+        ref-gene-idx "chrX" 61197987 nil []
+        ref-gene-idx "chr3" 41224090 "NM_001904" [[["intron" 2 14]]]
+        ref-gene-idx "chr5" 12575053 nil [[["UTR-5" nil nil] ["intron" 1 3]]]
+        ref-gene-idx "chr10" 79512600 "NM_001099692" [[["UTR-5" nil nil]]]
+        ref-gene-idx "chr12" 101128642 "NM_001286615" [[["UTR-3" nil nil]] [["UTR-5" nil nil]]]
+        ref-gene-idx "chr7" 140753336 "NM_004333" [[["exon" 15 18]]]
+
+        ncbi-ref-seq-idx "chr4" 54736520 nil (repeat 8 [["exon" 18 21]])
+        ncbi-ref-seq-idx "chr7" 116771976 "NM_000245.4" [[["exon" 14 21]]]
+        ncbi-ref-seq-idx "chrX" 61197987 nil []
+        ncbi-ref-seq-idx "chr3" 41224090 "NM_001904.4" [[["intron" 2 14]]]
+        ncbi-ref-seq-idx "chr5" 12575053 nil [[["UTR-5" nil nil] ["intron" 1 3]]]
+        ncbi-ref-seq-idx "chr10" 79512532 "NM_001099692.2" [[["UTR-5" nil nil]]]
+        ncbi-ref-seq-idx "chr12" 101128642 "NM_001286615.2" [[["UTR-3" nil nil]] [["UTR-5" nil nil]]]
+        ncbi-ref-seq-idx "chr7" 140753336 "NM_004333.6" [[["exon" 15 18]]]))))
 
 (deftest cds-coord-test
   ;; 1 [2 3 4] 5 6 7 [8 9 10 11] 12 13 14 15
@@ -347,17 +421,27 @@
 (defn- cds-coord
   [chr pos rgidx]
   (->> (rg/ref-genes chr pos rgidx)
+       (remove #(> (:cds-start %) (:cds-end %)))
        (map #(rg/cds-coord pos %))
-       (map coord/format)))
+       (map coord/format)
+       sort))
 
 (defslowtest cds-coord-slow-test
   (cavia-testing "cds-coord (slow)"
-    (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
-      (are [c p r] (= (cds-coord c p rgidx) r)
-        "chr7"  55191822  '("2573")
-        "chr19" 1220596   '("613")
-        "chr1"  948129    '("1659+2")
-        "chr7"  140753336 '("1799")))))
+    (let [ref-gene-idx (rg/index (rg/load-ref-genes test-ref-gene-file))
+          ncbi-ref-seq-idx (rg/index (rg/load-ref-seqs test-ncbi-ref-seq-file))]
+      (are [idx c p r] (= (cds-coord c p idx) r)
+        ref-gene-idx "chr7"  55191822  '("2573")
+        ref-gene-idx "chr19" 1220596   '("613")
+        ref-gene-idx "chr1"  948129    '("1659+2")
+        ref-gene-idx "chr7"  140753336 '("1799")
+
+        ncbi-ref-seq-idx "chr7"  55191822  '("1772" "2414" "2438" "2438" "2573" "2573")
+        ncbi-ref-seq-idx "chr19" 1220596   '("613")
+        ncbi-ref-seq-idx "chr1"  948129    '("1659+2")
+        ncbi-ref-seq-idx "chr7"  140753336 '("1535" "1643" "1643" "1688" "1697"
+                                             "1733" "1799" "1799" "1799" "1799"
+                                             "1808" "1919" "1919")))))
 
 (deftest cds-coord->genomic-pos-test
   ;; 1 [2 3 4] 5 6 7 [8 9 10 11] 12 13 14 15

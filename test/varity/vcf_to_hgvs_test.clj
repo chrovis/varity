@@ -3,7 +3,11 @@
             [clj-hgvs.core :as hgvs]
             [varity.ref-gene :as rg]
             [varity.vcf-to-hgvs :refer :all]
-            [varity.t-common :refer :all]))
+            [varity.t-common :refer [test-ref-seq-file
+                                     test-ref-gene-file
+                                     cavia-testing
+                                     disable-log-fixture
+                                     defslowtest]]))
 
 (use-fixtures :once disable-log-fixture)
 

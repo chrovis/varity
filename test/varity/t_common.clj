@@ -36,7 +36,10 @@
                 :sha1 "6fb20ba4de0b49247b78e08c2394d0c4f8594148"}
                {:id "test-refGene.txt.gz"
                 :url "https://test.chrov.is/data/varity/hg38-refGene.txt.gz"
-                :sha1 "941d514e57f4e842743f5c9269a0279906a072a0"}]})
+                :sha1 "941d514e57f4e842743f5c9269a0279906a072a0"}
+               {:id "test-ncbiRefSeq.txt.gz"
+                :url "https://test.chrov.is/data/varity/ncbiRefSeq_hg38_20210909.txt.gz"
+                :sha1 "b9bbc52296ec64da03b38db28be47a1925f69ee9"}]})
 
 (defn prepare-cavia! []
   (with-profile prof
@@ -55,9 +58,14 @@
 
 (def test-ref-seq-file (cavia/resource prof "test.2bit"))
 (def test-ref-gene-file (cavia/resource prof "test-refGene.txt.gz"))
+(def test-ncbi-ref-seq-file (cavia/resource prof "test-ncbiRefSeq.txt.gz"))
 
 (def test-chain-file (io/resource "hg19ToHg38.over.chain.gz"))
 
 (def test-gtf-file "./test-resources/gtf_parse_test.gtf")
 
 (def test-gff3-file "./test-resources/gff3_parse_test.gff3")
+
+(def test-load-refgene-file "./test-resources/test-refgene.txt")
+
+(def test-load-refseq-file "./test-resources/test-refseq.txt")
