@@ -1,7 +1,6 @@
 (ns varity.hgvs
   (:require [cljam.io.sequence :as cseq]
             [cljam.io.util :as io-util]
-            [clojure.string :as string]
             [varity.hgvs-to-vcf :as h2v]
             [varity.ref-gene :as rg]
             [varity.vcf-to-hgvs :as v2h]))

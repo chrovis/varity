@@ -60,11 +60,11 @@
 (defmethod hgvs->vcf-variants :ref-gene-index
   ([hgvs seq-rdr rgidx] (hgvs->vcf-variants hgvs nil seq-rdr rgidx))
   ([{:keys [kind transcript] :as hgvs} gene seq-rdr rgidx]
-   (let [convert (condp = kind
+   (let [convert (case kind
                    :coding-dna coding-dna-hgvs->vcf-variants
                    :protein protein-hgvs->vcf-variants
                    (throw (ex-info "supported HGVS kinds are only `:coding-dna` and `:protein`"
-                                   {:type ::unsopprted-hgvs-kind
+                                   {:type ::unsupported-hgvs-kind
                                     :hgvs-kind kind})))
          rgs (if-let [[rs] (re-find #"^(NM|NR)_\d+\.?(\d+)?$" (str transcript))]
                (rg/ref-genes rs rgidx)

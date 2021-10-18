@@ -205,15 +205,16 @@
                                                         test-ref-seq-file ref-gene-idx))
         "c.1-?_80+?del"   "BRCA1" ::h2v-coding-dna/ambiguous-coordinate
         "c.-202_-29+?dup" "TP53"  ::h2v-coding-dna/ambiguous-coordinate)
-      ;; inconsistent accession number won't throw expection (simply can not find refgene/seq's records)
-      (testing "pass an accession number which is inconsistent with index"
-        (are [idx hgvs] (thrown-with-error-type?
-                         ::h2v/gene-not-found
-                         (hgvs->vcf-variants (hgvs/parse hgvs)
-                                             test-ref-seq-file
-                                             idx))
-          ref-gene-idx "NM_007294.4:c.1-?_80+?del"
-          ncbi-ref-seq-idx  "NM_007294:c.1-?_80+?del"))))
+      (testing "error"
+        (are [error-type idx hgvs] (thrown-with-error-type?
+                                    error-type
+                                    (hgvs->vcf-variants (hgvs/parse hgvs)
+                                                        test-ref-seq-file
+                                                        idx))
+          ::h2v/gene-not-found ref-gene-idx "NM_007294.4:c.1-?_80+?del"
+          ::h2v/gene-not-found ncbi-ref-seq-idx  "NM_007294:c.1-?_80+?del"
+          ::h2v/unsupported-hgvs-kind ref-gene-idx "NM_004006:r.6_8del"
+          ::h2v/unsupported-hgvs-kind ncbi-ref-seq-idx "NM_004006.2:o.6_8del"))))
   (cavia-testing "protein HGVS with gene to possible vcf variants"
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))
           ncbi-ref-seq-idx (rg/index (rg/load-ref-seqs test-ncbi-ref-seq-file))]
