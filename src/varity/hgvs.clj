@@ -1,15 +1,9 @@
 (ns varity.hgvs
   (:require [cljam.io.sequence :as cseq]
             [cljam.io.util :as io-util]
-            [clojure.string :as string]
             [varity.hgvs-to-vcf :as h2v]
             [varity.ref-gene :as rg]
             [varity.vcf-to-hgvs :as v2h]))
-
-(defn- trim-version
-  [transcript]
-  (when transcript
-    (string/replace transcript #"([^.pt]+)[.pt]\d+" "$1")))
 
 (def ^:private option-patterns
   [{:prefer-deletion? false}
@@ -63,7 +57,7 @@
     (if (seq variants)
       (->> variants
            (mapcat vcf-variant->coding-dna-hgvs)
-           (filter #(= (:transcript %) (trim-version (:transcript hgvs))))
+           (filter #(= (:transcript %) (:transcript hgvs)))
            distinct)
       (throw (ex-info "The VCF variant is not found."
                       {:type ::invalid-variant

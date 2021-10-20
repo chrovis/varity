@@ -1,5 +1,5 @@
 (ns varity.ref-gene
-  "Handles refGene.txt(.gz) content."
+  "Handles refGene.txt(.gz) and ncbiRefSeq.txt(.gz) content."
   (:require [clojure.java.io :as io]
             [clojure.string :as string]
             [clj-hgvs.coordinate :as coord]
@@ -58,13 +58,24 @@
     (update m :cds-end-stat keyword)
     (update m :exon-frames parse-exon-pos)))
 
-(defn load-ref-genes
-  "Loads f (e.g. refGene.txt(.gz)), returning the all contents as a sequence."
+(defn- load-ncbi-file
   [f]
   (with-open [rdr (io/reader (util/compressor-input-stream f))]
     (->> (line-seq rdr)
          (map parse-ref-gene-line)
+         (filter #(re-find #"^(NM|NR)_.+$" (:name %)))
          doall)))
+
+(defn load-ref-genes
+  {:deprecated "0.8.0"
+   :doc "DEPRECATED: Loads f (e.g. refGene.txt(.gz)), returning the all contents as a sequence."}
+  [f]
+  (load-ncbi-file f))
+
+(defn load-ref-seqs
+  "Loads f (e.g. ncbiRefSeq.txt(.gz)), returning the all contents as a sequence."
+  [f]
+  (load-ncbi-file f))
 
 (defn- ->gencode-attr
   [attr-str kv-sep]
