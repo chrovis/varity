@@ -1,5 +1,15 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- Compatible with GENCODE's GTF and GFF3 format. [#42](https://github.com/chrovis/varity/pull/42)
+
+### Changed
+
+- Compat with acession number with version. [#43](https://github.com/chrovis/varity/pull/43)
+
 ## [0.7.1] - 2021-06-22
 
 ### Fixed
