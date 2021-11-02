@@ -111,7 +111,7 @@
                            (merge base
                                   {:name t-id
                                    :name2 (get attribute "gene_name")
-                                   :gene_id (get attribute "gene_id")
+                                   :gene-id (get attribute "gene_id")
                                    :strand (:strand gtf)
                                    :score (:score gtf)}))
 
