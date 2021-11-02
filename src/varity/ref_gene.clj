@@ -248,7 +248,7 @@
   "Searches refGene entries with ref-seq, gene or (chr, pos) using index,
   returning results as sequence. See also varity.ref-gene/index."
   ([s rgidx]
-   (get-in rgidx (if (re-find #"^(NC|LRG|NG|NM|NR|NP)_" s)
+   (get-in rgidx (if (re-find #"^ENST|^(NC|LRG|NG|NM|NR|NP)_" s)
                    [:ref-seq s]
                    [:gene s])))
   ([chr pos rgidx] (ref-genes chr pos rgidx 0))

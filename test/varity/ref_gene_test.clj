@@ -141,6 +141,32 @@
         (is (= output
                (rg/cds-seq parsed-gtf-region)))))))
 
+(deftest ref-genes-test
+  (let [gencode-test-data [{:name2 "C11orf68"
+                            :name "ENST00000449692.3"
+                            :tx-start 65916810
+                            :tx-end 65919062
+                            :chr "chr11"}
+                           {:name2 "KRAS"
+                            :name "ENST00000311936.8"
+                            :tx-start 25205246
+                            :tx-end 25250929
+                            :chr "chr12"}
+                           {:name2 "KRAS"
+                            :name "ENSP00000000001.8"
+                            :tx-start 25205246
+                            :tx-end 25250929
+                            :chr "chr12"}]
+        gencode-idx (rg/index gencode-test-data)]
+    (are [?param ?output]
+        (= (-> (rg/ref-genes ?param gencode-idx) first :name)
+           ?output)
+      "ENST00000449692.3" "ENST00000449692.3"
+      "KRAS" "ENST00000311936.8"
+
+      "FOO" nil
+      "ENSP00000000001.8" nil)))
+
 (defslowtest regions-slow
   (cavia-testing "exon-seq"
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
