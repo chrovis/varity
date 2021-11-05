@@ -122,7 +122,7 @@
                            (merge base
                                   {:name t-id
                                    :name2 (get attribute "gene_name")
-                                   :gene_id (get attribute "gene_id")
+                                   :gene-id (get attribute "gene_id")
                                    :strand (:strand gtf)
                                    :score (:score gtf)}))
 
@@ -259,7 +259,7 @@
   "Searches refGene entries with ref-seq, gene or (chr, pos) using index,
   returning results as sequence. See also varity.ref-gene/index."
   ([s rgidx]
-   (get-in rgidx (if (re-find #"^(NC|LRG|NG|NM|NR|NP)_" s)
+   (get-in rgidx (if (re-find #"^ENST|^(NC|LRG|NG|NM|NR|NP)_" s)
                    [:ref-seq s]
                    [:gene s])))
   ([chr pos rgidx] (ref-genes chr pos rgidx 0))
