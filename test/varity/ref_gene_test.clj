@@ -159,13 +159,13 @@
                             :chr "chr12"}]
         gencode-idx (rg/index gencode-test-data)]
     (are [?param ?output]
-        (= (-> (rg/ref-genes ?param gencode-idx) first :name)
+        (= (map :name (rg/ref-genes ?param gencode-idx))
            ?output)
-      "ENST00000449692.3" "ENST00000449692.3"
-      "KRAS" "ENST00000311936.8"
+      "ENST00000449692.3" ["ENST00000449692.3"]
+      "KRAS" ["ENST00000311936.8" "ENSP00000000001.8"]
 
-      "FOO" nil
-      "ENSP00000000001.8" nil)))
+      "FOO" '()
+      "ENSP00000000001.8" '())))
 
 (defslowtest regions-slow
   (cavia-testing "exon-seq"
