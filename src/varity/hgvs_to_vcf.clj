@@ -33,6 +33,10 @@
   [hgvs seq-rdr rgs]
   (distinct (apply concat (keep #(prot/->vcf-variants hgvs seq-rdr %) rgs))))
 
+(defn- ->supported-transcript
+  [s]
+  (re-find #"^((NM|NR)_|ENS(T|P))\d+(\.\d+)?$" s))
+
 (defmulti hgvs->vcf-variants
   "Converts coding DNA/protein hgvs into possible VCF-style variants. Transcript of
   hgvs, such as NM_005228, is used for ref-genes search. Alternatively, gene,
@@ -66,11 +70,11 @@
                    (throw (ex-info "supported HGVS kinds are only `:coding-dna` and `:protein`"
                                    {:type ::unsupported-hgvs-kind
                                     :hgvs-kind kind})))
-         rgs (if-let [[rs] (re-find #"^(NM|NR)_\d+\.?(\d+)?$" (str transcript))]
+         rgs (if-let [[rs] (->supported-transcript (str transcript))]
                (rg/ref-genes rs rgidx)
                (if-not (string/blank? gene)
                  (rg/ref-genes gene rgidx)
-                 (throw (ex-info "Transcript (NM_, NR_) or gene must be supplied."
+                 (throw (ex-info "Transcript (NM_, NR_, ENST, ENSP) or gene must be supplied."
                                  {:type ::ref-gene-clue-not-found}))))]
      (if (seq rgs)
        (convert hgvs seq-rdr rgs)
