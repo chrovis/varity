@@ -245,13 +245,13 @@
 
 (deftest coding-dna-ref-gene?-test
   (testing "valid reference genes"
-    (are [transcript] (#'v2h/coding-dna-ref-gene? {:name transcript})
+    (are [transcript] (true? (#'v2h/coding-dna-ref-gene? {:name transcript}))
       "NM_001005484.2"
       "NM_001005484"
       "ENST00000644969.2"
       "ENST00000644969"))
   (testing "invalid reference genes"
-    (are [transcript] (not (#'v2h/coding-dna-ref-gene? {:name transcript}))
+    (are [transcript] (false? (#'v2h/coding-dna-ref-gene? {:name transcript}))
       "XM_024451963.1"
       "XM_024451963"
       "NR_024540.1"

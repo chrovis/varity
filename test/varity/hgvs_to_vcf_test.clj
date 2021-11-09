@@ -14,10 +14,9 @@
                                      test-ref-seq-file]]
             [varity.vcf-to-hgvs :as v2h]))
 
-(deftest ->supported-transcript-test
+(deftest supported-transcript?-test
   (testing "supported transcript"
-    (are [transcript] (= (first (#'h2v/->supported-transcript transcript))
-                         transcript)
+    (are [transcript] (true? (#'h2v/supported-transcript? transcript))
       "NM_001.3"
       "NM_112"
       "NR_001.4"
@@ -28,7 +27,7 @@
       "ENSP0001"
       "ENSP0001.11"))
   (testing "unsupported transcript"
-    (are [transcript] (nil? (first (#'h2v/->supported-transcript transcript)))
+    (are [transcript] (false? (#'h2v/supported-transcript? transcript))
       "xNM_001.3"
       "NM001"
       "NM3.3"
