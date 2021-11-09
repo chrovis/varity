@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.8.0] - date TBD
 
 ### Added
 
@@ -9,6 +9,7 @@
 ### Changed
 
 - Compat with acession number with version. [#43](https://github.com/chrovis/varity/pull/43)
+- Conversions from/to HGVS with GENCODE ID. [#45](https://github.com/chrovis/varity/pull/45)
 
 ## [0.7.1] - 2021-06-22
 
@@ -268,7 +269,7 @@ Strand representation is changed from string (`+`, `-`) to keyword (`:forward`,
 
 First release.
 
-[Unreleased]: https://github.com/chrovis/varity/compare/0.7.1...HEAD
+[0.8.0]: https://github.com/chrovis/varity/compare/0.7.1...0.8.0
 [0.7.1]: https://github.com/chrovis/varity/compare/0.7.0...0.7.1
 [0.7.0]: https://github.com/chrovis/varity/compare/0.6.2...0.7.0
 [0.6.2]: https://github.com/chrovis/varity/compare/0.6.1...0.6.2
