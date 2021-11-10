@@ -27,7 +27,7 @@
       (map? ref-gene) :ref-gene-entity)))
 
 (defn- coding-dna-ref-gene? [rg]
-  (some? (re-matches #"NM_\d+(\.\d+)?" (:name rg))))
+  (some? (re-matches #"(NM_|ENST)\d+(\.\d+)?" (:name rg))))
 
 (defn select-variant
   [var seq-rdr rg]

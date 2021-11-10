@@ -2,7 +2,7 @@
   (:require [clojure.test :refer :all]
             [clj-hgvs.core :as hgvs]
             [varity.ref-gene :as rg]
-            [varity.vcf-to-hgvs :refer :all]
+            [varity.vcf-to-hgvs :refer :all :as v2h]
             [varity.t-common :refer [test-ref-seq-file
                                      test-ref-gene-file
                                      cavia-testing
@@ -242,3 +242,19 @@
       (is (thrown? Exception
                    (vcf-variant->protein-hgvs {:chr "chr7", :pos 55191823, :ref "T", :alt "G"}
                                               test-ref-seq-file rgidx))))))
+
+(deftest coding-dna-ref-gene?-test
+  (testing "valid reference genes"
+    (are [transcript] (true? (#'v2h/coding-dna-ref-gene? {:name transcript}))
+      "NM_001005484.2"
+      "NM_001005484"
+      "ENST00000644969.2"
+      "ENST00000644969"))
+  (testing "invalid reference genes"
+    (are [transcript] (false? (#'v2h/coding-dna-ref-gene? {:name transcript}))
+      "XM_024451963.1"
+      "XM_024451963"
+      "NR_024540.1"
+      "NR_024540"
+      "ENSP00000496776.1"
+      "ENSP00000496776")))

@@ -14,6 +14,35 @@
                                      test-ref-seq-file]]
             [varity.vcf-to-hgvs :as v2h]))
 
+(deftest supported-transcript?-test
+  (testing "supported transcript"
+    (are [transcript] (true? (#'h2v/supported-transcript? transcript))
+      "NM_001.3"
+      "NM_112"
+      "NR_001.4"
+      "NR_002"
+
+      "ENST00000497784.2"
+      "ENST00000497784"
+      "ENSP0001"
+      "ENSP0001.11"))
+  (testing "unsupported transcript"
+    (are [transcript] (false? (#'h2v/supported-transcript? transcript))
+      "xNM_001.3"
+      "NM001"
+      "NM3.3"
+      "NM_.3"
+      "NM_"
+      "NR"
+      "NMR_3.3"
+      "XM_024451963.1"
+
+      "ENST"
+      "ENSP"
+      "ENSTP001"
+
+      "NM_111.1ENST001.1")))
+
 (defslowtest hgvs->vcf-variants-test
   (cavia-testing "coding DNA HGVS to vcf variants"
     (let [ref-gene-idx (rg/index (rg/load-ref-genes test-ref-gene-file))]
