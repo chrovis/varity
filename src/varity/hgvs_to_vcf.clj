@@ -35,7 +35,7 @@
 
 (defn- supported-transcript?
   [s]
-  (some? (re-matches #"^((NM|NR)_|ENS(T|P))\d+(\.\d+)?$" (str s))))
+  (some? (re-matches #"((NM|NR)_|ENS(T|P))\d+(\.\d+)?" (str s))))
 
 (defmulti hgvs->vcf-variants
   "Converts coding DNA/protein hgvs into possible VCF-style variants. Transcript of
@@ -71,7 +71,7 @@
                                    {:type ::unsupported-hgvs-kind
                                     :hgvs-kind kind})))
          rgs (if (supported-transcript? transcript)
-               (rg/ref-genes (str transcript))
+               (rg/ref-genes (str transcript) rgidx)
                (if-not (string/blank? gene)
                  (rg/ref-genes gene rgidx)
                  (throw (ex-info "Transcript (NM_, NR_, ENST, ENSP) or gene must be supplied."
