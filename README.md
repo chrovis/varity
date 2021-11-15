@@ -17,13 +17,13 @@ Variant translation library for Clojure.
 Clojure CLI/deps.edn:
 
 ```clojure
-varity {:mvn/version "0.7.1"}
+varity/varity {:mvn/version "0.8.0"}
 ```
 
 Leiningen/Boot:
 
 ```clojure
-[varity "0.7.1"]
+[varity "0.8.0"]
 ```
 
 To use varity with Clojure 1.8, you must include a dependency on
