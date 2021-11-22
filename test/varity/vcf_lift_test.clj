@@ -69,7 +69,8 @@
              (ch/load-chain "./test-resources/vcf-lift/sample-rev.chain"))
             (vcf/read-variants vcf-reject-rdr))
            {:failure [{:alt ["A"], :ref "AT", :pos 5, :filter [:PASS], :id nil,
-                       :info {:END 6}, :qual 100.0, :chr "chr1"}]}))))
+                       :info {:END 6}, :qual 100.0, :chr "chr1"}]
+            :success nil}))))
 
 (deftest vcf-forward-lift-test
   (with-open [vcf-forward-rdr

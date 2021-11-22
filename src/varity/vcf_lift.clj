@@ -58,16 +58,15 @@
                 (every? #{:mnv :ref :complex :insertion :deletion :snv})))
          variants)]
     (->> (get separated-variants true)
-         (map (fn [x]
-                (if-let [new-variant (liftover-variant seq-reader
-                                                       indexed-chains x)]
-                  [:success new-variant]
-                  [:failure x])))
-         (group-by first)
-         (map (fn [[status v]]
-                [status
-                 (sort-by (juxt (comp chr/chromosome-order-key :chr)
-                                :pos :ref (comp vec :alt))
-                          (concat (map second v)))]))
-         (into {})
-         (merge-with concat {:failure (get separated-variants false)}))))
+         (reduce (fn [m x]
+                   (if-let [new-variant (liftover-variant seq-reader
+                                                          indexed-chains x)]
+                     (update m :success conj new-variant)
+                     (update m :failure conj x)))
+                 {:success [], :failure (vec (get separated-variants false))})
+         (reduce-kv #(->> %3
+                          (sort-by (juxt (comp chr/chromosome-order-key :chr)
+                                         :pos :ref (comp vec :alt)))
+                          seq
+                          (assoc %1 %2))
+                    {}))))
