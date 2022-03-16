@@ -1,5 +1,6 @@
 (ns varity.vcf-lift
-  (:require [cljam.io.vcf.util.normalize :as norm]
+  (:require [clojure.tools.logging :as logging]
+            [cljam.io.vcf.util.normalize :as norm]
             [cljam.io.vcf.util :as vcf-util]
             [cljam.io.vcf.util.check :as check]
             [cljam.util.sequence :as util-seq]
@@ -42,8 +43,9 @@
    sequence that the variant coordinate is converted to."
   [target-seq-reader indexed-chain variant]
   (when-let [x (liftover-variant* indexed-chain variant)]
-    (when (check/same-ref? target-seq-reader x)
-      (norm/realign target-seq-reader x))))
+    (if (check/same-ref? target-seq-reader x)
+      (norm/realign target-seq-reader x)
+      (logging/warn "liftover failed due to different refs" variant))))
 
 (defn liftover-variants
   "Lifts over variants data from chains applied chain/index and seq-reader.
