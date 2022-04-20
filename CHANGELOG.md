@@ -1,5 +1,15 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- Logging liftover failure caused by different refs. [#48](https://github.com/chrovis/varity/pull/48)
+
+### Fixed
+
+- Fix the peformance of liftover-variants. [#47](https://github.com/chrovis/varity/pull/47)
+
 ## [0.8.0] - 2021-11-15
 
 ### Added
@@ -269,6 +279,7 @@ Strand representation is changed from string (`+`, `-`) to keyword (`:forward`,
 
 First release.
 
+[Unreleased]: https://github.com/chrovis/varity/compare/0.8.0...HEAD
 [0.8.0]: https://github.com/chrovis/varity/compare/0.7.1...0.8.0
 [0.7.1]: https://github.com/chrovis/varity/compare/0.7.0...0.7.1
 [0.7.0]: https://github.com/chrovis/varity/compare/0.6.2...0.7.0
