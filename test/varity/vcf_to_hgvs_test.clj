@@ -182,6 +182,7 @@
         "chr7" 55174771 "AGGAATTAAGAGAAGC" "A" '("p.E746_A750del") ; cf. rs121913421 (+)
         "chr1" 247815239 "AAGG" "A" '("p.S163del") ; cf. rs35979231 (-)
         "chr2" 29223408 "AAGCAGT" "A" '("p.Y1096_C1097del") ; cf. rs776101205 (-)
+        "chr11" 108259071 "GT" "G" '("p.L822*") ; https://github.com/chrovis/varity/issues/49
 
         ;; Duplication
         "chr2" 26254257 "G" "GACT" '("p.T2dup") ; cf. rs3839049 (+)
