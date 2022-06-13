@@ -32,7 +32,7 @@
                           (<= s tpos e) [s (+ e d)]
                           :else [s e])
                    :del (let [dels tpos
-                              dele (+ tpos d)]
+                              dele (dec (+ tpos d))]
                           (cond
                             (< dele s) [(- s d) (- e d)]
                             (<= dels s) (if (< dele e) [dels (- e d)])
