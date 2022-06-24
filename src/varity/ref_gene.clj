@@ -113,33 +113,36 @@
   ([gtf-lines data]
    (reduce (fn [data {:keys [seqname feature attribute] :as gtf}]
              (let [base (merge (select-keys gtf [:start :end])
-                               {:chr seqname})
-                   t-id (get attribute "transcript_id")]
-               (case feature
-                 "transcript"
-                 (assoc-in data
-                           [:transcript t-id]
-                           (merge base
-                                  {:name t-id
-                                   :name2 (get attribute "gene_name")
-                                   :gene-id (get attribute "gene_id")
-                                   :strand (:strand gtf)
-                                   :score (:score gtf)}))
+                               {:chr seqname})]
+               (if-let [t-id (get attribute "transcript_id")]
+                 (let [t-id (re-find #"ENST\d+\.\d+" t-id)]
+                   (case feature
+                     "transcript"
+                     (assoc-in data
+                               [:transcript t-id]
+                               (merge base
+                                      {:name t-id
+                                       :name2 (get attribute "gene_name")
+                                       :gene-id (when-let [g-id (get attribute "gene_id")]
+                                                  (re-find #"ENSG\d+\.\d+" g-id))
+                                       :strand (:strand gtf)
+                                       :score (:score gtf)}))
 
-                 "exon"
-                 (update-in data
-                            [:exon t-id]
-                            conj
-                            (merge base
-                                   {:exon-number (as-long (get attribute "exon_number"))
-                                    :frame (:frame gtf)
-                                    :strand (:strand gtf)}))
-                 "CDS"
-                 (update-in data [:cds t-id] conj base)
+                     "exon"
+                     (update-in data
+                                [:exon t-id]
+                                conj
+                                (merge base
+                                       {:exon-number (as-long (get attribute "exon_number"))
+                                        :frame (:frame gtf)
+                                        :strand (:strand gtf)}))
+                     "CDS"
+                     (update-in data [:cds t-id] conj base)
 
-                 "stop_codon"
-                 (assoc-in data [:stop-codon t-id] base)
+                     "stop_codon"
+                     (assoc-in data [:stop-codon t-id] base)
 
+                     data))
                  data)))
            data
            gtf-lines)))
