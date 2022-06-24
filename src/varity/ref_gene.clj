@@ -150,15 +150,16 @@
 (defn- extend-cds
   "Extend 3'-most cds's `:end` or `:start` depending on the `strand` value
    if the cds doesn't include stop codon in its value"
-  [strand {:keys [start end] :as stop-codon} cdss]
-  (let [last-cds (last cdss)]
-    (when (and (not= start (:start last-cds))
-               (not= end (:end last-cds)))
+  [strand {stop-codon-start :start stop-codon-end :end :as stop-codon} cdss]
+  (let [{last-cds-start :start last-cds-end :end} (last cdss)]
+    (if (and (not= stop-codon-start last-cds-start)
+             (not= stop-codon-end last-cds-end))
       (update (vec cdss)
               (dec (count cdss))
               (if (= strand :forward)
                 #(merge % (select-keys stop-codon [:end]))
-                #(merge % (select-keys stop-codon [:start])))))))
+                #(merge % (select-keys stop-codon [:start]))))
+      cdss)))
 
 (defn- ->region
   [feature-map [transcript-id transcript]]
@@ -186,6 +187,7 @@
                        :cds-end (apply max (map :end cds)))
       (empty? cds) (assoc :cds-start (:start transcript)
                           :cds-end (:end transcript))
+
       true (assoc :tx-start (:start transcript)
                   :tx-end (:end transcript)
                   :strand strand))))
