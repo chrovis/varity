@@ -2,13 +2,17 @@
 
 ## [Unreleased]
 
+### Added
+
+- Annotate fusion genes. [#52](https://github.com/chrovis/varity/pull/52)
+
 ### Changed
 
 - Logging liftover failure caused by different refs. [#48](https://github.com/chrovis/varity/pull/48)
 
 ### Fixed
 
-- Fix the peformance of liftover-variants. [#47](https://github.com/chrovis/varity/pull/47)
+- Fix the performance of liftover-variants. [#47](https://github.com/chrovis/varity/pull/47)
 
 ## [0.8.0] - 2021-11-15
 
