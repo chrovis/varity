@@ -131,6 +131,6 @@ Copyright 2017-2021 [Xcoo, Inc.](https://xcoo.jp/)
 
 Licensed under the [Apache License, Version 2.0](LICENSE).
 
-## Acknowledgement
+## Acknowledgements
 
 The algorithm of `varity.fusion` was initially developed by Norio Tanaka at Cancer Precision Medicine Center, Japanese Foundation for Cancer Research. We thank him for his scientific insight and technical help.
