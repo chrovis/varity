@@ -47,10 +47,8 @@ jobs:
     - name: Install dependencies
       run: lein deps
     - name: Generate code coverage
-      run: |
-        lein cloverage --codecov
-        bash <(curl -s https://codecov.io/bash) -f target/coverage/codecov.json
-    - uses: codecov/codecov-action@v1
+      run: lein cloverage --codecov
+    - uses: codecov/codecov-action@v3
       with:
         files: ./target/coverage/codecov.json
 
