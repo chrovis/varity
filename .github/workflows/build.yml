@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        java: ['8', '11', '16']
+        java: ['8', '11', '17']
         clojure: ['1.8', '1.9', '1.10', '1.11']
     name: Test with Java ${{ matrix.java }} and Clojure ${{ matrix.clojure }}
     steps:
@@ -19,7 +19,7 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-lein-
     - name: Setup Java
-      uses: actions/setup-java@v2
+      uses: actions/setup-java@v3
       with:
         distribution: 'adopt'
         java-version: ${{ matrix.java }}
@@ -40,10 +40,10 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-lein-
     - name: Setup Java
-      uses: actions/setup-java@v2
+      uses: actions/setup-java@v3
       with:
         distribution: 'adopt'
-        java-version: '11'
+        java-version: '17'
     - name: Install dependencies
       run: lein deps
     - name: Generate code coverage
@@ -71,10 +71,10 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Setup Java
-      uses: actions/setup-java@v2
+      uses: actions/setup-java@v3
       with:
         distribution: 'adopt'
-        java-version: '11'
+        java-version: '17'
     - name: Deploy
       if: endsWith(needs.get-version.outputs.version, '-SNAPSHOT')
       env:
