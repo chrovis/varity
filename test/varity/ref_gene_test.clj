@@ -12,6 +12,7 @@
                                      test-load-refgene-file
                                      test-load-refseq-file
                                      test-gff3-file
+                                     test-lift-gff3-file
                                      test-gtf-file]]))
 
 (def parse-ref-gene-line #'varity.ref-gene/parse-ref-gene-line)
@@ -69,7 +70,7 @@
            (dissoc test-gtf-row :attribute)))))
 
 (deftest load-ncbi-file-test
-  (testing "refSeq.txt and ncbiRefGene.txt produces identical data instead of its accession number"
+  (testing "refGene.txt and ncbiRefGene.txt produces identical data instead of its accession number"
     (is (apply = (map #(-> % first (dissoc :name))
                       [(#'rg/load-ncbi-file test-load-refgene-file)
                        (#'rg/load-ncbi-file test-load-refseq-file)])))))
@@ -78,7 +79,9 @@
 
 (def parsed-gff3-region (first (rg/load-gff3 test-gff3-file)))
 
-(deftest load-gencode
+(def parsed-lift-gff3-region (first (rg/load-gff3 test-lift-gff3-file)))
+
+(deftest load-gencode-test
   (let [extract (fn [region] (select-keys region [:name2
                                                   :exon-ranges
                                                   :tx-start
@@ -88,12 +91,17 @@
                                                   :exon-count
                                                   :chr
                                                   :cds-end]))]
-    (testing "load-gff3"
+    (testing "load-gff3 produces same data as load-ref-genes"
       (is (= (extract parsed-gff3-region)
              (extract test-ref-gene))))
-    (testing "load-gtf"
+    (testing "load-gtf produces same data as load-ref-genes"
       (is (= (extract parsed-gtf-region)
-             (extract test-ref-gene))))))
+             (extract test-ref-gene))))
+    (testing "liftover file's trailing string is ommited"
+      (is (= (select-keys (first (rg/load-gff3 test-lift-gff3-file))
+                          [:name :gene-id])
+             {:name "ENST00000433179.4",
+              :gene-id "ENSG00000187642.10"})))))
 
 (defslowtest in-any-exon?-test
   (cavia-testing "in-any-exon? (slow)"
