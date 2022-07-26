@@ -107,15 +107,22 @@
        (when (= (count row) 9)
          {:attribute (->gencode-attr (nth row 8) attr-kv-sep)})))))
 
-(defn- ->feature-map
+(def ^:private ens-t-pattern #"ENST\d+\.\d+")
+(def ^:private ens-g-pattern #"ENSG\d+\.\d+")
+
+(def find-ens-t-id (memoize #(re-find ens-t-pattern %)))
+(def find-ens-g-id (memoize #(re-find ens-g-pattern %)))
+
+(defn- build-feature-map
   ([features]
-   (->feature-map features (zipmap [:transcript :exon :cds] (repeat {}))))
-  ([gtf-lines data]
-   (reduce (fn [data {:keys [seqname feature attribute] :as gtf}]
-             (let [base (merge (select-keys gtf [:start :end])
-                               {:chr seqname})]
+   (build-feature-map features (zipmap [:transcript :exon :cds] (repeat {}))))
+  ([features data]
+   (reduce (fn [data {:keys [start end seqname feature attribute] :as gtf}]
+             (let [base {:start start
+                         :end end
+                         :chr seqname}]
                (if-let [t-id (get attribute "transcript_id")]
-                 (let [t-id (re-find #"ENST\d+\.\d+" t-id)]
+                 (let [t-id (find-ens-t-id t-id)]
                    (case feature
                      "transcript"
                      (assoc-in data
@@ -124,7 +131,7 @@
                                       {:name t-id
                                        :name2 (get attribute "gene_name")
                                        :gene-id (when-let [g-id (get attribute "gene_id")]
-                                                  (re-find #"ENSG\d+\.\d+" g-id))
+                                                  (find-ens-g-id g-id))
                                        :strand (:strand gtf)
                                        :score (:score gtf)}))
 
@@ -136,6 +143,7 @@
                                        {:exon-number (as-long (get attribute "exon_number"))
                                         :frame (:frame gtf)
                                         :strand (:strand gtf)}))
+
                      "CDS"
                      (update-in data [:cds t-id] conj base)
 
@@ -145,7 +153,7 @@
                      data))
                  data)))
            data
-           gtf-lines)))
+           features)))
 
 (defn- extend-cds
   "Extend 3'-most cds's `:end` or `:start` depending on the `strand` value
@@ -193,22 +201,28 @@
                   :strand strand))))
 
 (defn load-gencode
-  [f parse-line]
+  [f parse-line & {:keys [chunk-size] :or {chunk-size 10000}}]
   (with-open [rdr (io/reader (util/compressor-input-stream f))]
     (let [feature-map (->> (line-seq rdr)
-                           (keep parse-line)
-                           ->feature-map)]
-      (->> (:transcript feature-map)
-           (map #(->region feature-map %))
-           doall))))
+                           (partition-all chunk-size)
+                           (pmap #(doall (keep parse-line %)))
+                           (apply concat)
+                           build-feature-map)]
+      (doall (map (partial ->region feature-map) (:transcript feature-map))))))
 
 (defn load-gtf
-  [f]
-  (load-gencode f parse-gencode-line))
+  [f & {:keys [chunk-size] :or {chunk-size 10000} :as opts}]
+  (let [args (concat [f
+                      parse-gencode-line]
+                     (mapcat seq opts))]
+    (apply load-gencode args)))
 
 (defn load-gff3
-  [f]
-  (load-gencode f #(parse-gencode-line % :attr-kv-sep (:gff3 gencode-attr-kv-sep))))
+  [f & {:keys [chunk-size] :or {chunk-size 10000} :as opts}]
+  (let [args (concat [f
+                      #(parse-gencode-line % :attr-kv-sep (:gff3 gencode-attr-kv-sep))]
+                     (mapcat seq opts))]
+    (apply load-gencode args)))
 
 ;; Indexing
 ;; --------
