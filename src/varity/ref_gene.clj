@@ -211,12 +211,18 @@
       (doall (map (partial ->region feature-map) (:transcript feature-map))))))
 
 (defn load-gtf
-  [f]
-  (load-gencode f parse-gencode-line))
+  [f & {:keys [chunk-size] :or {chunk-size 10000} :as opts}]
+  (let [args (concat [f
+                      parse-gencode-line]
+                     (mapcat seq opts))]
+    (apply load-gencode args)))
 
 (defn load-gff3
-  [f]
-  (load-gencode f #(parse-gencode-line % :attr-kv-sep (:gff3 gencode-attr-kv-sep))))
+  [f & {:keys [chunk-size] :or {chunk-size 10000} :as opts}]
+  (let [args (concat [f
+                      #(parse-gencode-line % :attr-kv-sep (:gff3 gencode-attr-kv-sep))]
+                     (mapcat seq opts))]
+    (apply load-gencode args)))
 
 ;; Indexing
 ;; --------
