@@ -67,9 +67,7 @@
       (log/warn "Debug printing throws error" e))))
 
 (def ^:private default-options
-  {;; NOTE: Change default :prefer-deletion to false in the next major release
-   ;;       (0.7.0).
-   :prefer-deletion? true
+  {:prefer-deletion? false
    :prefer-insertion? false
    :tx-margin 5000
    :verbose? false})
@@ -87,9 +85,7 @@
   Options:
 
     :prefer-deletion?  Prefer deletion (e.g. \"c.7_9del\") to repeated
-                       sequences (e.g. \"c.4_6[1]\"), default true for backward
-                       compatibility. The default value plans to be changed to
-                       false in the next major release.
+                       sequences (e.g. \"c.4_6[1]\"), default false.
 
     :prefer-insertion? Prefer insertion (e.g. \"c.9_10insAGG\") to repeated
                        sequences (e.g. \"c.4_6[3]\"), default false.
@@ -159,9 +155,7 @@
   Options:
 
     :prefer-deletion?  Prefer deletion (e.g. \"p.P7_H8del\") to repeated
-                       sequences (e.g. \"p.P5_H6[1]\"), default true for
-                       backward compatibility. The default value plans to be
-                       changed to false in the next major release.
+                       sequences (e.g. \"p.P5_H6[1]\"), default false.
 
     :prefer-insertion? Prefer insertion (e.g. \"c.H9_L10insRPH\") to repeated
                        sequences (e.g. \"c.R4_H6[3]\"), default false.
@@ -231,9 +225,7 @@
   Options:
 
     :prefer-deletion?  Prefer deletion (e.g. \"c.7_9del\") to repeated
-                       sequences (e.g. \"c.4_6[1]\"), default true for backward
-                       compatibility. The default value plans to be changed to
-                       false in the next major release.
+                       sequences (e.g. \"c.4_6[1]\"), default false.
 
     :prefer-insertion? Prefer insertion (e.g. \"c.9_10insAGG\") to repeated
                        sequences (e.g. \"c.4_6[3]\"), default false.

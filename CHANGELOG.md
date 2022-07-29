@@ -2,6 +2,27 @@
 
 ## [Unreleased]
 
+### BREAKING
+
+The default value of `:prefer-deletion?` option is changed to `false`.
+
+```clojure
+(require '[varity.vcf-to-hgvs :as v2h])
+
+(v2h/vcf-variant->coding-dna-hgvs {:chr "chr7", :pos 140924774, :ref "GGGAGGC", :alt "G"}
+                                  "path/to/hg38.fa" "path/to/refGene.txt.gz")
+;;=> (#clj-hgvs/hgvs "NM_004333:c.-95GCCTCC[3]")
+```
+
+If you hope the previous behavior, specify `:prefer-deletion? true`.
+
+```clojure
+(v2h/vcf-variant->coding-dna-hgvs {:chr "chr7", :pos 140924774, :ref "GGGAGGC", :alt "G"}
+                                  "path/to/hg38.fa" "path/to/refGene.txt.gz"
+                                  {:prefer-deletion? true})
+;;=> (#clj-hgvs/hgvs "NM_004333:c.-77_-72delGCCTCC")
+```
+
 ### Added
 
 - Annotate fusion genes. [#52](https://github.com/chrovis/varity/pull/52)
