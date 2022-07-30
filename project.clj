@@ -6,12 +6,12 @@
   :min-lein-version "2.7.0"
   :dependencies [[org.clojure/clojure "1.11.1" :scope "provided"]
                  [org.clojure/tools.logging "1.2.4"]
-                 [clj-hgvs "0.4.5"]
+                 [clj-hgvs "0.4.6"]
                  [cljam "0.8.3"]
                  [org.apache.commons/commons-compress "1.21"]
                  [proton "0.2.2"]]
   :plugins [[lein-cloverage "1.2.4"]
-            [lein-codox "0.10.7"]
+            [lein-codox "0.10.8"]
             [net.totakke/lein-libra "0.1.2"]]
   :test-selectors {:default (complement :slow)
                    :slow :slow
