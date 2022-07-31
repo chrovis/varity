@@ -17,17 +17,38 @@ Variant translation library for Clojure.
 Clojure CLI/deps.edn:
 
 ```clojure
-varity/varity {:mvn/version "0.8.0"}
+varity/varity {:mvn/version "0.9.0"}
 ```
 
 Leiningen/Boot:
 
 ```clojure
-[varity "0.8.0"]
+[varity "0.9.0"]
 ```
 
 To use varity with Clojure 1.8, you must include a dependency on
 [clojure-future-spec](https://github.com/tonsky/clojure-future-spec).
+
+## Breaking changes in 0.9.0
+
+The default value of `:prefer-deletion?` option is changed to `false`.
+
+```clojure
+(require '[varity.vcf-to-hgvs :as v2h])
+
+(v2h/vcf-variant->coding-dna-hgvs {:chr "chr7", :pos 140924774, :ref "GGGAGGC", :alt "G"}
+                                  "path/to/hg38.fa" "path/to/refGene.txt.gz")
+;;=> (#clj-hgvs/hgvs "NM_004333:c.-95GCCTCC[3]")
+```
+
+If you hope the previous behavior, specify `:prefer-deletion? true`.
+
+```clojure
+(v2h/vcf-variant->coding-dna-hgvs {:chr "chr7", :pos 140924774, :ref "GGGAGGC", :alt "G"}
+                                  "path/to/hg38.fa" "path/to/refGene.txt.gz"
+                                  {:prefer-deletion? true})
+;;=> (#clj-hgvs/hgvs "NM_004333:c.-77_-72delGCCTCC")
+```
 
 ## Usage
 
@@ -127,7 +148,7 @@ To convert a genomic coordinate between assemblies,
 
 ## License
 
-Copyright 2017-2021 [Xcoo, Inc.](https://xcoo.jp/)
+Copyright 2017-2022 [Xcoo, Inc.](https://xcoo.jp/)
 
 Licensed under the [Apache License, Version 2.0](LICENSE).
 
