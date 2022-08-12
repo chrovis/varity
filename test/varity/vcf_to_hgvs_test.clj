@@ -205,6 +205,8 @@
         "chr1" 69567 "A" "AT" '("p.L160Sfs*7")
         "chr1" 963222 "GCG" "G" '("p.A386Gfs*12")
         "chr2" 47478341 "T" "TGG" '("p.L762Gfs*2" "p.L696Gfs*2")
+        "chr5" 112839837 "AGTGGCAT" "A" '("p.S1397Ifs*2"
+                                          "p.S1415Ifs*2") ; https://github.com/chrovis/varity/issues/58
 
         ;; frame shift with initiation codon change (e.g. NM_007298:c.-19_80del from BRCA Share)
         "chr17" 43124016 "CCAGATGGGACACTCTAAGATTTTCTGCATAGCATTAATGACATTTTGTACTTCTTCAACGCGAAGAGCAGATAAATCCATTTCTTTCTGTTCCAATGAA" "C"
