@@ -66,6 +66,8 @@
 
 (def test-gff3-file "./test-resources/gff3_parse_test.gff3")
 
+(def test-genomic-gff3-file "./test-resources/genomic_gff3_parse_test.gff")
+
 (def test-lift-gff3-file "./test-resources/gff3_lift_parse_test.gff3")
 
 (def test-load-refgene-file "./test-resources/test-refgene.txt")

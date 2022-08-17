@@ -11,6 +11,7 @@
                                      test-ncbi-ref-seq-file
                                      test-load-refgene-file
                                      test-load-refseq-file
+                                     test-genomic-gff3-file
                                      test-gff3-file
                                      test-lift-gff3-file
                                      test-gtf-file]]))
@@ -18,6 +19,8 @@
 (def parse-ref-gene-line #'varity.ref-gene/parse-ref-gene-line)
 
 (def parse-gencode-line #'varity.ref-gene/parse-gencode-line)
+
+(def parse-genomic-gff-line #'varity.ref-gene/parse-genomic-gff-line)
 
 (def ^:private ^:const test-ref-gene
   {:bin 592
@@ -49,6 +52,20 @@
    :end 14409,
    :feature "exon"})
 
+(def ^:private ^:const test-genomic-gff-row
+  {:attributes
+   {"ID" "exon-NM_148902.2-1",
+    "Parent" "rna-NM_148902.2",
+    "Dbxref" "GeneID:8784,Genbank:NM_148902.2"},
+   :phase ".",
+   :strand "-",
+   :start 1141765,
+   :source "BestRefSeq",
+   :score nil,
+   :seqid "NC_000001.10",
+   :end 1141972,
+   :type "exon"})
+
 (deftest parse-ref-gene-line-test
   (is (= (parse-ref-gene-line "592\tNM_001291366\tchr1\t-\t975198\t982117\t976171\t981029\t4\t975198,976498,978880,982064,\t976269,976624,981047,982117,\t0\tPERM1\tcmpl\tcmpl\t1,1,0,-1,")
          test-ref-gene)))
@@ -69,6 +86,15 @@
                                :attr-kv-sep #"=")
            (dissoc test-gtf-row :attribute)))))
 
+(deftest parse-genomic-gff-line-test
+  (testing "GFF3"
+    (is (= (parse-genomic-gff-line "NC_000001.10\tBestRefSeq\texon\t1141765\t1141972\t.\t-\t.\tID=exon-NM_148902.2-1;Parent=rna-NM_148902.2;Dbxref=GeneID:8784,Genbank:NM_148902.2"
+                                   :attr-kv-sep #"=")
+           test-genomic-gff-row))
+    (is (= (parse-genomic-gff-line "NC_000001.10\tBestRefSeq\texon\t1141765\t1141972\t.\t-\t.\t"
+                                   :attr-kv-sep #"=")
+           (dissoc test-genomic-gff-row :attributes)))))
+
 (deftest load-ncbi-file-test
   (testing "refGene.txt and ncbiRefGene.txt produces identical data other than accession number"
     (is (apply = (map #(-> % first (dissoc :name))
@@ -78,6 +104,8 @@
 (def parsed-gtf-region (first (rg/load-gtf test-gtf-file)))
 
 (def parsed-gff3-region (first (rg/load-gff3 test-gff3-file)))
+
+(def parsed-genomic-gff3-region (first (rg/load-genomic-gff3 test-genomic-gff3-file)))
 
 (def parsed-lift-gff3-region (first (rg/load-gff3 test-lift-gff3-file)))
 
@@ -102,6 +130,20 @@
                           [:name :gene-id])
              {:name "ENST00000433179.4",
               :gene-id "ENSG00000187642.10"})))))
+
+(deftest load-genomic-gff-test
+  (let [extract (fn [region] (select-keys region [:name2
+                                                  :exon-ranges
+                                                  :tx-start
+                                                  :strand
+                                                  :cds-start
+                                                  :tx-end
+                                                  :exon-count
+                                                  :chr
+                                                  :cds-end]))]
+    (testing "load-genomic-gff3 produces same data as load-ref-genes"
+      (is (= (extract parsed-genomic-gff3-region)
+             (extract test-ref-gene))))))
 
 (defslowtest in-any-exon?-test
   (cavia-testing "in-any-exon? (slow)"
