@@ -72,7 +72,7 @@
                                       :reverse (:coord-start mut*))
                                     rg)]
     (if (and start end)
-      (let [ref (cseq/read-sequence seq-rdr {:chr chr, :start (dec start), :end end})]
+      (when-let [ref (cseq/read-sequence seq-rdr {:chr chr, :start (dec start), :end end})]
         {:chr chr
          :pos (dec start)
          :ref ref
@@ -109,7 +109,7 @@
                                            :forward (:coord-start mut*)
                                            :reverse (:coord-end mut*))
                                          rg)]
-    (let [ref (cseq/read-sequence seq-rdr {:chr chr, :start start, :end start})]
+    (when-let [ref (cseq/read-sequence seq-rdr {:chr chr, :start start, :end start})]
       {:chr chr
        :pos start
        :ref ref
@@ -127,7 +127,7 @@
                                       :reverse (:coord-start mut*))
                                     rg)]
     (if (and start end)
-      (let [ref (cseq/read-sequence seq-rdr {:chr chr, :start (dec start), :end end})]
+      (when-let [ref (cseq/read-sequence seq-rdr {:chr chr, :start (dec start), :end end})]
         {:chr chr
          :pos (dec start)
          :ref ref
@@ -145,7 +145,7 @@
                                       :reverse (:coord-start mut*))
                                     rg)]
     (if (and start end)
-      (let [ref (cseq/read-sequence seq-rdr {:chr chr, :start (dec start), :end end})]
+      (when-let [ref (cseq/read-sequence seq-rdr {:chr chr, :start (dec start), :end end})]
         (if (or (nil? (:ref mut*))
                 (= (subs ref 1) (cond-> (:ref mut*)
                                   (= strand :reverse) (util-seq/revcomp))))
