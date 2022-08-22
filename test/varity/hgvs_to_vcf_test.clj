@@ -43,6 +43,8 @@
 
       "NM_111.1ENST001.1")))
 
+(defn load-ref-seqs [f] (rg/load-ref-seqs f {:filter-fns [#(rg/rna-accession? (:name %))]}))
+
 (defslowtest hgvs->vcf-variants-test
   (cavia-testing "coding DNA HGVS to vcf variants"
     (let [ref-gene-idx (rg/index (rg/load-ref-genes test-ref-gene-file))]
@@ -82,7 +84,7 @@
         "NM_000059:c.18AG[2]" '({:chr "chr13", :pos 32316477, :ref "AAG", :alt "A"}) ; cf. rs397507623 (+)
         "NM_004333:c.-95_-90[3]" '({:chr "chr7", :pos 140924774, :ref "GGGAGGC", :alt "G"}) ; cf. rs727502907 (-)
         ))
-    (let [ncbi-ref-seq-idx (rg/index (rg/load-ref-seqs test-ncbi-ref-seq-file))]
+    (let [ncbi-ref-seq-idx (rg/index (load-ref-seqs test-ncbi-ref-seq-file))]
       (are [hgvs* e]
           (= (hgvs->vcf-variants (hgvs/parse hgvs*) test-ref-seq-file ncbi-ref-seq-idx) e)
         ;; substitution
@@ -121,7 +123,7 @@
         )))
   (cavia-testing "coding DNA HGVS with gene to vcf variants"
     (let [ref-gene-idx (rg/index (rg/load-ref-genes test-ref-gene-file))
-          ncbi-ref-seq-idx (rg/index (rg/load-ref-seqs test-ncbi-ref-seq-file))]
+          ncbi-ref-seq-idx (rg/index (load-ref-seqs test-ncbi-ref-seq-file))]
       (are [hgvs* gene e]
           (= (hgvs->vcf-variants (hgvs/parse hgvs*) gene test-ref-seq-file ref-gene-idx)
              e)
@@ -221,7 +223,7 @@
                                 {:alt "TCGTGACCGTGAC", :chr "chr7", :pos 140924256, :ref "T"}))))
   (cavia-testing "conversion failure"
     (let [ref-gene-idx (rg/index (rg/load-ref-genes test-ref-gene-file))
-          ncbi-ref-seq-idx (rg/index (rg/load-ref-seqs test-ncbi-ref-seq-file))]
+          ncbi-ref-seq-idx (rg/index (load-ref-seqs test-ncbi-ref-seq-file))]
       (are [hgvs* error-type] (thrown-with-error-type?
                                error-type
                                (hgvs->vcf-variants (hgvs/parse hgvs*)
@@ -246,7 +248,7 @@
           ::h2v/unsupported-hgvs-kind ncbi-ref-seq-idx "NM_004006.2:o.6_8del"))))
   (cavia-testing "protein HGVS with gene to possible vcf variants"
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))
-          ncbi-ref-seq-idx (rg/index (rg/load-ref-seqs test-ncbi-ref-seq-file))]
+          ncbi-ref-seq-idx (rg/index (load-ref-seqs test-ncbi-ref-seq-file))]
       (are [hgvs* gene e]
           (= (hgvs->vcf-variants (hgvs/parse hgvs*) gene test-ref-seq-file rgidx)
              (hgvs->vcf-variants (hgvs/parse hgvs*) gene test-ref-seq-file ncbi-ref-seq-idx)
@@ -273,7 +275,7 @@
 (defslowtest protein-hgvs->vcf-variants-with-coding-dna-hgvs-test
   (cavia-testing "protein HGVS with gene to possible vcf variants with coding DNA HGVS"
     (let [ref-gene-idx (rg/index (rg/load-ref-genes test-ref-gene-file))
-          ncbi-ref-seq-idx (rg/index (rg/load-ref-seqs test-ncbi-ref-seq-file))]
+          ncbi-ref-seq-idx (rg/index (load-ref-seqs test-ncbi-ref-seq-file))]
       (are [idx hgvs* gene e]
           (= (protein-hgvs->vcf-variants-with-coding-dna-hgvs (hgvs/parse hgvs*) gene test-ref-seq-file idx)
              e)
@@ -332,7 +334,7 @@
 (defslowtest hgvs->vcf->hgvs-test
   (cavia-testing "protein HGVS with gene to possible vcf variants which gives the same protein HGVS"
     (let [ref-gene-idx (rg/index (rg/load-ref-genes test-ref-gene-file))
-          ncbi-ref-seq-idx (rg/index (rg/load-ref-seqs test-ncbi-ref-seq-file))]
+          ncbi-ref-seq-idx (rg/index (load-ref-seqs test-ncbi-ref-seq-file))]
       (with-open [r (cseq/reader test-ref-seq-file)]
         (are [?idx ?protein-hgvs ?gene-symbol]
             (->> (map :name (rg/ref-genes ?gene-symbol ?idx))

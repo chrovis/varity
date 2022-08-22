@@ -70,10 +70,10 @@
            (dissoc test-gtf-row :attribute)))))
 
 (deftest load-ncbi-file-test
-  (testing "refGene.txt and ncbiRefGene.txt produces identical data instead of its accession number"
+  (testing "refGene.txt and ncbiRefGene.txt produces identical data other than accession number"
     (is (apply = (map #(-> % first (dissoc :name))
-                      [(#'rg/load-ncbi-file test-load-refgene-file)
-                       (#'rg/load-ncbi-file test-load-refseq-file)])))))
+                      [(#'rg/load-ncbi-file test-load-refgene-file [identity])
+                       (#'rg/load-ncbi-file test-load-refseq-file [identity])])))))
 
 (def parsed-gtf-region (first (rg/load-gtf test-gtf-file)))
 
@@ -463,7 +463,8 @@
 (defslowtest cds-coord-slow-test
   (cavia-testing "cds-coord (slow)"
     (let [ref-gene-idx (rg/index (rg/load-ref-genes test-ref-gene-file))
-          ncbi-ref-seq-idx (rg/index (rg/load-ref-seqs test-ncbi-ref-seq-file))]
+          ncbi-ref-seq-idx (rg/index (rg/load-ref-seqs test-ncbi-ref-seq-file
+                                                       {:filter-fns [#(rg/rna-accession? (:name %))]}))]
       (are [idx c p r] (= (cds-coord c p idx) r)
         ref-gene-idx "chr7"  55191822  '("2573")
         ref-gene-idx "chr19" 1220596   '("613")
