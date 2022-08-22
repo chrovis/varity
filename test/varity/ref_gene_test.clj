@@ -72,8 +72,8 @@
 (deftest load-ncbi-file-test
   (testing "refGene.txt and ncbiRefGene.txt produces identical data other than accession number"
     (is (apply = (map #(-> % first (dissoc :name))
-                      [(#'rg/load-ncbi-file test-load-refgene-file [identity])
-                       (#'rg/load-ncbi-file test-load-refseq-file [identity])])))))
+                      [(#'rg/load-genepred-file test-load-refgene-file [identity])
+                       (#'rg/load-genepred-file test-load-refseq-file [identity])])))))
 
 (def parsed-gtf-region (first (rg/load-gtf test-gtf-file)))
 
