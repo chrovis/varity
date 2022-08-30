@@ -58,24 +58,30 @@
     (update m :cds-end-stat keyword)
     (update m :exon-frames parse-exon-pos)))
 
-(defn- load-ncbi-file
-  [f]
-  (with-open [rdr (io/reader (util/compressor-input-stream f))]
-    (->> (line-seq rdr)
-         (map parse-ref-gene-line)
-         (filter #(re-find #"^(NM|NR)_.+$" (:name %)))
-         doall)))
+(defn rna-accession?
+  [s]
+  (when s
+    (re-find #"^(NM|NR)_.+$" s)))
+
+(defn- load-genepred-file
+  [f filter-fns]
+  (let [filter-fn (apply every-pred filter-fns)]
+    (with-open [rdr (io/reader (util/compressor-input-stream f))]
+      (->> (line-seq rdr)
+           (map parse-ref-gene-line)
+           (filter filter-fn)
+           doall))))
 
 (defn load-ref-genes
   {:deprecated "0.8.0"
    :doc "DEPRECATED: Loads f (e.g. refGene.txt(.gz)), returning the all contents as a sequence."}
-  [f]
-  (load-ncbi-file f))
+  [f & {:keys [filter-fns] :or {filter-fns [identity]}}]
+  (load-genepred-file f filter-fns))
 
 (defn load-ref-seqs
   "Loads f (e.g. ncbiRefSeq.txt(.gz)), returning the all contents as a sequence."
-  [f]
-  (load-ncbi-file f))
+  [f & {:keys [filter-fns] :or {filter-fns [identity]}}]
+  (load-genepred-file f filter-fns))
 
 (defn- ->gencode-attr
   [attr-str kv-sep]
