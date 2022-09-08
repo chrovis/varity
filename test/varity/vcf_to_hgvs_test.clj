@@ -134,6 +134,11 @@
         ;; prefer-deletion?, cf. rs727502907 (-)
         "chr7" 140924774 "GGGAGGC" "G" {:prefer-deletion? false} '("NM_004333:c.-95_-90[3]")
         "chr7" 140924774 "GGGAGGC" "G" {:prefer-deletion? true} '("NM_004333:c.-77_-72delGCCTCC")
+        "chr20" 58854572 "CCGCCCCAGCCGATCCCGACTCCGGGGCGGCCCCTGA" "C" {:prefer-deletion? true} '("NM_001309861:c.-39+12749_-39+12784delCGACTCCGGGGCGGCCCCTGACGCCCCAGCCGATCC"
+                                                                                                "NM_001077490:c.1172_1207delCGACTCCGGGGCGGCCCCTGACGCCCCAGCCGATCC"
+                                                                                                "NM_001309883:c.1172_1207delCGACTCCGGGGCGGCCCCTGACGCCCCAGCCGATCC"
+                                                                                                "NM_080425:c.1359_1394delCGACTCCGGGGCGGCCCCTGACGCCCCAGCCGATCC"
+                                                                                                "NM_016592:c.*42+13738_*42+13773delCGACTCCGGGGCGGCCCCTGACGCCCCAGCCGATCC")
 
         ;; prefer-insertion?, cf. rs2307882 (-)
         "chr3" 126492636 "C" "CCTCT" {:prefer-insertion? false} '("NM_001165974:c.1690-122_1690-121[3]"
@@ -235,6 +240,7 @@
         ;; prefer-deletion?, not actual example (+)
         "chr1" 47439008 "CCCGCAC" "C" {:prefer-deletion? false} '("p.P286_H287[3]")
         "chr1" 47439008 "CCCGCAC" "C" {:prefer-deletion? true} '("p.P292_H293del")
+        "chr20" 58854572 "CCGCCCCAGCCGATCCCGACTCCGGGGCGGCCCCTGA" "C" {:prefer-deletion? true} '("p.S455_D466del")
 
         ;; prefer-insertion?, cf. rs3046924 (+)
         "chr1" 47438996 "T" "TCCGCAC" {:prefer-insertion? false} '("p.P286_H287[5]")
