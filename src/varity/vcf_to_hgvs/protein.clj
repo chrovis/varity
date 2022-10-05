@@ -326,19 +326,22 @@
 (defn- mutation
   [seq-rdr rg pos ref alt options]
   (let [seq-info (read-sequence-info seq-rdr rg pos ref alt)]
-    (if-let [{mut-type :type, ppos :pos, pref :ref, palt :alt}
-             (->protein-variant rg pos ref alt seq-info options)]
-      (case mut-type
-        :substitution (protein-substitution ppos pref palt)
-        :deletion (protein-deletion ppos pref palt)
-        :duplication (protein-duplication ppos pref palt)
-        :insertion (protein-insertion ppos pref palt seq-info)
-        :indel (protein-indel ppos pref palt)
-        :repeated-seqs (protein-repeated-seqs ppos pref palt seq-info)
-        :frame-shift (protein-frame-shift ppos pref palt seq-info)
-        :extension (protein-extension ppos pref palt seq-info)
-        :no-effect (mut/protein-no-effect)
-        :unknown (mut/protein-unknown-mutation)))))
+    (if-let [pvariant (->protein-variant rg pos ref alt seq-info options)]
+      (let [{ppos :pos, pref :ref, palt :alt}
+            (if-not (#{:no-effect :unknown} (:type pvariant))
+              (common/apply-3'-rule pvariant (:ref-prot-seq seq-info))
+              pvariant)]
+        (case (:type pvariant)
+          :substitution (protein-substitution ppos pref palt)
+          :deletion (protein-deletion ppos pref palt)
+          :duplication (protein-duplication ppos pref palt)
+          :insertion (protein-insertion ppos pref palt seq-info)
+          :indel (protein-indel ppos pref palt)
+          :repeated-seqs (protein-repeated-seqs ppos pref palt seq-info)
+          :frame-shift (protein-frame-shift ppos pref palt seq-info)
+          :extension (protein-extension ppos pref palt seq-info)
+          :no-effect (mut/protein-no-effect)
+          :unknown (mut/protein-unknown-mutation))))))
 
 (defn ->hgvs
   ([variant seq-rdr rg]
@@ -404,6 +407,9 @@
                    (case (:strand rg)
                      :forward (protein-position (+ pos (count alt) -1) rg)
                      :reverse (protein-position (- pos (- (count alt) (count ref))) rg)))
+        {base-ppos :pos, pref :ref, palt :alt} (common/apply-3'-rule
+                                                {:pos base-ppos, :ref pref, :alt palt}
+                                                (:ref-prot-seq seq-info))
         start (max 1 (- base-ppos 20))
         end (min (+ base-ppos 20) (count (:ref-prot-seq seq-info)))
         pref-seq (subs (:ref-prot-seq seq-info) (dec start) end)
