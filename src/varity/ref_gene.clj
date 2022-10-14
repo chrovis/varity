@@ -88,17 +88,17 @@
   (->> (string/split attr-str #";")
        (map string/trim)
        (mapcat #(string/split % kv-sep))
-       (partition-all 2)
+       (partition 2)
        (map (fn [[k v]]
               [k (string/replace v #"\"" "")]))
        (into {})))
 
 (def ^:private gtf-gff-attr-kv-sep
   {:gtf #"\s"
-   :gff3 #"="})
+   :gff3 #"="
+   :genome-annotation-gtf #"\s\""})
 
-;;;; GENCODE
-(defn- parse-gencode-line
+(defn- parse-gtf-gff-line
   [s & {:keys [attr-kv-sep] :or {attr-kv-sep (gtf-gff-attr-kv-sep :gtf)}}]
   (when-not (= \# (first s))
     (let [row (string/split s #"\t")]
@@ -113,6 +113,8 @@
         :frame (nth row 7)}
        (when (= (count row) 9)
          {:attribute (->gtf-gff-attr (nth row 8) attr-kv-sep)})))))
+
+;;; GENCODE
 
 (def ^:private ens-t-pattern #"ENST\d+\.\d+")
 (def ^:private ens-g-pattern #"ENSG\d+\.\d+")
@@ -162,22 +164,7 @@
            data
            features)))
 
-;;;; genomic.gff
-(defn- parse-genomic-gff-line
-  [s & {:keys [attr-kv-sep] :or {attr-kv-sep (gtf-gff-attr-kv-sep :gff3)}}]
-  (when-not (= \# (first s))
-    (let [row (string/split s #"\t")]
-      (merge
-       {:seqid (nth row 0)
-        :source (nth row 1)
-        :type (nth row 2)
-        :start (as-long (nth row 3))
-        :end (as-long (nth row 4))
-        :score (as-float (nth row 5))
-        :strand (nth row 6)
-        :phase (nth row 7)}
-       (when (= (count row) 9)
-         {:attributes (->gtf-gff-attr (nth row 8) attr-kv-sep)})))))
+;;; NCBI genome annotation
 
 (def ^:private nm-pattern #"NM_\d+\.\d+")
 (def ^:private nr-pattern #"NR_\d+\.\d+")
@@ -187,73 +174,52 @@
 
 (def chr-idx-name-map (merge (zipmap (range 1 23) (map str (range 1 23))) {23 "X" 24 "Y"}))
 
-(defn get-chr-from-seqid
-  [seqid]
-  (let [accession-number (re-find #"NC_0000(\d+)" seqid)
+(defn get-chr
+  [seqname]
+  (let [accession-number (re-find #"NC_0000(\d+)" seqname)
         chr-idx (when accession-number
-                  (Integer/parseInt (second accession-number)))
+                  (as-long (second accession-number)))
         chr-name (chr-idx-name-map chr-idx)]
     (when chr-name
       (str "chr" chr-name))))
 
-(defn get-gene-id
-  [dbxref]
-  (when-let [gene-id (re-find #"GeneID:(\d+)" dbxref)]
-    (second gene-id)))
-
-(defn find-nm-from-attributes
-  [attributes]
-  (let [id (find-nm-id (attributes "ID"))
-        parent (find-nm-id (get attributes "Parent" ""))]
-    (or id parent)))
-
-(defn find-nr-from-attributes
-  [attributes]
-  (let [id (find-nr-id (attributes "ID"))]
-    id))
-
-(defn get-exon-number-from-id
-  [id]
-  (nth (re-find #"exon-(NM|NR)_\d+.\d+-(\d+)" id) 2))
-
-(defn- build-genomic-gff-feature-map
+(defn- build-ncbi-genome-annotation-feature-map
   ([features]
-   (build-genomic-gff-feature-map features (zipmap [:transcript :exon :cds] (repeat {}))))
+   (build-ncbi-genome-annotation-feature-map features (zipmap [:transcript :exon :cds] (repeat {}))))
   ([features data]
-   (reduce (fn [data {:keys [start end seqid type attributes] :as gff}]
+   (reduce (fn [data {:keys [start end seqname feature attribute] :as gtf}]
              (let [base {:start start
                          :end end
-                         :chr (get-chr-from-seqid seqid)}]
-               (if-let [t-id (or (find-nm-from-attributes attributes)
-                                 (find-nr-from-attributes attributes))]
-                 (case type
-                   ("mRNA" "transcript" "lnc_RNA")
-                   (assoc-in data
-                             [:transcript t-id]
-                             (merge base
-                                    {:name t-id
-                                     :name2 (get attributes "gene")
-                                     :gene-id (get-gene-id (get attributes "Dbxref"))
-                                     :strand (:strand gff)
-                                     :score (:score gff)}))
+                         :chr (get-chr seqname)}]
+               (if-let [t-id (get attribute "transcript_id")]
+                 (let [t-id (or (find-nm-id t-id) (find-nr-id t-id))]
+                   (case feature
+                     "transcript"
+                     (assoc-in data
+                               [:transcript t-id]
+                               (merge base
+                                      {:name t-id
+                                       :name2 (get attribute "gene")
+                                       :gene-id (get attribute "gene_id")
+                                       :strand (:strand gtf)
+                                       :score (:score gtf)}))
 
-                   "exon"
-                   (update-in data
-                              [:exon t-id]
-                              conj
-                              (merge base
-                                     {:exon-number (as-long (get-exon-number-from-id (attributes "ID")))
-                                      :frame (:phase gff)
-                                      :strand (:strand gff)}))
+                     "exon"
+                     (update-in data
+                                [:exon t-id]
+                                conj
+                                (merge base
+                                       {:exon-number (as-long (get attribute "exon_number"))
+                                        :frame (:frame gtf)
+                                        :strand (:strand gtf)}))
 
-                   "CDS"
-                   (update-in data
-                              [:cds t-id]
-                              conj
-                              (merge base
-                                     {:cds-number (inc (count (get-in data [:cds t-id])))
-                                      :strand (:strand gff)}))
-                   data)
+                     "CDS"
+                     (update-in data [:cds t-id] conj base)
+
+                     "stop_codon"
+                     (assoc-in data [:stop-codon t-id] base)
+
+                     data))
                  data)))
            data
            features)))
@@ -272,7 +238,7 @@
                 #(merge % (select-keys stop-codon [:start]))))
       cdss)))
 
-(defn- ->gencode-region
+(defn- ->region
   [feature-map [transcript-id transcript]]
   (let [exons (->> (get-in feature-map [:exon transcript-id])
                    (filter :exon-number)
@@ -303,77 +269,32 @@
                   :tx-end (:end transcript)
                   :strand strand))))
 
-(defn- ->genomic-gff-region
-  [feature-map [transcript-id transcript]]
-  (let [exons (->> (get-in feature-map [:exon transcript-id])
-                   (filter :exon-number)
-                   (sort-by :exon-number))
-        cdss (->> (get-in feature-map [:cds transcript-id])
-                  (filter :cds-number)
-                  (sort-by :cds-number))
-        [exons cdss strand] (case (:strand transcript)
-                              "+" [exons cdss :forward]
-                              "-" [(reverse exons) (reverse cdss) :reverse])]
-    (cond-> transcript
-      (seq exons) (assoc :exon-count (count exons)
-                         :exon-start (:start (first exons))
-                         :exon-end (:end (last exons))
-                         :exon-ranges (mapv #(vector (:start %) (:end %)) exons)
-                         :exon-frames (mapv :frame exons))
-      (empty? exons) (assoc :exon-count 0
-                            :exon-start nil
-                            :exon-end nil
-                            :exon-ranges []
-                            :exon-frames [])
-      (seq cdss) (assoc :cds-start (apply min (map :start cdss))
-                        :cds-end (apply max (map :end cdss)))
-      (empty? cdss) (assoc :cds-start (:start transcript)
-                           :cds-end (:end transcript))
-
-      true (assoc :tx-start (:start transcript)
-                  :tx-end (:end transcript)
-                  :strand strand))))
+(defn load-gtf-gff
+  [f build-feature-map attr-kv-sep & {:keys [chunk-size] :or {chunk-size 10000}}]
+  (with-open [rdr (io/reader (util/compressor-input-stream f))]
+    (let [parse-line-fn #(parse-gtf-gff-line % :attr-kv-sep attr-kv-sep)
+          feature-map (->> (line-seq rdr)
+                           (partition-all chunk-size)
+                           (pmap #(doall (keep parse-line-fn %)))
+                           (apply concat)
+                           build-feature-map)]
+      (doall (map (partial ->region feature-map) (:transcript feature-map))))))
 
 (defn load-gencode
-  [f parse-line & {:keys [chunk-size] :or {chunk-size 10000}}]
-  (with-open [rdr (io/reader (util/compressor-input-stream f))]
-    (let [feature-map (->> (line-seq rdr)
-                           (partition-all chunk-size)
-                           (pmap #(doall (keep parse-line %)))
-                           (apply concat)
-                           build-gencode-feature-map)]
-      (doall (map (partial ->gencode-region feature-map) (:transcript feature-map))))))
-
-(defn load-genomic
-  [f parse-line & {:keys [chunk-size] :or {chunk-size 10000}}]
-  (with-open [rdr (io/reader (util/compressor-input-stream f))]
-    (let [feature-map (->> (line-seq rdr)
-                           (partition-all chunk-size)
-                           (pmap #(doall (keep parse-line %)))
-                           (apply concat)
-                           build-genomic-gff-feature-map)]
-      (doall (map (partial ->genomic-gff-region feature-map) (:transcript feature-map))))))
-
-(defn load-gtf
-  [f & {:keys [chunk-size] :or {chunk-size 10000} :as opts}]
+  [f & {:keys [file-type chunk-size] :or {file-type :gtf chunk-size 10000} :as opts}]
   (let [args (concat [f
-                      parse-gencode-line]
+                      build-gencode-feature-map
+                      (file-type gtf-gff-attr-kv-sep)]
                      (mapcat seq opts))]
-    (apply load-gencode args)))
+    (apply load-gtf-gff args)))
 
-(defn load-gff3
-  [f & {:keys [chunk-size] :or {chunk-size 10000} :as opts}]
+(defn load-ncbi-genome-annotation
+  [f & {:keys [file-type chunk-size] :or {file-type :genome-annotation-gtf chunk-size 10000} :as opts}]
   (let [args (concat [f
-                      #(parse-gencode-line % :attr-kv-sep (:gff3 gtf-gff-attr-kv-sep))]
+                      build-ncbi-genome-annotation-feature-map
+                      (file-type gtf-gff-attr-kv-sep)]
                      (mapcat seq opts))]
-    (apply load-gencode args)))
-
-(defn load-genomic-gff3
-  [f & {:keys [chunk-size] :or {chunk-size 10000} :as opts}]
-  (let [args (concat [f
-                      #(parse-genomic-gff-line %)]
-                     (mapcat seq opts))]
-    (apply load-genomic args)))
+    (apply load-gtf-gff args)))
 
 ;; Indexing
 ;; --------
