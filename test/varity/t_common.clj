@@ -66,7 +66,7 @@
 
 (def test-gff3-file "./test-resources/gff3_parse_test.gff3")
 
-(def test-genomic-gff3-file "./test-resources/genomic_gff3_parse_test.gff")
+(def test-ncbi-genome-annotation-gtf-file "./test-resources/ncbi_genome_annotation_gtf_parse_test.gtf")
 
 (def test-lift-gff3-file "./test-resources/gff3_lift_parse_test.gff3")
 
