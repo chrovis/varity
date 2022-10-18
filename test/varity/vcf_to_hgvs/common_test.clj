@@ -1,7 +1,6 @@
 (ns varity.vcf-to-hgvs.common-test
   (:require [clojure.test :refer :all]
             [cljam.io.sequence :as cseq]
-            [varity.vcf-to-hgvs.common :refer :all]
             [varity.t-common :refer :all]
             [varity.vcf-to-hgvs.common :as common]))
 
@@ -69,13 +68,19 @@
     "XXXCAGTAGTAGTCXXX" 11 "ATG" :del
     "XXXCAGTCXXX"       5  "ATG" :del))
 
-(deftest normalize-variant*-test
-  (testing "normalize-variant* normalizes variant"
-    (are [v st ret] (= (#'common/normalize-variant* v "NNNCAGTAGTAGTCNNN" st) ret)
+(deftest apply-3'-rule-test
+  (testing "general case"
+    (are [v d ret] (= (common/apply-3'-rule v "NNNCAGTAGTAGTCNNN" d) ret)
       {:pos 7, :ref "T", :alt "TAGT"} :forward {:pos 13, :ref "T", :alt "TAGT"}
       {:pos 7, :ref "TAGT", :alt "T"} :forward {:pos 10, :ref "TAGT", :alt "T"}
-      {:pos 7, :ref "T", :alt "TAGT"} :reverse {:pos 4, :ref "C", :alt "CAGT"}
-      {:pos 7, :ref "TAGT", :alt "T"} :reverse {:pos 4, :ref "CAGT", :alt "C"})))
+      {:pos 7, :ref "T", :alt "TAGT"} :backward {:pos 4, :ref "C", :alt "CAGT"}
+      {:pos 7, :ref "TAGT", :alt "T"} :backward {:pos 4, :ref "CAGT", :alt "C"}))
+  (testing "case of a trailing sub sequence"
+    (are [v d ret] (= (common/apply-3'-rule v "NNNCAGTCTTAGTCTTAGTCNNN" d) ret)
+      {:pos 10, :ref "T", :alt "TAGTCTT"} :forward {:pos 20, :ref "C", :alt "CTTAGTC"}
+      {:pos 4, :ref "CAGTCTT", :alt "C"} :forward {:pos 14, :ref "CTTAGTC", :alt "C"}
+      {:pos 13, :ref "T", :alt "TCTTAGT"} :backward {:pos 4, :ref "C", :alt "CAGTCTT"}
+      {:pos 13, :ref "TCTTAGT", :alt "T"} :backward {:pos 4, :ref "CAGTCTT", :alt "C"})))
 
 (defslowtest normalize-variant-test
   (cavia-testing "normalize without error"

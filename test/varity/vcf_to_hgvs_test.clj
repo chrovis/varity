@@ -60,7 +60,7 @@
                                   "NM_001276761:c.98C=") ; cf. rs1042522
 
         ;; Deletion
-        "chr1" 963222 "GCG" "G" '("NM_015658:c.-3984_-3983delCG"
+        "chr1" 963222 "GCG" "G" '("NM_015658:c.-3983_-3982delGC"
                                   "NM_198317:c.1157_1158delCG"
                                   "NM_001160184:c.-3309_-3308delCG"
                                   "NM_032129:c.-3309_-3308delCG")
@@ -74,15 +74,15 @@
         "chr6" 33086236 "TA" "T" '("NM_002121:c.776delA") ; cf. rs67523850 (deletion in border of UTR)
 
         ;; Duplication
-        "chr2" 47806842 "T" "TGACT" '("NM_000179:c.4062_4065dupGACT"
-                                      "NM_001281492:c.3672_3675dupGACT"
-                                      "NM_001281493:c.3156_3159dupGACT"
-                                      "NM_001281494:c.3156_3159dupGACT"
-                                      "NM_025133:c.*1276_*1279dupAGTC"
-                                      "NM_001190274:c.*1276_*1279dupAGTC") ; cf. rs55740729 (+)
-        "chr2" 26254257 "G" "GACT" '("NM_000183:c.4_6dupACT"
-                                     "NM_001281512:c.4_6dupACT"
-                                     "NM_001281513:c.-146_-144dupACT") ; cf. rs3839049 (+)
+        "chr2" 47806844 "T" "TGATT" '("NM_000179:c.4068_4071dupGATT"
+                                      "NM_001281492:c.3678_3681dupGATT"
+                                      "NM_001281493:c.3162_3165dupGATT"
+                                      "NM_001281494:c.3162_3165dupGATT"
+                                      "NM_025133:c.*1272_*1275dupTCAA"
+                                      "NM_001190274:c.*1272_*1275dupTCAA") ; cf. rs55740729 (+)
+        "chr2" 26254257 "G" "GACT" '("NM_000183:c.5_7dupCTA"
+                                     "NM_001281512:c.5_7dupCTA"
+                                     "NM_001281513:c.-145_-143dupCTA") ; cf. rs3839049 (+)
         "chr1" 42752620 "T" "TGGAGTTC" '("NM_001146289:c.1383_1389dupGAACTCC"
                                          "NM_001243246:c.1383_1389dupGAACTCC"
                                          "NM_022356:c.1383_1389dupGAACTCC") ; cf. rs137853953 (-)
@@ -118,7 +118,7 @@
                                      "NM_005529:c.862_863delCAinsG") ; cf. rs2010297 (-)
 
         ;; repeated sequences
-        "chr7" 55191822 "T" "TGCTGCT" '("NM_005228:c.2571_2573[3]") ; not actual example (+)
+        "chr7" 55191822 "T" "TGCTGCT" '("NM_005228:c.2572_2574[3]") ; not actual example (+)
         "chr3" 126492636 "C" "CCTCT" '("NM_001165974:c.1690-122_1690-121[3]"
                                        "NM_144639:c.1510-122_1510-121[3]") ; cf. rs2307882 (-)
         "chr2" 237363239 "T" "TA" '("NM_004369:c.6063+6[9]"
@@ -134,6 +134,12 @@
         ;; prefer-deletion?, cf. rs727502907 (-)
         "chr7" 140924774 "GGGAGGC" "G" {:prefer-deletion? false} '("NM_004333:c.-95_-90[3]")
         "chr7" 140924774 "GGGAGGC" "G" {:prefer-deletion? true} '("NM_004333:c.-77_-72delGCCTCC")
+        "chr20" 58854572 "CCGCCCCAGCCGATCCCGACTCCGGGGCGGCCCCTGA" "C" {:prefer-deletion? true}
+        '("NM_016592:c.*42+13738_*42+13773delCGACTCCGGGGCGGCCCCTGACGCCCCAGCCGATCC"
+          "NM_001309861:c.-39+12749_-39+12784delCGACTCCGGGGCGGCCCCTGACGCCCCAGCCGATCC"
+          "NM_001309883:c.1172_1207delCGACTCCGGGGCGGCCCCTGACGCCCCAGCCGATCC"
+          "NM_001077490:c.1172_1207delCGACTCCGGGGCGGCCCCTGACGCCCCAGCCGATCC"
+          "NM_080425:c.1359_1394delCGACTCCGGGGCGGCCCCTGACGCCCCAGCCGATCC")
 
         ;; prefer-insertion?, cf. rs2307882 (-)
         "chr3" 126492636 "C" "CCTCT" {:prefer-insertion? false} '("NM_001165974:c.1690-122_1690-121[3]"
@@ -235,6 +241,8 @@
         ;; prefer-deletion?, not actual example (+)
         "chr1" 47439008 "CCCGCAC" "C" {:prefer-deletion? false} '("p.P286_H287[3]")
         "chr1" 47439008 "CCCGCAC" "C" {:prefer-deletion? true} '("p.P292_H293del")
+        "chr20" 58854572 "CCGCCCCAGCCGATCCCGACTCCGGGGCGGCCCCTGA" "C" {:prefer-deletion? true}
+        '("p.P391_I402del" "p.S455_D466del")
 
         ;; prefer-insertion?, cf. rs3046924 (+)
         "chr1" 47438996 "T" "TCCGCAC" {:prefer-insertion? false} '("p.P286_H287[5]")

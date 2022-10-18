@@ -135,26 +135,48 @@
 ;; + ...CAGTAGTAGTC... 7 TAGT T => 10 TAGT T
 ;; - ...CAGTAGTAGTC... 7 T TAGT => 4 C CAGT
 ;; - ...CAGTAGTAGTC... 7 TAGT T => 4 CAGT C
-(defn- normalize-variant*
-  [{:keys [pos ref alt] :as var} seq* strand]
-  (let [[ref-only alt-only offset _] (diff-bases ref alt)
-        type* (cond
-                (and (zero? (count ref-only)) (pos? (count alt-only))) :ins
-                (and (pos? (count ref-only)) (zero? (count alt-only))) :del
-                :else :other)]
-    (if (#{:ins :del} type*)
-      (let [bases (if (string/blank? ref-only) alt-only ref-only)
-            seq' (if (= type* :ins)
-                   (str (subs seq* 0 (+ pos offset -1)) bases (subs seq* (+ pos offset -1)))
-                   seq*)
-            move (case strand
-                   :forward (forward-shift seq' (+ pos offset) bases)
-                   :reverse (- (backward-shift seq' (+ pos offset) bases)))
-            comm (subs seq* (+ pos move -1) (+ pos move offset -1))]
-        {:pos (+ pos move)
-         :ref (str comm ref-only)
-         :alt (str comm alt-only)})
-      var)))
+(defn apply-3'-rule
+  "Apply the 3’ rule to the VCF-style variant based on the surrounding sequence.
+
+  For example, `{:pos 7, :ref T, :alt TAGT}` on `...CAGTAGTAGTC...` is
+  equivalent to `{:pos 13, :ref T, :alt TAGT}`. The latter is a normalized
+  variant.
+
+  This function can be applied to both nucleotide sequence and amino acid
+  sequence. If you want to normalize the variant as reverse strand, supply
+  `:backward` to the third argument."
+  ([variant seq*]
+   (apply-3'-rule variant seq* :forward))
+  ([{:keys [pos ref alt] :as variant} seq* direction]
+   (let [[ref-only alt-only offset _] (diff-bases ref alt)
+         type* (cond
+                 (and (zero? (count ref-only)) (pos? (count alt-only))) :ins
+                 (and (pos? (count ref-only)) (zero? (count alt-only))) :del
+                 :else :other)]
+     (if (#{:ins :del} type*)
+       (let [bases (if (string/blank? ref-only) alt-only ref-only)
+             seq' (if (= type* :ins)
+                    (str (subs seq* 0 (+ pos offset -1)) bases (subs seq* (+ pos offset -1)))
+                    seq*)
+             move (case direction
+                    :forward (forward-shift seq' (+ pos offset) bases)
+                    :backward (- (backward-shift seq' (+ pos offset) bases)))
+             exmove (case direction
+                      :forward (left-common-len
+                                bases
+                                (subs seq' (+ pos offset move (count bases) -1)))
+                      :backward (- (left-common-len
+                                    (reverse bases)
+                                    (reverse (subs seq' 0 (+ pos offset move -1))))))
+             npos (+ pos move exmove offset -1)]
+         {:pos npos
+          :ref (case type*
+                 :ins (subs seq' (dec npos) npos)
+                 :del (subs seq' (dec npos) (+ npos (count bases))))
+          :alt (case type*
+                 :ins (subs seq' (dec npos) (+ npos (count bases)))
+                 :del (subs seq' (dec npos) npos))})
+       variant))))
 
 (def normalization-read-sequence-step 1000)
 
@@ -167,7 +189,7 @@
                                normalization-read-sequence-step)
        (keep (fn [seq*]
                (when (>= (count seq*) (count ref))
-                 (let [nvar (normalize-variant* {:pos 1, :ref ref, :alt alt} seq* :forward)]
+                 (let [nvar (apply-3'-rule {:pos 1, :ref ref, :alt alt} seq* :forward)]
                    (if (<= (dec (:pos nvar)) (- (count seq*) (max (count ref) (count alt))))
                      (-> nvar
                          (assoc :chr chr)
@@ -184,7 +206,7 @@
        (keep (fn [seq*]
                (let [offset (- (count seq*) (count ref))]
                  (when (>= offset 0)
-                   (let [nvar (normalize-variant* {:pos (inc offset), :ref ref, :alt alt} seq* :reverse)]
+                   (let [nvar (apply-3'-rule {:pos (inc offset), :ref ref, :alt alt} seq* :backward)]
                      (if (> (:pos nvar) (max (count ref) (count alt)))
                        (-> nvar
                            (assoc :chr chr)
@@ -192,10 +214,8 @@
        (first)))
 
 (defn normalize-variant
-  "Normalizes a VCF-style variant based on surrounding sequence. For example,
-  {:pos 7, :ref T, :alt TAGT} on ...CAGTAGTAGTC... is equivalent to
-  {:pos 13, :ref T, :alt TAGT}. The latter is normalized.
-  e.g.  ...CAGTAGTAGTC... 7 T TAGT => 13 T TAGT"
+  "Normalizes the VCF-style variant based on the surrounding sequence and the
+  ref-gene with the 3’ rule."
   [variant seq-rdr rg]
   (case (:strand rg)
     :forward (normalize-variant-forward variant seq-rdr rg)
