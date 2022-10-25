@@ -278,16 +278,14 @@
                                alt-repeat)))
 
 (defn- protein-frame-shift
-  [ppos pref palt seq-info]
-  (let [[ppos pref palt] (if (= pref palt)
-                           (->> (map vector (:ref-prot-seq seq-info) (:alt-prot-seq seq-info))
-                                (drop (dec ppos))
-                                (map-indexed vector)
-                                (drop-while (fn [[_ [r a]]] (= r a)))
-                                first
-                                ((fn [[i [r a]]]
-                                   [(+ ppos i) (str r) (str a)])))
-                           [ppos pref palt])
+  [ppos seq-info]
+  (let [[ppos pref palt] (->> (map vector (:ref-prot-seq seq-info) (:alt-prot-seq seq-info))
+                              (drop (dec ppos))
+                              (map-indexed vector)
+                              (drop-while (fn [[_ [r a]]] (= r a)))
+                              first
+                              ((fn [[i [r a]]]
+                                 [(+ ppos i) (str r) (str a)])))
         [_ _ offset _] (diff-bases pref palt)
         alt-prot-seq (format-alt-prot-seq seq-info)
         ref (nth (:ref-prot-seq seq-info) (dec (+ ppos offset)))
@@ -338,7 +336,7 @@
           :insertion (protein-insertion ppos pref palt seq-info)
           :indel (protein-indel ppos pref palt)
           :repeated-seqs (protein-repeated-seqs ppos pref palt seq-info)
-          :frame-shift (protein-frame-shift ppos pref palt seq-info)
+          :frame-shift (protein-frame-shift ppos seq-info)
           :extension (protein-extension ppos pref palt seq-info)
           :no-effect (mut/protein-no-effect)
           :unknown (mut/protein-unknown-mutation))))))
