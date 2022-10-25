@@ -178,7 +178,7 @@
               (not= ref-prot-rest alt-prot-rest) (if (or (and (= (first alt-prot-rest) \*)
                                                               (>= nprefo npalto)
                                                               (= palt (subs pref 0 (count palt))))
-                                                         (= (last palt-only) \*))
+                                                         (= (first palt-only) \*))
                                                    :fs-ter-substitution
                                                    :frame-shift)
               (or (and (zero? nprefo) (zero? npalto))

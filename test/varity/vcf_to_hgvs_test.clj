@@ -182,6 +182,7 @@
         "chr2" 47478341 "TG" "T" '("p.L762*" "p.L696*") ;; rs786204050 (+) frameshift with termination
         "chr8" 42838217 "GAGATTAACAGGGGTCTGAAGAGGCGGCATTAGTAATCCAATAGCAGCATCAACCTGGGAAACAGGAGGCGGTAAAGGAGGTGGGGGAAGCTGTTCCTGTGGCTCCAGAAGATCTTCTTTCTAAAACAAAAATACAAAGTATGTTTGAATTTAGTAACTAAAAACAGTTTAAA" "G"
         '("p.K90Lfs*5" "p.K25*") ; cf. VCV000965170.1 (-, frameshift with termination)
+        "chr17" 7676202 "T" "TGTCCCTTAGTCTT" '("p.P58*" "p.P19*") ; cf. not actual example (-, frameshift with termination)
 
         ;; deletion
         "chr1" 240092288 "AGTC" "A" '("p.S61del") ; cf. rs772088733 (+)
