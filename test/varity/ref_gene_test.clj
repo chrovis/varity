@@ -18,7 +18,9 @@
 
 (def parse-ref-gene-line #'varity.ref-gene/parse-ref-gene-line)
 
-(def parse-gtf-gff-line #'varity.ref-gene/parse-gtf-gff-line)
+(def parse-gtf-line #'varity.ref-gene/parse-gtf-line)
+
+(def parse-gff3-line #'varity.ref-gene/parse-gff3-line)
 
 (def ^:private ^:const test-ref-gene
   {:bin 592
@@ -68,20 +70,18 @@
   (is (= (parse-ref-gene-line "592\tNM_001291366\tchr1\t-\t975198\t982117\t976171\t981029\t4\t975198,976498,978880,982064,\t976269,976624,981047,982117,\t0\tPERM1\tcmpl\tcmpl\t1,1,0,-1,")
          test-ref-gene)))
 
-(deftest parse-gtf-gff-line-test
+(deftest parse-line-test
   (testing "GTF"
-    (is (= (parse-gtf-gff-line "#comment") nil))
-    (is (= (parse-gtf-gff-line "chr1\tHAVANA\texon\t13221\t14409\t.\t+\t.\tgene_id \"ENSG00000223972.5\"; transcript_id \"ENST00000456328.2\";")
+    (is (= (parse-gtf-line "#comment") nil))
+    (is (= (parse-gtf-line "chr1\tHAVANA\texon\t13221\t14409\t.\t+\t.\tgene_id \"ENSG00000223972.5\"; transcript_id \"ENST00000456328.2\";")
            test-gtf-row))
-    (is (= (parse-gtf-gff-line "chr1\tHAVANA\texon\t13221\t14409\t.\t+\t.\t")
+    (is (= (parse-gtf-line "chr1\tHAVANA\texon\t13221\t14409\t.\t+\t.\t")
            (dissoc test-gtf-row :attribute))))
   (testing "GFF3"
-    (is (= (parse-gtf-gff-line "#comment") nil))
-    (is (= (parse-gtf-gff-line "chr1\tHAVANA\texon\t13221\t14409\t.\t+\t.\tgene_id=ENSG00000223972.5;transcript_id=ENST00000456328.2"
-                               :attr-kv-sep #"=")
+    (is (= (parse-gff3-line "#comment") nil))
+    (is (= (parse-gff3-line "chr1\tHAVANA\texon\t13221\t14409\t.\t+\t.\tgene_id=ENSG00000223972.5;transcript_id=ENST00000456328.2")
            test-gtf-row))
-    (is (= (parse-gtf-gff-line "chr1\tHAVANA\texon\t13221\t14409\t.\t+\t.\t"
-                               :attr-kv-sep #"=")
+    (is (= (parse-gff3-line "chr1\tHAVANA\texon\t13221\t14409\t.\t+\t.\t")
            (dissoc test-gtf-row :attribute)))))
 
 (deftest load-ncbi-file-test
@@ -98,41 +98,35 @@
 
 (def parsed-lift-gff3-region (first (rg/load-gencode test-lift-gff3-file :file-type :gff3)))
 
+(defn- extract-load-test-data
+  [region]
+  (select-keys region [:name2
+                       :exon-ranges
+                       :tx-start
+                       :strand
+                       :cds-start
+                       :tx-end
+                       :exon-count
+                       :chr
+                       :cds-end]))
+
 (deftest load-gencode-test
-  (let [extract (fn [region] (select-keys region [:name2
-                                                  :exon-ranges
-                                                  :tx-start
-                                                  :strand
-                                                  :cds-start
-                                                  :tx-end
-                                                  :exon-count
-                                                  :chr
-                                                  :cds-end]))]
-    (testing "load-gff3 produces same data as load-ref-genes"
-      (is (= (extract parsed-gff3-region)
-             (extract test-ref-gene))))
-    (testing "load-gtf produces same data as load-ref-genes"
-      (is (= (extract parsed-gtf-region)
-             (extract test-ref-gene))))
-    (testing "liftover file's trailing string is ommited"
-      (is (= (select-keys (first (rg/load-gencode test-lift-gff3-file :file-type :gff3))
-                          [:name :gene-id])
-             {:name "ENST00000433179.4",
-              :gene-id "ENSG00000187642.10"})))))
+  (testing "load-gff3 produces same data as load-ref-genes"
+    (is (= (extract-load-test-data parsed-gff3-region)
+           (extract-load-test-data test-ref-gene))))
+  (testing "load-gtf produces same data as load-ref-genes"
+    (is (= (extract-load-test-data parsed-gtf-region)
+           (extract-load-test-data test-ref-gene))))
+  (testing "liftover file's trailing string is ommited"
+    (is (= (select-keys (first (rg/load-gencode test-lift-gff3-file :file-type :gff3))
+                        [:name :gene-id])
+           {:name "ENST00000433179.4"
+            :gene-id "ENSG00000187642.10"}))))
 
 (deftest load-ncbi-genome-annotation-test
-  (let [extract (fn [region] (select-keys region [:name2
-                                                  :exon-ranges
-                                                  :tx-start
-                                                  :strand
-                                                  :cds-start
-                                                  :tx-end
-                                                  :exon-count
-                                                  :chr
-                                                  :cds-end]))]
-    (testing "load-ncbi-genome-annotation produces same data as load-ref-genes"
-      (is (= (extract parsed-genome-annotation-gtf-region)
-             (extract test-ref-gene))))))
+  (testing "load-ncbi-genome-annotation produces same data as load-ref-genes"
+    (is (= (extract-load-test-data parsed-genome-annotation-gtf-region)
+           (extract-load-test-data test-ref-gene)))))
 
 (defslowtest in-any-exon?-test
   (cavia-testing "in-any-exon? (slow)"

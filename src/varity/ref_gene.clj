@@ -87,7 +87,7 @@
   [attr-str kv-sep]
   (->> (string/split attr-str #";")
        (map string/trim)
-       (mapcat #(string/split % kv-sep))
+       (mapcat #(string/split % kv-sep 2))
        (partition 2)
        (map (fn [[k v]]
               [k (string/replace v #"\"" "")]))
@@ -95,11 +95,10 @@
 
 (def ^:private gtf-gff-attr-kv-sep
   {:gtf #"\s"
-   :gff3 #"="
-   :genome-annotation-gtf #"\s\""})
+   :gff3 #"="})
 
-(defn- parse-gtf-gff-line
-  [s & {:keys [attr-kv-sep] :or {attr-kv-sep (gtf-gff-attr-kv-sep :gtf)}}]
+(defn- parse-line
+  [s attr-kv-sep]
   (when-not (= \# (first s))
     (let [row (string/split s #"\t")]
       (merge
@@ -113,6 +112,14 @@
         :frame (nth row 7)}
        (when (= (count row) 9)
          {:attribute (->gtf-gff-attr (nth row 8) attr-kv-sep)})))))
+
+(defn- parse-gtf-line
+  [s]
+  (parse-line s (gtf-gff-attr-kv-sep :gtf)))
+
+(defn- parse-gff3-line
+  [s]
+  (parse-line s (gtf-gff-attr-kv-sep :gff3)))
 
 ;;; GENCODE
 
@@ -172,16 +179,15 @@
 (def find-nm-id (memoize #(re-find nm-pattern %)))
 (def find-nr-id (memoize #(re-find nr-pattern %)))
 
-(def chr-idx-name-map (merge (zipmap (range 1 23) (map str (range 1 23))) {23 "X" 24 "Y"}))
+(def refseq-chr-map
+  (let [chr-idx-name-map (into {} (map-indexed #(vector (inc %1) (str %2))
+                                               (concat (range 1 23) ["X" "Y"])))]
+    (into {} (map (fn [[idx name]] (vector (str "NC_0000" (format "%02d" idx)) (str "chr" name))) chr-idx-name-map))))
 
-(defn get-chr
+(defn extract-chr-name
   [seqname]
-  (let [accession-number (re-find #"NC_0000(\d+)" seqname)
-        chr-idx (when accession-number
-                  (as-long (second accession-number)))
-        chr-name (chr-idx-name-map chr-idx)]
-    (when chr-name
-      (str "chr" chr-name))))
+  (let [accession-number (re-find #"NC_0000\d+" seqname)]
+    (refseq-chr-map accession-number)))
 
 (defn- build-ncbi-genome-annotation-feature-map
   ([features]
@@ -190,7 +196,7 @@
    (reduce (fn [data {:keys [start end seqname feature attribute] :as gtf}]
              (let [base {:start start
                          :end end
-                         :chr (get-chr seqname)}]
+                         :chr (extract-chr-name seqname)}]
                (if-let [t-id (get attribute "transcript_id")]
                  (let [t-id (or (find-nm-id t-id) (find-nr-id t-id))]
                    (case feature
@@ -269,32 +275,38 @@
                   :tx-end (:end transcript)
                   :strand strand))))
 
-(defn load-gtf-gff
-  [f build-feature-map attr-kv-sep & {:keys [chunk-size] :or {chunk-size 10000}}]
+(defn load-file*
+  [f build-feature-map parse-line-fn & {:keys [chunk-size] :or {chunk-size 10000}}]
   (with-open [rdr (io/reader (util/compressor-input-stream f))]
-    (let [parse-line-fn #(parse-gtf-gff-line % :attr-kv-sep attr-kv-sep)
-          feature-map (->> (line-seq rdr)
+    (let [feature-map (->> (line-seq rdr)
                            (partition-all chunk-size)
                            (pmap #(doall (keep parse-line-fn %)))
                            (apply concat)
                            build-feature-map)]
       (doall (map (partial ->region feature-map) (:transcript feature-map))))))
 
+(defn load-gtf
+  [f build-feature-map & {:keys [chunk-size] :or {chunk-size 10000}}]
+  (load-file* f build-feature-map parse-gtf-line :chunk-size chunk-size))
+
+(defn load-gff3
+  [f build-feature-map & {:keys [chunk-size] :or {chunk-size 10000}}]
+  (load-file* f build-feature-map parse-gff3-line :chunk-size chunk-size))
+
 (defn load-gencode
   [f & {:keys [file-type chunk-size] :or {file-type :gtf chunk-size 10000} :as opts}]
-  (let [args (concat [f
-                      build-gencode-feature-map
-                      (file-type gtf-gff-attr-kv-sep)]
+  (let [load-file-fn ({:gtf load-gtf :gff3 load-gff3} file-type)
+        args (concat [f
+                      build-gencode-feature-map]
                      (mapcat seq opts))]
-    (apply load-gtf-gff args)))
+    (apply load-file-fn args)))
 
 (defn load-ncbi-genome-annotation
-  [f & {:keys [file-type chunk-size] :or {file-type :genome-annotation-gtf chunk-size 10000} :as opts}]
+  [f & {:keys [chunk-size] :or {chunk-size 10000} :as opts}]
   (let [args (concat [f
-                      build-ncbi-genome-annotation-feature-map
-                      (file-type gtf-gff-attr-kv-sep)]
+                      build-ncbi-genome-annotation-feature-map]
                      (mapcat seq opts))]
-    (apply load-gtf-gff args)))
+    (apply load-gtf args)))
 
 ;; Indexing
 ;; --------
