@@ -97,7 +97,7 @@
   {:gtf #"\s"
    :gff3 #"="})
 
-(defn- parse-line
+(defn- parse-gtf-gff-line
   [s attr-kv-sep]
   (when-not (= \# (first s))
     (let [row (string/split s #"\t")]
@@ -115,11 +115,11 @@
 
 (defn- parse-gtf-line
   [s]
-  (parse-line s (gtf-gff-attr-kv-sep :gtf)))
+  (parse-gtf-gff-line s (gtf-gff-attr-kv-sep :gtf)))
 
 (defn- parse-gff3-line
   [s]
-  (parse-line s (gtf-gff-attr-kv-sep :gff3)))
+  (parse-gtf-gff-line s (gtf-gff-attr-kv-sep :gff3)))
 
 ;;; GENCODE
 
@@ -179,12 +179,12 @@
 (def find-nm-id (memoize #(re-find nm-pattern %)))
 (def find-nr-id (memoize #(re-find nr-pattern %)))
 
-(def refseq-chr-map
-  (let [chr-idx-name-map (into {} (map-indexed #(vector (inc %1) (str %2))
-                                               (concat (range 1 23) ["X" "Y"])))]
-    (into {} (map (fn [[idx name]] (vector (str "NC_0000" (format "%02d" idx)) (str "chr" name))) chr-idx-name-map))))
+(def ^:private refseq-chr-map
+  (into {} (map-indexed #(vector (str "NC_0000" (format "%02d" (inc %1)))
+                                 (str "chr" %2))
+                        (concat (range 1 23) ["X" "Y"]))))
 
-(defn extract-chr-name
+(defn- extract-chr-name
   [seqname]
   (let [accession-number (re-find #"NC_0000\d+" seqname)]
     (refseq-chr-map accession-number)))
@@ -275,7 +275,7 @@
                   :tx-end (:end transcript)
                   :strand strand))))
 
-(defn load-file*
+(defn load-gtf-gff
   [f build-feature-map parse-line-fn & {:keys [chunk-size] :or {chunk-size 10000}}]
   (with-open [rdr (io/reader (util/compressor-input-stream f))]
     (let [feature-map (->> (line-seq rdr)
@@ -287,11 +287,11 @@
 
 (defn load-gtf
   [f build-feature-map & {:keys [chunk-size] :or {chunk-size 10000}}]
-  (load-file* f build-feature-map parse-gtf-line :chunk-size chunk-size))
+  (load-gtf-gff f build-feature-map parse-gtf-line :chunk-size chunk-size))
 
 (defn load-gff3
   [f build-feature-map & {:keys [chunk-size] :or {chunk-size 10000}}]
-  (load-file* f build-feature-map parse-gff3-line :chunk-size chunk-size))
+  (load-gtf-gff f build-feature-map parse-gff3-line :chunk-size chunk-size))
 
 (defn load-gencode
   [f & {:keys [file-type chunk-size] :or {file-type :gtf chunk-size 10000} :as opts}]
