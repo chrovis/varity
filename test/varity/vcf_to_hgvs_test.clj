@@ -248,7 +248,10 @@
 
         ;; prefer-insertion?, cf. rs3046924 (+)
         "chr1" 47438996 "T" "TCCGCAC" {:prefer-insertion? false} '("p.P286_H287[5]")
-        "chr1" 47438996 "T" "TCCGCAC" {:prefer-insertion? true} '("p.H293_A294insPH"))))
+        "chr1" 47438996 "T" "TCCGCAC" {:prefer-insertion? true} '("p.H293_A294insPH")
+
+        ;; prefer-insertion?, not actual example (+)
+        "chr1" 26773690 "C" "CGCAGCA" {:prefer-insertion? true} '("p.Q1334_R1335insQQ"))))
 
   (cavia-testing "throws Exception if inputs are illegal"
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
