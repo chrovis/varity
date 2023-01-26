@@ -24,6 +24,14 @@
               :else :same)
         tpos (+ pos (min nref nalt))
         d (Math/abs (- nref nalt))]
+    (when (and (not= 1 nref) (not= 1 nalt)
+               (some (fn [[s e]]
+                       (or (<= pos s (+ pos nref -1))
+                           (<= pos e (+ pos nref -1)))) exon-ranges))
+      (throw
+       (ex-info
+        "Variants overlapping a boundary of exon/intron are unsupported"
+        {:exon-ranges exon-ranges, :pos pos, :ref ref, :alt alt})))
     (->> exon-ranges
          (keep (fn [[s e]]
                  (case typ

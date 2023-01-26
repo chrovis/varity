@@ -257,7 +257,33 @@
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
       (is (thrown? Exception
                    (vcf-variant->protein-hgvs {:chr "chr7", :pos 55191823, :ref "T", :alt "G"}
-                                              test-ref-seq-file rgidx))))))
+                                              test-ref-seq-file rgidx)))))
+
+  (cavia-testing "throws Exception if inputs overlap exon/intron boundaries"
+    (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
+      (are [chr pos ref alt]
+           (thrown-with-msg?
+            Exception
+            #"unsupported"
+            (vcf-variant->protein-hgvs
+             {:chr chr, :pos pos, :ref ref, :alt alt}
+             test-ref-seq-file rgidx))
+        ;; Two variants at the each side of a GT dinucleotide splice donor site
+        "chr1" 26773716 "CGGTGA" "CCAGGTGT"
+        "chr1" 26773714 "AACGGTGAG" "AGCGGT"
+
+        ;; p.=
+        ;; Two synonymous snvs on the same strand.
+        ;; The intron in between remains unchanged.
+        "chr1" 26773714
+        "AACGGTGAGTAAAGCCTGGTCTCGGTGCTGCTATGGATCAGGCTTCGCCACTGCCCACCCTAATCCTGTGTTTCTTTGCCTCCTATAGACAT"
+        "AGCGGTGAGTAAAGCCTGGTCTCGGTGCTGCTATGGATCAGGCTTCGCCACTGCCCACCCTAATCCTGTGTTTCTTTGCCTCCTATAGACAC"
+        ;; p.R1335delinsQRH
+        ;; Two insertions (GCA at first, CAT at last) on the same strand.
+        ;; The intron in between remains unchanged.
+        "chr1" 26773714
+        "AACGGTGAGTAAAGCCTGGTCTCGGTGCTGCTATGGATCAGGCTTCGCCACTGCCCACCCTAATCCTGTGTTTCTTTGCCTCCTATAGACAT"
+        "AGCAACGGTGAGTAAAGCCTGGTCTCGGTGCTGCTATGGATCAGGCTTCGCCACTGCCCACCCTAATCCTGTGTTTCTTTGCCTCCTATAGACATCAT"))))
 
 (deftest coding-dna-ref-gene?-test
   (testing "valid reference genes"
