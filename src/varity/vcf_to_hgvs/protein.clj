@@ -24,6 +24,14 @@
               :else :same)
         tpos (+ pos (min nref nalt))
         d (Math/abs (- nref nalt))]
+    (when (and (not= 1 nref) (not= 1 nalt)
+               (some (fn [[s e]]
+                       (or (<= pos s (+ pos nref -1))
+                           (<= pos e (+ pos nref -1)))) exon-ranges))
+      (throw
+       (ex-info
+        "Variants overlapping a boundary of exon/intron are unsupported"
+        {:exon-ranges exon-ranges, :pos pos, :ref ref, :alt alt})))
     (->> exon-ranges
          (keep (fn [[s e]]
                  (case typ
@@ -81,7 +89,9 @@
         ref-down-exon-seq1 (read-exon-sequence seq-rdr chr (inc cds-end) tx-end exon-ranges)
         nref-down-exon-seq1 (count ref-down-exon-seq1)
         ref-down-exon-seq1 (subs ref-down-exon-seq1 0 (- nref-down-exon-seq1 (mod nref-down-exon-seq1 3)))
-        alt-exon-seq1 (exon-sequence alt-seq cds-start alt-exon-ranges*)]
+        alt-exon-seq1 (exon-sequence alt-seq cds-start alt-exon-ranges*)
+        apply-offset #(or (ffirst (alt-exon-ranges [[% %]] pos ref alt))
+                          (some (fn [[_ e]] (when (<= e %) e)) alt-exon-ranges*))]
     {:ref-exon-seq ref-exon-seq1
      :ref-prot-seq (codon/amino-acid-sequence (cond-> ref-exon-seq1
                                                 (= strand :reverse) util-seq/revcomp))
@@ -94,7 +104,11 @@
      :ini-offset (quot (:position (rg/cds-coord (case strand
                                                   :forward tx-start
                                                   :reverse tx-end) rg))
-                       3)}))
+                       3)
+     :alt-rg (-> rg
+                 (assoc :exon-ranges alt-exon-ranges*)
+                 (update :cds-start apply-offset)
+                 (update :cds-end apply-offset))}))
 
 (defn- protein-position
   "Converts genomic position to protein position. If pos is outside of CDS,
@@ -132,7 +146,7 @@
 
 (defn- ->protein-variant
   [{:keys [strand] :as rg} pos ref alt
-   {:keys [ref-exon-seq ref-prot-seq alt-exon-seq] :as seq-info}
+   {:keys [ref-exon-seq ref-prot-seq alt-exon-seq alt-rg] :as seq-info}
    {:keys [prefer-deletion? prefer-insertion?]}]
   (cond
     (= ref-exon-seq alt-exon-seq)
@@ -159,8 +173,8 @@
                                   alt-prot-seq*
                                   [(min (dec base-ppos) (count alt-prot-seq*))
                                    (min (case strand
-                                          :forward (protein-position (+ pos (count alt) -1) rg)
-                                          :reverse (protein-position (- pos (- (count alt) (count ref))) rg))
+                                          :forward (protein-position (+ pos (count alt) -1) alt-rg)
+                                          :reverse (protein-position pos alt-rg))
                                         (count alt-prot-seq*))])
           [pref-only palt-only offset _] (diff-bases pref palt)
           nprefo (count pref-only)
