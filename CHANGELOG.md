@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.9.2] - date TBD
+
+### Fixed
+
+- Fix the 3’ rule on a trailing sub-sequence. [#63](https://github.com/chrovis/varity/pull/63)
+- Fix conditional branch of frameshift caused by insertion. [#65](https://github.com/chrovis/varity/pull/65)
+- Fix the position of first amino acid changed by the frame shift. [#66](https://github.com/chrovis/varity/pull/66)
+- Fix VCF to protein HGVS conversions of insertions near splice sites. [#68](https://github.com/chrovis/varity/pull/68)
+
 ## [0.9.1] - 2022-10-11
 
 ### Added
@@ -317,7 +326,8 @@ Strand representation is changed from string (`+`, `-`) to keyword (`:forward`,
 
 First release.
 
-[Unreleased]: https://github.com/chrovis/varity/compare/0.9.1...HEAD
+[Unreleased]: https://github.com/chrovis/varity/compare/0.9.2...HEAD
+[0.9.2]: https://github.com/chrovis/varity/compare/0.9.1...0.9.2
 [0.9.1]: https://github.com/chrovis/varity/compare/0.9.0...0.9.1
 [0.9.0]: https://github.com/chrovis/varity/compare/0.8.0...0.9.0
 [0.8.0]: https://github.com/chrovis/varity/compare/0.7.1...0.8.0
