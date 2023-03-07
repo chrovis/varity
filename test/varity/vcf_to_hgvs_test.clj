@@ -72,6 +72,21 @@
                                            "NM_001176:c.-147_-138delTCTCTGCCGG"
                                            "NM_006849:c.-2636_-2627delTCTCTGCCGG") ; cf. rs1460727826 (deletion in UTR)
         "chr6" 33086236 "TA" "T" '("NM_002121:c.776delA") ; cf. rs67523850 (deletion in border of UTR)
+        "chr17" 7675170 "CAA" "C" '("NM_001126116.2:c.44_45delTT"
+                                    "NM_001276698.3:c.-38_-37delTT"
+                                    "NM_001126117.2:c.44_45delTT"
+                                    "NM_001276699.3:c.-38_-37delTT"
+                                    "NM_001126115.2:c.44_45delTT"
+                                    "NM_001276697.3:c.-38_-37delTT"
+                                    "NM_001126118.2:c.323_324delTT"
+                                    "NM_001126114.3:c.440_441delTT"
+                                    "NM_001276696.3:c.323_324delTT"
+                                    "NM_001126113.3:c.440_441delTT"
+                                    "NM_001276695.3:c.323_324delTT"
+                                    "NM_001276760.3:c.323_324delTT"
+                                    "NM_000546.6:c.440_441delTT"
+                                    "NM_001126112.3:c.440_441delTT"
+                                    "NM_001276761.3:c.323_324delTT")
 
         ;; Duplication
         "chr2" 47806844 "T" "TGATT" '("NM_000179:c.4068_4071dupGATT"
