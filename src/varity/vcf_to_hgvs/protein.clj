@@ -91,7 +91,7 @@
         ref-down-exon-seq1 (subs ref-down-exon-seq1 0 (- nref-down-exon-seq1 (mod nref-down-exon-seq1 3)))
         alt-exon-seq1 (exon-sequence alt-seq cds-start alt-exon-ranges*)
         apply-offset #(or (ffirst (alt-exon-ranges [[% %]] pos ref alt))
-                          (some (fn [[_ e]] (when (<= e %) e)) alt-exon-ranges*))]
+                          (some (fn [[_ e]] (when (<= e %) e)) (reverse alt-exon-ranges*)))]
     {:ref-exon-seq ref-exon-seq1
      :ref-prot-seq (codon/amino-acid-sequence (cond-> ref-exon-seq1
                                                 (= strand :reverse) util-seq/revcomp))
@@ -308,12 +308,14 @@
                      format-alt-prot-seq
                      (subs (dec (+ ppos offset)))
                      (string/index-of "*"))]
-    (mut/protein-frame-shift (mut/->long-amino-acid ref)
-                             (coord/protein-coordinate (+ ppos offset))
-                             (mut/->long-amino-acid alt)
-                             (if (and ter-site (pos? ter-site))
-                               (coord/protein-coordinate (inc ter-site))
-                               (coord/unknown-coordinate)))))
+    (if (= alt \*)
+      (protein-substitution (+ ppos offset) (str ref) (str alt)) ; eventually fs-ter-substitution
+      (mut/protein-frame-shift (mut/->long-amino-acid ref)
+                               (coord/protein-coordinate (+ ppos offset))
+                               (mut/->long-amino-acid alt)
+                               (if (and ter-site (pos? ter-site))
+                                 (coord/protein-coordinate (inc ter-site))
+                                 (coord/unknown-coordinate))))))
 
 (defn- protein-extension
   [ppos pref palt seq-info]
