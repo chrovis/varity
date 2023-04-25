@@ -11,8 +11,8 @@ jobs:
         clojure: ['1.8', '1.9', '1.10', '1.11']
     name: Test with Java ${{ matrix.java }} and Clojure ${{ matrix.clojure }}
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/cache@v2
+    - uses: actions/checkout@v3
+    - uses: actions/cache@v3
       with:
         path: ~/.m2/repository
         key: ${{ runner.os }}-lein-${{ hashFiles('**/project.clj') }}
@@ -32,8 +32,8 @@ jobs:
     needs: [test]
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/cache@v2
+    - uses: actions/checkout@v3
+    - uses: actions/cache@v3
       with:
         path: ~/.m2/repository
         key: ${{ runner.os }}-lein-${{ hashFiles('**/project.clj') }}
@@ -57,19 +57,18 @@ jobs:
     outputs:
       version: ${{ steps.get-version.outputs.version }}
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Get version
       id: get-version
       run: |
-        echo ::set-output \
-          name=version::$(head -n 1 project.clj | sed -e 's/^(defproject.*"\(.*\)"$/\1/')
+        echo "version=$(head -n 1 project.clj | sed -e 's/^(defproject.*"\(.*\)"$/\1/')" >> $GITHUB_OUTPUT
 
   deploy:
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     needs: [test, get-version]
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Setup Java
       uses: actions/setup-java@v3
       with:
