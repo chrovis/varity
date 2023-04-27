@@ -72,6 +72,21 @@
                                            "NM_001176:c.-147_-138delTCTCTGCCGG"
                                            "NM_006849:c.-2636_-2627delTCTCTGCCGG") ; cf. rs1460727826 (deletion in UTR)
         "chr6" 33086236 "TA" "T" '("NM_002121:c.776delA") ; cf. rs67523850 (deletion in border of UTR)
+        "chr17" 7675170 "CAA" "C" '("NM_001126115:c.44_45delTT"
+                                    "NM_001126116:c.44_45delTT"
+                                    "NM_001126117:c.44_45delTT"
+                                    "NM_001276697:c.-38_-37delTT"
+                                    "NM_001276698:c.-38_-37delTT"
+                                    "NM_001276699:c.-38_-37delTT"
+                                    "NM_000546:c.440_441delTT"
+                                    "NM_001126112:c.440_441delTT"
+                                    "NM_001126113:c.440_441delTT"
+                                    "NM_001126114:c.440_441delTT"
+                                    "NM_001126118:c.323_324delTT"
+                                    "NM_001276695:c.323_324delTT"
+                                    "NM_001276696:c.323_324delTT"
+                                    "NM_001276760:c.323_324delTT"
+                                    "NM_001276761:c.323_324delTT")
 
         ;; Duplication
         "chr2" 47806844 "T" "TGATT" '("NM_000179:c.4068_4071dupGATT"
@@ -190,6 +205,7 @@
         "chr1" 247815239 "AAGG" "A" '("p.S163del") ; cf. rs35979231 (-)
         "chr2" 29223408 "AAGCAGT" "A" '("p.Y1096_C1097del") ; cf. rs776101205 (-)
         "chr11" 108259071 "GT" "G" '("p.L822*") ; https://github.com/chrovis/varity/issues/49
+        "chr17" 7676206 "TGAACCATTGTTCAATATCGTCCGGGGACAGCATCAAATCATCCATTGCTTGGGACGGCAAGGGG" "T" '("p.P34Lfs*68" "p.M1ext-78" "p.M1ext-39") ; https://mutalyzer.nl/normalizer/NC_000017.11:g.7676209_7676272del
 
         ;; Duplication
         "chr2" 26254257 "G" "GACT" '("p.T2dup") ; cf. rs3839049 (+)

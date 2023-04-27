@@ -69,15 +69,15 @@
       0
       (let [rbases (string/reverse bases)
             n (count bases)
-            step (count (first (repeat-units rbases)))
-            tweak (if (= step 1) #(+ (dec n) %) #(* step %))]
+            step (count (first (repeat-units rbases)))]
         (->> seq*
-             (take (dec pos))
+             (take (+ pos (dec n)))
              reverse
              (partition (count rbases) step)
              (take-while #(= (apply str %) rbases))
              count
-             tweak)))
+             dec
+             (* step))))
     (throw (ex-info "The bases is not found on the position."
                     {:type ::invalid-bases
                      :sequence seq*
@@ -148,10 +148,10 @@
   ([variant seq*]
    (apply-3'-rule variant seq* :forward))
   ([{:keys [pos ref alt] :as variant} seq* direction]
-   (let [[ref-only alt-only offset _] (diff-bases ref alt)
+   (let [[ref-only alt-only offset right-offset] (diff-bases ref alt)
          type* (cond
-                 (and (zero? (count ref-only)) (pos? (count alt-only))) :ins
-                 (and (pos? (count ref-only)) (zero? (count alt-only))) :del
+                 (and (zero? (count ref-only)) (pos? (count alt-only)) (zero? right-offset)) :ins
+                 (and (pos? (count ref-only)) (zero? (count alt-only)) (zero? right-offset)) :del
                  :else :other)]
      (if (#{:ins :del} type*)
        (let [bases (if (string/blank? ref-only) alt-only ref-only)

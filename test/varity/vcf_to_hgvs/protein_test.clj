@@ -1,7 +1,11 @@
 (ns varity.vcf-to-hgvs.protein-test
   (:require [clojure.string :as string]
             [clojure.test :refer :all]
-            [varity.vcf-to-hgvs.protein :as prot]))
+            [cljam.io.sequence :as cseq]
+            [clj-hgvs.core :as hgvs]
+            [varity.vcf-to-hgvs.protein :as prot]
+            [varity.t-common :refer [test-ref-seq-file
+                                     defslowtest]]))
 
 (deftest alt-exon-ranges-test
   ;; 1 [2 3 4] 5 6 7 [8 9 10 11] 12 13 14 15
@@ -95,3 +99,23 @@
                            "YDIGGPDQEFGVDVGPVCFL*"
                            "YDIGGPDQEFGVDVGPVCFLQ"
                            "                    ^"])))
+
+(defslowtest protein-seq-3'-rule-test
+  (let [tp53 {:name2 "TP53"
+              :name "NM_000546.6"
+              :chr "chr17"
+              :tx-start 7668421
+              :tx-end 7687490
+              :cds-start 7669609
+              :cds-end 7676594
+              :strand :reverse
+              :cds-start-stat :cmpl
+              :cds-end-stat :cmpl
+              :exon-ranges [[7668421 7669690] [7670609 7670715] [7673535 7673608] [7673701 7673837] [7674181 7674290] [7674859 7674971] [7675053 7675236] [7675994 7676272] [7676382 7676403] [7676521 7676622] [7687377 7687490]]
+              :bin 643
+              :exon-frames [2 0 1 2 0 1 0 0 2 0 -1]
+              :exon-count 11}]
+    (are [pos ref alt res]
+        (= (with-open [seq-rdr (cseq/reader test-ref-seq-file)] (#'prot/mutation seq-rdr tp53 pos ref alt {})) res)
+      7676197 "G" "GGTCTTGTCCCTTA" (:mutation (hgvs/parse "p.P58*"))
+      7676202 "T" "TGTCCCTTAGTCTT" (:mutation (hgvs/parse "p.P58*")))))

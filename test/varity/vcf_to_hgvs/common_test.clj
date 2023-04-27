@@ -49,6 +49,9 @@
       "AGGGGGGT" 7 "G" 5
       "AGGGGGGT" 6 "GG" 4
       "AGGGGGGT" 5 "GGG" 3
+      "AGGGGGGT" 4 "GGGG" 2
+      "AGGGGGGT" 3 "GGG" 1
+      "AGGGGGGT" 2 "GGGGG" 0
       "AAGTGTCC" 5 "GT" 2
       "AAGTGTCC" 3 "GT" 0))
   (testing "backward-shift throws exception when inputs are illegal"
@@ -80,7 +83,12 @@
       {:pos 10, :ref "T", :alt "TAGTCTT"} :forward {:pos 20, :ref "C", :alt "CTTAGTC"}
       {:pos 4, :ref "CAGTCTT", :alt "C"} :forward {:pos 14, :ref "CTTAGTC", :alt "C"}
       {:pos 13, :ref "T", :alt "TCTTAGT"} :backward {:pos 4, :ref "C", :alt "CAGTCTT"}
-      {:pos 13, :ref "TCTTAGT", :alt "T"} :backward {:pos 4, :ref "CAGTCTT", :alt "C"})))
+      {:pos 13, :ref "TCTTAGT", :alt "T"} :backward {:pos 4, :ref "CAGTCTT", :alt "C"}))
+  (testing "protein sequence"
+    (are [v d ret] (= (common/apply-3'-rule v "MDDLWFTFTPGPDE" d) ret)
+      {:pos 5 :ref "WFT" :alt "W"} :forward {:pos 7 :ref "TFT" :alt "T"}
+      {:pos 5 :ref "WFT" :alt "F"} :forward {:pos 5 :ref "WFT" :alt "F"}
+      {:pos 5 :ref "WFT" :alt "T"} :forward {:pos 5 :ref "WFT" :alt "T"})))
 
 (defslowtest normalize-variant-test
   (cavia-testing "normalize without error"
