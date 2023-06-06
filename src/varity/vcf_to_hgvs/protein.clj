@@ -26,8 +26,10 @@
         d (Math/abs (- nref nalt))]
     (when (and (not= 1 nref) (not= 1 nalt)
                (some (fn [[s e]]
-                       (or (<= pos s (+ pos nref -1))
-                           (<= pos e (+ pos nref -1)))) exon-ranges))
+                       (and (not= s e)
+                            (or (and (< pos s) (<= s (+ pos nref -1)))
+                                (and (<= pos e) (< e (+ pos nref -1))))))
+                     exon-ranges))
       (throw
        (ex-info
         "Variants overlapping a boundary of exon/intron are unsupported"
@@ -91,7 +93,7 @@
         ref-down-exon-seq1 (subs ref-down-exon-seq1 0 (- nref-down-exon-seq1 (mod nref-down-exon-seq1 3)))
         alt-exon-seq1 (exon-sequence alt-seq cds-start alt-exon-ranges*)
         apply-offset #(or (ffirst (alt-exon-ranges [[% %]] pos ref alt))
-                          (some (fn [[_ e]] (when (<= e %) e)) (reverse alt-exon-ranges*)))]
+                          (some (fn [[_ e]] (if (<= e %) e)) (reverse alt-exon-ranges*)))]
     {:ref-exon-seq ref-exon-seq1
      :ref-prot-seq (codon/amino-acid-sequence (cond-> ref-exon-seq1
                                                 (= strand :reverse) util-seq/revcomp))
