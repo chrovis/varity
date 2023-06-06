@@ -68,7 +68,7 @@
 
 (deftest prot-seq-pstring-test
   (are [pref-seq palt-seq start end m e]
-      (= (#'prot/prot-seq-pstring pref-seq palt-seq start end m) e)
+       (= (#'prot/prot-seq-pstring pref-seq palt-seq start end m) e)
     "LAARNVLVKTPQHVKITDFGLAKLLGAEEKEYHAEGGKVPI"
     "LAARNVLVKTPQHVKITDFGRAKLLGAEEKEYHAEGGKVPI"
     838 878 {:ppos 858, :pref "L", :palt "R"}
@@ -117,6 +117,6 @@
               :exon-frames [2 0 1 2 0 1 0 0 2 0 -1]
               :exon-count 11}]
     (are [pos ref alt res]
-        (= (with-open [seq-rdr (cseq/reader test-ref-seq-file)] (#'prot/mutation seq-rdr tp53 pos ref alt {})) res)
+         (= (with-open [seq-rdr (cseq/reader test-ref-seq-file)] (#'prot/mutation seq-rdr tp53 pos ref alt {})) res)
       7676197 "G" "GGTCTTGTCCCTTA" (:mutation (hgvs/parse "p.P58*"))
       7676202 "T" "TGTCCCTTAGTCTT" (:mutation (hgvs/parse "p.P58*")))))

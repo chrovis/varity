@@ -45,7 +45,7 @@
                               dele (dec (+ tpos d))]
                           (cond
                             (< dele s) [(- s d) (- e d)]
-                            (<= dels s) (if (< dele e) [dels (- e d)])
+                            (<= dels s) (when (< dele e) [dels (- e d)])
                             (<= dels e) (if (< dele e)
                                           [s (- e d)]
                                           [s (dec dels)])
@@ -93,7 +93,7 @@
         ref-down-exon-seq1 (subs ref-down-exon-seq1 0 (- nref-down-exon-seq1 (mod nref-down-exon-seq1 3)))
         alt-exon-seq1 (exon-sequence alt-seq cds-start alt-exon-ranges*)
         apply-offset #(or (ffirst (alt-exon-ranges [[% %]] pos ref alt))
-                          (some (fn [[_ e]] (if (<= e %) e)) (reverse alt-exon-ranges*)))]
+                          (some (fn [[_ e]] (when (<= e %) e)) (reverse alt-exon-ranges*)))]
     {:ref-exon-seq ref-exon-seq1
      :ref-prot-seq (codon/amino-acid-sequence (cond-> ref-exon-seq1
                                                 (= strand :reverse) util-seq/revcomp))
@@ -240,9 +240,9 @@
         ndel (count del)]
     (mut/protein-deletion (mut/->long-amino-acid (first del))
                           (coord/protein-coordinate (+ ppos offset))
-                          (if (> ndel 1)
+                          (when (> ndel 1)
                             (mut/->long-amino-acid (last del)))
-                          (if (> ndel 1)
+                          (when (> ndel 1)
                             (coord/protein-coordinate (+ ppos offset ndel -1))))))
 
 (defn- protein-duplication
@@ -251,8 +251,8 @@
         nins (count ins)]
     (mut/protein-duplication (mut/->long-amino-acid (first ins))
                              (coord/protein-coordinate (- (+ ppos offset) nins))
-                             (if (> nins 1) (mut/->long-amino-acid (last ins)))
-                             (if (> nins 1) (coord/protein-coordinate (dec (+ ppos offset)))))))
+                             (when (> nins 1) (mut/->long-amino-acid (last ins)))
+                             (when (> nins 1) (coord/protein-coordinate (dec (+ ppos offset)))))))
 
 (defn- protein-insertion
   [ppos pref palt seq-info]
@@ -271,9 +271,9 @@
         ndel (count del)]
     (mut/protein-indel (mut/->long-amino-acid (first del))
                        (coord/protein-coordinate (+ ppos offset))
-                       (if (> ndel 1)
+                       (when (> ndel 1)
                          (mut/->long-amino-acid (last del)))
-                       (if (> ndel 1)
+                       (when (> ndel 1)
                          (coord/protein-coordinate (+ ppos offset ndel -1)))
                        (->> (seq ins) (map mut/->long-amino-acid)))))
 
@@ -289,8 +289,8 @@
         end (dec (+ start nunit))]
     (mut/protein-repeated-seqs (mut/->long-amino-acid (first unit))
                                (coord/protein-coordinate start)
-                               (if (< start end) (mut/->long-amino-acid (last unit)))
-                               (if (< start end) (coord/protein-coordinate end))
+                               (when (< start end) (mut/->long-amino-acid (last unit)))
+                               (when (< start end) (coord/protein-coordinate end))
                                alt-repeat)))
 
 (defn- protein-frame-shift
@@ -342,7 +342,7 @@
 (defn- mutation
   [seq-rdr rg pos ref alt options]
   (let [seq-info (read-sequence-info seq-rdr rg pos ref alt)]
-    (if-let [pvariant (->protein-variant rg pos ref alt seq-info options)]
+    (when-let [pvariant (->protein-variant rg pos ref alt seq-info options)]
       (let [{ppos :pos, pref :ref, palt :alt}
             (if-not (#{:no-effect :unknown} (:type pvariant))
               (common/apply-3'-rule pvariant (:ref-prot-seq seq-info))
@@ -363,7 +363,7 @@
   ([variant seq-rdr rg]
    (->hgvs variant seq-rdr rg {}))
   ([{:keys [pos ref alt]} seq-rdr rg options]
-   (if-let [mutation (mutation seq-rdr rg pos ref alt options)]
+   (when-let [mutation (mutation seq-rdr rg pos ref alt options)]
      (hgvs/hgvs nil :protein mutation))))
 
 (defn- prot-seq-pstring
