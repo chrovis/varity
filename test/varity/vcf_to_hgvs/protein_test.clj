@@ -17,7 +17,8 @@
     6 "XX" "X" [[2 4] [7 10]]
     6 "XXX" "X" [[2 4] [7 9]]
     3 "XXX" "X" [[2 3] [6 9]]
-    1 "XXXXX" "X" [[4 7]])
+    1 "XXXXX" "X" [[4 7]]
+    9 "XXX" "XXX" [[2 4] [8 11]])
   ;; Can't determine whether the splice site is shifted or not
   (is (thrown-with-msg?
        Exception
@@ -67,7 +68,7 @@
 
 (deftest prot-seq-pstring-test
   (are [pref-seq palt-seq start end m e]
-      (= (#'prot/prot-seq-pstring pref-seq palt-seq start end m) e)
+       (= (#'prot/prot-seq-pstring pref-seq palt-seq start end m) e)
     "LAARNVLVKTPQHVKITDFGLAKLLGAEEKEYHAEGGKVPI"
     "LAARNVLVKTPQHVKITDFGRAKLLGAEEKEYHAEGGKVPI"
     838 878 {:ppos 858, :pref "L", :palt "R"}
@@ -116,6 +117,6 @@
               :exon-frames [2 0 1 2 0 1 0 0 2 0 -1]
               :exon-count 11}]
     (are [pos ref alt res]
-        (= (with-open [seq-rdr (cseq/reader test-ref-seq-file)] (#'prot/mutation seq-rdr tp53 pos ref alt {})) res)
+         (= (with-open [seq-rdr (cseq/reader test-ref-seq-file)] (#'prot/mutation seq-rdr tp53 pos ref alt {})) res)
       7676197 "G" "GGTCTTGTCCCTTA" (:mutation (hgvs/parse "p.P58*"))
       7676202 "T" "TGTCCCTTAGTCTT" (:mutation (hgvs/parse "p.P58*")))))

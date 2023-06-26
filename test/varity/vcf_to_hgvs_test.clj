@@ -239,6 +239,7 @@
         ;; Extension
         "chr2" 188974490 "A" "C" '("p.M1Lext-23")
         "chr2" 189011772 "T" "C" '("p.*1467Qext*45") ; cf. ClinVar 101338
+        "chr11" 125655318 "TGA" "TAT" '("p.*477Yext*17" "p.*443Yext*17" "p.*477Yext*24")
         ;; NOTE: There are very few correct examples...
 
         ;; no effect
