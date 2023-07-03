@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.3] - date TBD
+
+### Fixed
+
+- Fix 3'-rule errors for certain sequence patterns. [#75](https://github.com/chrovis/varity/pull/75)
+- Fix overlapping condition of boundary of exon/intron. [#77](https://github.com/chrovis/varity/pull/77)
+
 ## [0.9.2] - 2023-02-08
 
 ### Fixed
@@ -326,7 +333,8 @@ Strand representation is changed from string (`+`, `-`) to keyword (`:forward`,
 
 First release.
 
-[Unreleased]: https://github.com/chrovis/varity/compare/0.9.2...HEAD
+[Unreleased]: https://github.com/chrovis/varity/compare/0.9.3...HEAD
+[0.9.3]: https://github.com/chrovis/varity/compare/0.9.2...0.9.3
 [0.9.2]: https://github.com/chrovis/varity/compare/0.9.1...0.9.2
 [0.9.1]: https://github.com/chrovis/varity/compare/0.9.0...0.9.1
 [0.9.0]: https://github.com/chrovis/varity/compare/0.8.0...0.9.0
