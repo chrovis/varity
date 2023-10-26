@@ -236,6 +236,9 @@
         "chr17" 43124016 "CCAGATGGGACACTCTAAGATTTTCTGCATAGCATTAATGACATTTTGTACTTCTTCAACGCGAAGAGCAGATAAATCCATTTCTTTCTGTTCCAATGAA" "C"
         '("p.M1Sfs*13")
 
+        ;; frame shift with termination codon change
+        "chr8" 116847497 "TCCTTATATAATATGGAACCTTGGTCCAGGTGTTGCGATGATGTCACTGTA" "T" '("p.Y617Sfs*2")
+
         ;; Extension
         "chr2" 188974490 "A" "C" '("p.M1Lext-23")
         "chr2" 189011772 "T" "C" '("p.*1467Qext*45") ; cf. ClinVar 101338
