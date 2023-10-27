@@ -362,8 +362,8 @@
                                alt-repeat)))
 
 (defn- protein-frame-shift
-  [ppos seq-info]
-  (let [[ppos pref palt] (->> (map vector (:ref-prot-seq seq-info) (:alt-prot-seq seq-info))
+  [ppos {:keys [ref-prot-seq c-ter-adjusted-alt-prot-seq] :as seq-info}]
+  (let [[ppos pref palt] (->> (map vector ref-prot-seq c-ter-adjusted-alt-prot-seq)
                               (drop (dec ppos))
                               (map-indexed vector)
                               (drop-while (fn [[_ [r a]]] (= r a)))
@@ -372,7 +372,7 @@
                                  [(+ ppos i) (str r) (str a)])))
         [_ _ offset _] (diff-bases pref palt)
         alt-prot-seq (format-alt-prot-seq seq-info)
-        ref (nth (:ref-prot-seq seq-info) (dec (+ ppos offset)))
+        ref (nth ref-prot-seq (dec (+ ppos offset)))
         alt (nth alt-prot-seq (dec (+ ppos offset)))
         ter-site (-> seq-info
                      format-alt-prot-seq
