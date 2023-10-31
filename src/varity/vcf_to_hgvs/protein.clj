@@ -24,7 +24,8 @@
               :else :same)
         tpos (+ pos (min nref nalt))
         d (Math/abs (- nref nalt))]
-    (when (and (not= 1 nref) (not= 1 nalt)
+    (when (and (not (= 1 nref nalt))
+               (not= 1 (count exon-ranges))
                (some (fn [[s e]]
                        (and (not= s e)
                             (or (and (< pos s) (<= s (+ pos nref -1)))
