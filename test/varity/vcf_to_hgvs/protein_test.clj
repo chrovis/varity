@@ -15,15 +15,16 @@
     2 "XX" "X" [[2 3] [7 10]]
     3 "XX" "X" [[2 3] [7 10]]
     6 "XX" "X" [[2 4] [7 10]]
-    6 "XXX" "X" [[2 4] [7 9]]
-    3 "XXX" "X" [[2 3] [6 9]]
-    1 "XXXXX" "X" [[4 7]]
     9 "XXX" "XXX" [[2 4] [8 11]])
-  ;; Can't determine whether the splice site is shifted or not
-  (is (thrown-with-msg?
-       Exception
-       #"unsupported"
-       (#'prot/alt-exon-ranges [[2 4] [8 11]] 3 "XXX" "XXX"))))
+  ;; Variants overlapping a boundary of exon/intron
+  (are [p r a] (thrown-with-msg?
+                Exception
+                #"unsupported"
+                (#'prot/alt-exon-ranges [[2 4] [8 11]] p r a))
+    3 "XXX" "XXX"
+    6 "XXX" "X"
+    3 "XXX" "X"
+    1 "XXXXX" "X"))
 
 (deftest exon-sequence-test
   ;; A  C G T  A C G  T A C  G   T  A  C  G
