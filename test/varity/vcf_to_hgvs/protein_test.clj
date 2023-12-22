@@ -31,6 +31,58 @@
   ;; 1 [2 3 4] 5 6 7 [8 9 10 11] 12 13 14 15
   (is (= (#'prot/exon-sequence "ACGTACGTACGTACG" 1 [[2 4] [8 11]]) "CGTTACG")))
 
+(deftest make-alt-up-exon-seq-test
+  (let [ref-up-exon-seq "AATGCTTCTAGCTCC"
+        cds-start 100]
+    (are [p pos ref alt] (= p (#'prot/make-alt-up-exon-seq ref-up-exon-seq
+                                                           cds-start
+                                                           pos
+                                                           ref
+                                                           alt))
+      "AATGCTTCTAGCTCC" 102 "ATGTC" "A"
+      "ATGCTTCTAGCT" 98 "CCTT" "C")))
+
+(deftest make-alt-down-exon-seq-test
+  (let [ref-up-exon-seq "CTTATAATAATAA"
+        cds-end 1000]
+    (are [p pos ref alt] (= p (#'prot/make-alt-down-exon-seq ref-up-exon-seq
+                                                             cds-end
+                                                             pos
+                                                             ref
+                                                             alt))
+      "CTTATAATAATA" 1002 "TTATAA" "T"
+      "TATAATAAT" 998 "GGCCT" "G")))
+
+(deftest make-ter-site-adjusted-alt-seq-test
+  (let [alt-seq "XXXXXX"
+        upstream-seq "YYYYYY"
+        downstream-seq "ZZZZZZ"
+        [cds-start cds-end] [7 12]]
+    (are [p strand pos ref] (#'prot/make-ter-site-adjusted-alt-seq alt-seq
+                                                                   upstream-seq
+                                                                   downstream-seq
+                                                                   strand
+                                                                   cds-start
+                                                                   cds-end
+                                                                   pos
+                                                                   ref)
+      "XXXXXX" :forward 8 "XX"
+      "XXXXXX" :forward 5 "YY"
+      "XXXXXX" :forward 5 "YYX"
+      "XXXXXX" :forward 13 "ZZ"
+      "XXXXXXZZZZZZ" :forward 12 "XZZ"
+      "XXXXXX" :reverse 8 "XX"
+      "XXXXXX" :reverse 5 "YY"
+      "YYYYYYXXXXXX" :reverse 5 "YYX"
+      "XXXXXX" :reverse 13 "ZZ"
+      "XXXXXX" :reverse 12 "XZZ")))
+
+(deftest get-pos-exon-end-tuple-test
+  (let [exon-ranges [[1 10] [15 20] [25 40]]]
+    (are [p pos] (= (#'prot/get-pos-exon-end-tuple pos exon-ranges) p)
+      [15 20] 15
+      [5 10] 5)))
+
 (def ref-gene-EGFR
   {:bin 125
    :name "NM_005228"
