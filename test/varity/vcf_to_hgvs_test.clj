@@ -244,7 +244,7 @@
         ;; NOTE: There are very few correct examples...
 
         ;; Extension without termination site
-        "chr17" 81537077 "CT" "C" '("p.*517ext*?" "p.*493ext*?") ; not actual example (+)
+        "chr17" 81537077 "CT" "C" '("p.*517Eext*?" "p.*493Eext*?") ; not actual example (+)
         "chr17" 9771487 "GT" "G" '("p.*312Yext*?" "p.*313Yext*?") ; not actual example (-)
 
         ;; no effect

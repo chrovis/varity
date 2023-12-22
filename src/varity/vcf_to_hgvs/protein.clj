@@ -438,7 +438,9 @@
         ter-site (some-> (string/index-of rest-seq (if (= ppos 1) "M" "*")) inc)]
     (mut/protein-extension (if (= ppos 1) "Met" "Ter")
                            (coord/protein-coordinate (if (= ppos 1) 1 (+ ppos offset)))
-                           (mut/->long-amino-acid (last ins))
+                           (mut/->long-amino-acid (if (= ppos 1)
+                                                    (last ins)
+                                                    (or (last ins) (first rest-seq))))
                            (if (= ppos 1) :upstream :downstream)
                            (if ter-site
                              (coord/protein-coordinate ter-site)
