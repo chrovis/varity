@@ -227,9 +227,21 @@
                           (and (seq ref-only) (empty? alt-only)) [ref-only :del])]
     (common/repeat-info seq* pos alt type)))
 
+(defn- get-first-diff-aa-info
+  [pos ref-seq alt-seq]
+  (->> (map vector ref-seq alt-seq)
+       (drop (dec pos))
+       (map-indexed vector)
+       (drop-while (fn [[_ [r a]]] (= r a)))
+       first
+       ((fn [[i [r a]]]
+          {:ppos (+ pos i)
+           :pref (str r)
+           :palt (str a)}))))
+
 (defn- ->protein-variant
   [{:keys [strand] :as rg} pos ref alt
-   {:keys [ref-exon-seq ref-prot-seq alt-exon-seq alt-rg] :as seq-info}
+   {:keys [ref-exon-seq ref-prot-seq alt-exon-seq alt-rg ref-include-ter-site] :as seq-info}
    {:keys [prefer-deletion? prefer-insertion?]}]
   (cond
     (= ref-exon-seq alt-exon-seq)
@@ -277,7 +289,9 @@
                                                               (= palt (subs pref 0 (count palt))))
                                                          (= (first palt-only) \*))
                                                    :fs-ter-substitution
-                                                   :frame-shift)
+                                                   (if ref-include-ter-site
+                                                     :indel
+                                                     :frame-shift))
               (or (and (zero? nprefo) (zero? npalto))
                   (and (= nprefo 1) (= npalto 1))) :substitution
               (and prefer-deletion? (pos? nprefo) (zero? npalto)) :deletion
@@ -347,16 +361,32 @@
                            (->> (seq ins) (map mut/->long-amino-acid)))))
 
 (defn- protein-indel
-  [ppos pref palt]
-  (let [[del ins offset _] (diff-bases pref palt)
-        ndel (count del)]
-    (mut/protein-indel (mut/->long-amino-acid (first del))
-                       (coord/protein-coordinate (+ ppos offset))
-                       (when (> ndel 1)
-                         (mut/->long-amino-acid (last del)))
-                       (when (> ndel 1)
-                         (coord/protein-coordinate (+ ppos offset ndel -1)))
-                       (->> (seq ins) (map mut/->long-amino-acid)))))
+  [ppos pref palt {:keys [ref-prot-seq c-ter-adjusted-alt-prot-seq ref-include-ter-site]}]
+  (let [[pref palt ppos] (if ref-include-ter-site
+                           (let [{:keys [ppos]} (get-first-diff-aa-info ppos ref-prot-seq c-ter-adjusted-alt-prot-seq)
+                                 get-seq-between-pos-ter-site (fn [seq pos]
+                                                                (-> (pstring/split-at seq (dec pos))
+                                                                    last
+                                                                    (string/split #"\*")
+                                                                    first))
+                                 pref (get-seq-between-pos-ter-site ref-prot-seq ppos)
+                                 palt (get-seq-between-pos-ter-site c-ter-adjusted-alt-prot-seq ppos)]
+                             [pref palt ppos])
+                           [pref palt ppos])
+        [del ins offset _] (diff-bases pref palt)
+        ndel (count del)
+        include-ter-site? (if ref-include-ter-site
+                            (string/includes? (subs c-ter-adjusted-alt-prot-seq (dec ppos)) "*")
+                            true)]
+    (if include-ter-site?
+      (mut/protein-indel (mut/->long-amino-acid (first del))
+                         (coord/protein-coordinate (+ ppos offset))
+                         (when (> ndel 1)
+                           (mut/->long-amino-acid (last del)))
+                         (when (> ndel 1)
+                           (coord/protein-coordinate (+ ppos offset ndel -1)))
+                         (->> (seq ins) (map mut/->long-amino-acid)))
+      (mut/protein-unknown-mutation))))
 
 (defn- protein-repeated-seqs
   [ppos pref palt seq-info]
@@ -375,17 +405,11 @@
                                alt-repeat)))
 
 (defn- protein-frame-shift
-  [ppos seq-info]
-  (let [[ppos pref palt] (->> (map vector (:ref-prot-seq seq-info) (:alt-prot-seq seq-info))
-                              (drop (dec ppos))
-                              (map-indexed vector)
-                              (drop-while (fn [[_ [r a]]] (= r a)))
-                              first
-                              ((fn [[i [r a]]]
-                                 [(+ ppos i) (str r) (str a)])))
+  [ppos {:keys [ref-prot-seq alt-prot-seq] :as seq-info}]
+  (let [{:keys [ppos pref palt]} (get-first-diff-aa-info ppos ref-prot-seq alt-prot-seq)
         [_ _ offset _] (diff-bases pref palt)
         alt-prot-seq (format-alt-prot-seq seq-info)
-        ref (nth (:ref-prot-seq seq-info) (dec (+ ppos offset)))
+        ref (nth ref-prot-seq (dec (+ ppos offset)))
         alt (nth alt-prot-seq (dec (+ ppos offset)))
         ter-site (-> seq-info
                      format-alt-prot-seq
@@ -433,7 +457,7 @@
           :deletion (protein-deletion ppos pref palt)
           :duplication (protein-duplication ppos pref palt)
           :insertion (protein-insertion ppos pref palt seq-info)
-          :indel (protein-indel ppos pref palt)
+          :indel (protein-indel ppos pref palt seq-info)
           :repeated-seqs (protein-repeated-seqs ppos pref palt seq-info)
           :frame-shift (protein-frame-shift ppos seq-info)
           :extension (protein-extension ppos pref palt seq-info)

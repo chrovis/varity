@@ -83,6 +83,15 @@
       [15 20] 15
       [5 10] 5)))
 
+(deftest get-first-diff-aa-info-test
+  (let [ref-seq "ABCDEFGHIJKLMN"]
+    (are [p alt-seq pos] (= (#'prot/get-first-diff-aa-info pos
+                                                           ref-seq
+                                                           alt-seq)
+                            p)
+      {:ppos 6 :pref "F" :palt "G"} "ABCDEG" 4
+      {:ppos 13 :pref "M" :palt "K"} "ACBDEFGHIJKLK" 10)))
+
 (def ref-gene-EGFR
   {:bin 125
    :name "NM_005228"
