@@ -83,8 +83,7 @@
 
 (defn- is-deletion-variant?
   [ref alt]
-  (or (and (= 1 (count alt))
-           (= (first ref) (first alt)))
+  (or (and (not= 1 (count ref)) (= 1 (count alt)))
       (and (not= 1 (count ref) (count alt))
            (not= (first ref) (first alt)))))
 
@@ -150,17 +149,16 @@
     (boolean (seq (s/intersection ter-site-positions alt-positions)))))
 
 (defn- apply-offset
-  [pos ref alt exon-ranges ref-include-ter-site]
+  [pos ref alt exon-ranges ref-include-ter-site pos*]
   (letfn [(apply-offset* [exon-ranges*]
             (ffirst (alt-exon-ranges exon-ranges* pos ref alt)))
           (apply-ter-site-offset [pos*]
             (-> (get-pos-exon-end-tuple pos* exon-ranges)
                 vector
                 apply-offset*))]
-    (fn [pos*]
-      (or (apply-offset* [[pos* pos*]])
-          (and ref-include-ter-site (apply-ter-site-offset pos*))
-          (some (fn [[_ e]] (when (<= e pos*) e)) (reverse exon-ranges))))))
+    (or (apply-offset* [[pos* pos*]])
+        (and ref-include-ter-site (apply-ter-site-offset pos*))
+        (some (fn [[_ e]] (when (<= e pos*) e)) (reverse exon-ranges)))))
 
 (defn- read-sequence-info
   [seq-rdr rg pos ref alt]
@@ -177,7 +175,7 @@
         ter-site-adjusted-alt-seq (make-ter-site-adjusted-alt-seq alt-exon-seq alt-up-exon-seq alt-down-exon-seq
                                                                   strand cds-start cds-end pos ref)
         ref-include-ter-site (include-ter-site? rg pos ref)
-        apply-offset* (apply-offset pos ref alt alt-exon-ranges* ref-include-ter-site)]
+        apply-offset* (partial apply-offset pos ref alt alt-exon-ranges* ref-include-ter-site)]
     {:ref-exon-seq ref-exon-seq
      :ref-prot-seq (codon/amino-acid-sequence (cond-> ref-exon-seq
                                                 (= strand :reverse) util-seq/revcomp))

@@ -114,8 +114,7 @@
         ref "GCTGACC"
         alt "G"
         exon-ranges [[10 50] [80 120] [150 200]]]
-    (are [pos* ref-include-ter-site p] (= ((#'prot/apply-offset pos ref alt exon-ranges ref-include-ter-site) pos*)
-                                          p)
+    (are [pos* ref-include-ter-site p] (= (#'prot/apply-offset pos ref alt exon-ranges ref-include-ter-site pos*) p)
       40 false 40
       110 false 104
       105 true 101
