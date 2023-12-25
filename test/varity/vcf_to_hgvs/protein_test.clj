@@ -31,6 +31,32 @@
   ;; 1 [2 3 4] 5 6 7 [8 9 10 11] 12 13 14 15
   (is (= (#'prot/exon-sequence "ACGTACGTACGTACG" 1 [[2 4] [8 11]]) "CGTTACG")))
 
+(deftest is-deletion-variant?-test
+  (are [p ref alt] (p (#'prot/is-deletion-variant? ref alt))
+    false? "T" "A" ; substitution
+    true? "TAGTCTA" "T" ; deletion
+    false? "T" "TGTGATC" ; insertion
+    true? "C" "GTCATCC" ; delins
+    true? "ATC" "CATGCAT" ; delins
+    ))
+
+(deftest cds-start-upstream-to-cds-variant?-test
+  (are [p cds-start pos ref] (p (#'prot/cds-start-upstream-to-cds-variant? cds-start pos ref))
+    true? 100 99 "TCGA"
+    false? 100 100 "CGTA"
+    false? 100 100 "G"
+    false? 100 99 "A"
+    false? 100 95 "GATGC"
+    false? 100 101 "GTCAT"))
+
+(deftest cds-to-cds-end-downstream-variant?-test
+  (are [p cds-end pos ref] (p (#'prot/cds-to-cds-end-downstream-variant? cds-end pos ref))
+    true? 100 99 "TCGA"
+    true? 100 100 "CGTA"
+    false? 100 100 "A"
+    false? 100 95 "GATGC"
+    false? 100 101 "GTCAT"))
+
 (deftest make-alt-up-exon-seq-test
   (let [ref-up-exon-seq "AATGCTTCTAGCTCC"
         cds-start 100]
@@ -82,6 +108,18 @@
     (are [p pos] (= (#'prot/get-pos-exon-end-tuple pos exon-ranges) p)
       [15 20] 15
       [5 10] 5)))
+
+(deftest apply-offset-test
+  (let [pos 100
+        ref "GCTGACC"
+        alt "G"
+        exon-ranges [[10 50] [80 120] [150 200]]]
+    (are [pos* ref-include-ter-site p] (= ((#'prot/apply-offset pos ref alt exon-ranges ref-include-ter-site) pos*)
+                                          p)
+      40 false 40
+      110 false 104
+      105 true 101
+      112 true 106)))
 
 (deftest get-first-diff-aa-info-test
   (let [ref-seq "ABCDEFGHIJKLMN"]
