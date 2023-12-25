@@ -15,7 +15,13 @@
       "CAG" "CTC"     ["AG" "TC" 1 0]
       "CA"  "CTC"     ["A"  "TC" 1 0]
       "CAG" "CT"      ["AG" "T" 1 0]
-      "CAGTC" "CTGAC" ["AGT" "TGA" 1 1])))
+      "CAGTC" "CTGAC" ["AGT" "TGA" 1 1]))
+  (testing "diff-bases with offset"
+    (are [s1 s2 offset ret] (= (common/diff-bases s1 s2 offset) ret)
+      "CGATC"    "CGTTG"     3 ["C" "G" 1 0]
+      "C"        "CA"        1 ["" "A" 0 0]
+      "TCG"      "TCAG"      2 ["" "A" 0 1]
+      "GATCTGAA" "GATCGATCA" 3 ["TGA" "GATC" 1 1])))
 
 (deftest repeat-units-test
   (are [s ret] (= (#'common/repeat-units s) ret)
