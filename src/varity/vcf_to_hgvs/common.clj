@@ -13,15 +13,18 @@
 (defn diff-bases
   "Compares VCF-style base(s) s1 and s2, returning a vector of
   [bases-only-in-s1 bases-only-in-s2 left-common-len right-common-len]."
-  [s1 s2]
-  (let [l (left-common-len s1 s2)
-        ls1 (subs s1 l)
-        ls2 (subs s2 l)
-        r (left-common-len (reverse ls1) (reverse ls2))]
-    [(subs ls1 0 (- (count ls1) r))
-     (subs ls2 0 (- (count ls2) r))
-     l
-     r]))
+  ([s1 s2] (diff-bases s1 s2 0))
+  ([s1 s2 offset]
+   (let [s1 (subs s1 offset)
+         s2 (subs s2 offset)
+         l (left-common-len s1 s2)
+         ls1 (subs s1 l)
+         ls2 (subs s2 l)
+         r (left-common-len (reverse ls1) (reverse ls2))]
+     [(subs ls1 0 (- (count ls1) r))
+      (subs ls2 0 (- (count ls2) r))
+      l
+      r])))
 
 (def max-repeat-unit-size 100)
 
