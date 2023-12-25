@@ -17,17 +17,32 @@ Variant translation library for Clojure.
 Clojure CLI/deps.edn:
 
 ```clojure
-varity/varity {:mvn/version "0.9.3"}
+varity/varity {:mvn/version "0.10.0"}
 ```
 
 Leiningen/Boot:
 
 ```clojure
-[varity "0.9.3"]
+[varity "0.10.0"]
 ```
 
 To use varity with Clojure 1.8, you must include a dependency on
 [clojure-future-spec](https://github.com/tonsky/clojure-future-spec).
+
+## Breaking changes in 0.10.0
+
+We introduced enhancements to the description of protein changes by `varity.vcf-to-hgvs`, specifically making deletions more clinically meaningful:
+
+1. exon-intron boundary deletions:
+
+The deletion that overlaps the exon-intron boundary will trigger an Exception because alterations affecting the splice sites are predicted to be splicing abnormalities.
+
+2. stop codon deletions:
+
+In cases where deletions contain a stop codon, `varity.vcf-to-hgvs` generates the following outputs based on the alteration sequence:
+
+- If the alteration sequence contains a stop codon, varity outputs as deletion-insertion.
+- Otherwise, this outputs `p.?`.
 
 ## Breaking changes in 0.9.0
 

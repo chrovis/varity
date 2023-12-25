@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.9.4] - date TBD
+## [0.10.0] - date TBD
 
  ### Fixed
 
@@ -340,8 +340,8 @@ Strand representation is changed from string (`+`, `-`) to keyword (`:forward`,
 
 First release.
 
-[Unreleased]: https://github.com/chrovis/varity/compare/0.9.4...HEAD
-[0.9.4]: https://github.com/chrovis/varity/compare/0.9.3...0.9.4
+[Unreleased]: https://github.com/chrovis/varity/compare/0.10.0...HEAD
+[0.10.0]: https://github.com/chrovis/varity/compare/0.9.3...0.10.0
 [0.9.3]: https://github.com/chrovis/varity/compare/0.9.2...0.9.3
 [0.9.2]: https://github.com/chrovis/varity/compare/0.9.1...0.9.2
 [0.9.1]: https://github.com/chrovis/varity/compare/0.9.0...0.9.1
