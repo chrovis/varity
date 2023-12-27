@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.0] - date TBD
+
+ ### Fixed
+
+- Fix upstream and downstream sequence of sequence-info and delins process. [#81](https://github.com/chrovis/varity/pull/81)
+- Fix boundary of exon/intron determining process. [#82](https://github.com/chrovis/varity/pull/82)
+
 ## [0.9.3] - 2023-07-03
 
 ### Fixed
@@ -333,7 +340,8 @@ Strand representation is changed from string (`+`, `-`) to keyword (`:forward`,
 
 First release.
 
-[Unreleased]: https://github.com/chrovis/varity/compare/0.9.3...HEAD
+[Unreleased]: https://github.com/chrovis/varity/compare/0.10.0...HEAD
+[0.10.0]: https://github.com/chrovis/varity/compare/0.9.3...0.10.0
 [0.9.3]: https://github.com/chrovis/varity/compare/0.9.2...0.9.3
 [0.9.2]: https://github.com/chrovis/varity/compare/0.9.1...0.9.2
 [0.9.1]: https://github.com/chrovis/varity/compare/0.9.0...0.9.1
