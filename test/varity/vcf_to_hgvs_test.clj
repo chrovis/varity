@@ -251,6 +251,7 @@
         "chr7" 55181876 "A" "T" '("p.=") ; not actual example (+)
         "chr7" 55181874 "TGAT" "T" '("p.=") ; not actual example (+)
         "chr7" 55181876 "A" "AGGT" '("p.=") ; not actual example (+)
+        "chr3" 149520808 "C" "CTTAA" '("p.=") ; not actual example (-)
 
         ;; unknown
         "chr12" 40393453 "G" "A" '("p.?") ; not actual example (+)
