@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.10.1] - date TBD
+
+ ### Fixed
+
+- Add conditional branch of unaffected stop codon to protein-extension. [#86](https://github.com/chrovis/varity/pull/86)
+
 ## [0.10.0] - 2023-12-27
 
  ### Fixed
@@ -340,7 +346,8 @@ Strand representation is changed from string (`+`, `-`) to keyword (`:forward`,
 
 First release.
 
-[Unreleased]: https://github.com/chrovis/varity/compare/0.10.0...HEAD
+[Unreleased]: https://github.com/chrovis/varity/compare/0.10.1...HEAD
+[0.10.1]: https://github.com/chrovis/varity/compare/0.10.0...0.10.1
 [0.10.0]: https://github.com/chrovis/varity/compare/0.9.3...0.10.0
 [0.9.3]: https://github.com/chrovis/varity/compare/0.9.2...0.9.3
 [0.9.2]: https://github.com/chrovis/varity/compare/0.9.1...0.9.2
