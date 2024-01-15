@@ -109,6 +109,13 @@
       [15 20] 15
       [5 10] 5)))
 
+(deftest ter-site-same-pos?-test
+  (are [p ref alt] (p (#'prot/ter-site-same-pos? ref alt))
+    true? "MTGA*" "MTGA*"
+    true? "MTGA*" "MTGA*CT"
+    false? "MTGA*" "MTGAQCT*"
+    false? "MTGA*" "MTGA"))
+
 (deftest apply-offset-test
   (let [pos 100
         ref "GCTGACC"

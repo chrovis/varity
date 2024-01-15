@@ -148,6 +148,11 @@
         alt-positions (set (range pos (+ pos (count ref))))]
     (boolean (seq (s/intersection ter-site-positions alt-positions)))))
 
+(defn- ter-site-same-pos?
+  [ref-prot-seq alt-prot-seq]
+  (let [ter-site-pos (dec (count ref-prot-seq))]
+    (= \* (get alt-prot-seq ter-site-pos))))
+
 (defn- apply-offset
   [pos ref alt exon-ranges ref-include-ter-site pos*]
   (letfn [(apply-offset* [exon-ranges*]
@@ -426,26 +431,28 @@
                                  (coord/unknown-coordinate))))))
 
 (defn- protein-extension
-  [ppos pref palt seq-info]
-  (let [{:keys [alt-prot-seq alt-tx-prot-seq ini-offset]} seq-info
-        [_ ins offset _] (diff-bases pref palt)
-        rest-seq (if (= ppos 1)
-                   (-> alt-tx-prot-seq
-                       (subs 0 ini-offset)
-                       reverse
-                       (#(apply str %)))
-                   (-> alt-tx-prot-seq
-                       (subs (+ ini-offset (count alt-prot-seq)))))
-        ter-site (some-> (string/index-of rest-seq (if (= ppos 1) "M" "*")) inc)]
-    (mut/protein-extension (if (= ppos 1) "Met" "Ter")
-                           (coord/protein-coordinate (if (= ppos 1) 1 (+ ppos offset)))
-                           (mut/->long-amino-acid (if (= ppos 1)
-                                                    (last ins)
-                                                    (or (last ins) (first rest-seq))))
-                           (if (= ppos 1) :upstream :downstream)
-                           (if ter-site
-                             (coord/protein-coordinate ter-site)
-                             (coord/unknown-coordinate)))))
+  [ppos pref palt {:keys [ref-prot-seq alt-prot-seq alt-tx-prot-seq c-ter-adjusted-alt-prot-seq ini-offset]}]
+  (if (and (not= ppos 1)
+           (ter-site-same-pos? ref-prot-seq c-ter-adjusted-alt-prot-seq))
+    (mut/protein-no-effect)
+    (let [[_ ins offset _] (diff-bases pref palt)
+          rest-seq (if (= ppos 1)
+                     (-> alt-tx-prot-seq
+                         (subs 0 ini-offset)
+                         reverse
+                         (#(apply str %)))
+                     (-> alt-tx-prot-seq
+                         (subs (+ ini-offset (count alt-prot-seq)))))
+          ter-site (some-> (string/index-of rest-seq (if (= ppos 1) "M" "*")) inc)]
+      (mut/protein-extension (if (= ppos 1) "Met" "Ter")
+                             (coord/protein-coordinate (if (= ppos 1) 1 (+ ppos offset)))
+                             (mut/->long-amino-acid (if (= ppos 1)
+                                                      (last ins)
+                                                      (or (last ins) (first rest-seq))))
+                             (if (= ppos 1) :upstream :downstream)
+                             (if ter-site
+                               (coord/protein-coordinate ter-site)
+                               (coord/unknown-coordinate))))))
 
 (defn- mutation
   [seq-rdr rg pos ref alt options]
