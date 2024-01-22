@@ -34,42 +34,6 @@ To use varity with Clojure 1.8, you must include a dependency on
 We fixed the `varity.vcf-to-hgvs` implementation.
 It is confusing to throw the exception in `vcf-variant->protein-hgvs` when a variant overlaps the exon-intron boundaries, even if coding DNA HGVS is available. So we changed the behavior to return protein HGVS as `nil`.
 
-## Breaking changes in 0.10.0
-
-We introduced enhancements to the description of protein changes by `varity.vcf-to-hgvs`, specifically making deletions more clinically meaningful:
-
-1. exon-intron boundary deletions:
-
-The deletion that overlaps the exon-intron boundary will trigger an Exception because alterations affecting the splice sites are predicted to be splicing abnormalities.
-
-2. stop codon deletions:
-
-In cases where deletions contain a stop codon, `varity.vcf-to-hgvs` generates the following outputs based on the alteration sequence:
-
-- If the alteration sequence contains a stop codon, varity outputs as deletion-insertion.
-- Otherwise, this outputs `p.?`.
-
-## Breaking changes in 0.9.0
-
-The default value of `:prefer-deletion?` option is changed to `false`.
-
-```clojure
-(require '[varity.vcf-to-hgvs :as v2h])
-
-(v2h/vcf-variant->coding-dna-hgvs {:chr "chr7", :pos 140924774, :ref "GGGAGGC", :alt "G"}
-                                  "path/to/hg38.fa" "path/to/refGene.txt.gz")
-;;=> (#clj-hgvs/hgvs "NM_004333:c.-95GCCTCC[3]")
-```
-
-If you hope the previous behavior, specify `:prefer-deletion? true`.
-
-```clojure
-(v2h/vcf-variant->coding-dna-hgvs {:chr "chr7", :pos 140924774, :ref "GGGAGGC", :alt "G"}
-                                  "path/to/hg38.fa" "path/to/refGene.txt.gz"
-                                  {:prefer-deletion? true})
-;;=> (#clj-hgvs/hgvs "NM_004333:c.-77_-72delGCCTCC")
-```
-
 ## Usage
 
 ### Documentation
