@@ -31,8 +31,8 @@ To use varity with Clojure 1.8, you must include a dependency on
 
 ## Breaking changes in 0.11.0
 
-We fixed following `varity.vcf-to-hgvs` implementation.
-It is inconvenient to throw an exception in `vcf-variant->protein-hgvs` when variants overlapping a boundary of exon/intron even if `vcf-variant->coding-dna-hgvs` succeed in `vcf-to-hgvs.vcf-variant->hgvs`. So we changed to return nil.
+We fixed the `varity.vcf-to-hgvs` implementation.
+It is confusing to throw the exception in `vcf-variant->protein-hgvs` when a variant overlaps the exon-intron boundaries, even if coding DNA HGVS is available. So we changed the behavior to return protein HGVS as `nil`.
 
 ## Breaking changes in 0.10.0
 

@@ -4,7 +4,7 @@
 
 ### Fixed
 
-- Return protein-hgvs nil when variants overlapping exon/intron boundaries. [#89](https://github.com/chrovis/varity/pull/89)
+- Return protein HGVS as `nil` if a variant overlaps exon-intron boundaries. [#89](https://github.com/chrovis/varity/pull/89)
 
 
 ## [0.10.1] - 2024-01-15
