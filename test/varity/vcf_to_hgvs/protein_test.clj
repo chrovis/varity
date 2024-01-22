@@ -17,10 +17,7 @@
     6 "XX" "X" [[2 4] [7 10]]
     9 "XXX" "XXX" [[2 4] [8 11]])
   ;; Variants overlapping a boundary of exon/intron
-  (are [p r a] (thrown-with-msg?
-                Exception
-                #"unsupported"
-                (#'prot/alt-exon-ranges [[2 4] [8 11]] p r a))
+  (are [p r a] (nil? (#'prot/alt-exon-ranges [[2 4] [8 11]] p r a))
     3 "XXX" "XXX"
     6 "XXX" "X"
     3 "XXX" "X"

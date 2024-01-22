@@ -14,6 +14,18 @@
             [varity.ref-gene :as rg]
             [varity.vcf-to-hgvs.common :refer [diff-bases] :as common]))
 
+(defn- overlap-exon-intron-boundary?
+  [exon-ranges pos ref alt]
+  (let [nref (count ref)
+        nalt (count alt)]
+    (and (not (= 1 nref nalt))
+         (not= 1 (count exon-ranges))
+         (some (fn [[s e]]
+                 (and (not= s e)
+                      (or (and (< pos s) (<= s (+ pos nref -1)))
+                          (and (<= pos e) (< e (+ pos nref -1))))))
+               exon-ranges))))
+
 (defn alt-exon-ranges
   "Returns exon ranges a variant applied."
   [exon-ranges pos ref alt]
@@ -25,35 +37,27 @@
               :else :same)
         tpos (+ pos (min nref nalt))
         d (Math/abs (- nref nalt))]
-    (when (and (not (= 1 nref nalt))
-               (not= 1 (count exon-ranges))
-               (some (fn [[s e]]
-                       (and (not= s e)
-                            (or (and (< pos s) (<= s (+ pos nref -1)))
-                                (and (<= pos e) (< e (+ pos nref -1))))))
-                     exon-ranges))
-      (throw
-       (ex-info
-        "Variants overlapping a boundary of exon/intron are unsupported"
-        {:exon-ranges exon-ranges, :pos pos, :ref ref, :alt alt})))
-    (->> exon-ranges
-         (keep (fn [[s e]]
-                 (case typ
-                   :ins (cond
-                          (< tpos s) [(+ s d) (+ e d)]
-                          (<= s tpos e) [s (+ e d)]
-                          :else [s e])
-                   :del (let [dels tpos
-                              dele (dec (+ tpos d))]
-                          (cond
-                            (< dele s) [(- s d) (- e d)]
-                            (<= dels s) (when (< dele e) [dels (- e d)])
-                            (<= dels e) (if (< dele e)
-                                          [s (- e d)]
-                                          [s (dec dels)])
-                            :else [s e]))
-                   :same [s e])))
-         vec)))
+    (if (overlap-exon-intron-boundary? exon-ranges pos ref alt)
+      (do (log/warn "Variants overlapping a boundary of exon/intron are unsupported")
+          nil)
+      (->> exon-ranges
+           (keep (fn [[s e]]
+                   (case typ
+                     :ins (cond
+                            (< tpos s) [(+ s d) (+ e d)]
+                            (<= s tpos e) [s (+ e d)]
+                            :else [s e])
+                     :del (let [dels tpos
+                                dele (dec (+ tpos d))]
+                            (cond
+                              (< dele s) [(- s d) (- e d)]
+                              (<= dels s) (when (< dele e) [dels (- e d)])
+                              (<= dels e) (if (< dele e)
+                                            [s (- e d)]
+                                            [s (dec dels)])
+                              :else [s e]))
+                     :same [s e])))
+           vec))))
 
 (defn exon-sequence
   "Extracts bases in exon from supplied sequence, returning the sequence of
@@ -197,12 +201,14 @@
      :c-ter-adjusted-alt-prot-seq (codon/amino-acid-sequence
                                    (cond-> ter-site-adjusted-alt-seq
                                      (= strand :reverse) util-seq/revcomp))
-     :alt-rg (-> rg
-                 (assoc :exon-ranges alt-exon-ranges*)
-                 (update :cds-start apply-offset*)
-                 (update :cds-end apply-offset*)
-                 (update :tx-end apply-offset*))
-     :ref-include-ter-site ref-include-ter-site}))
+     :alt-rg (when alt-exon-ranges*
+               (-> rg
+                   (assoc :exon-ranges alt-exon-ranges*)
+                   (update :cds-start apply-offset*)
+                   (update :cds-end apply-offset*)
+                   (update :tx-end apply-offset*)))
+     :ref-include-ter-site ref-include-ter-site
+     :overlap-exon-intron-boundary (overlap-exon-intron-boundary? exon-ranges pos ref alt)}))
 
 (defn- protein-position
   "Converts genomic position to protein position. If pos is outside of CDS,
@@ -254,6 +260,9 @@
   (cond
     (= ref-exon-seq alt-exon-seq)
     {:type :no-effect, :pos 1, :ref nil, :alt nil}
+
+    (:overlap-exon-intron-boundary seq-info)
+    {:type :overlap-exon-intron-boundary, :pos nil, :ref nil, :alt nil}
 
     (pos? (mod (count ref-exon-seq) 3))
     (do (log/warnf "CDS length is indivisible by 3: %d (%s, %s)"
@@ -459,7 +468,7 @@
   (let [seq-info (read-sequence-info seq-rdr rg pos ref alt)]
     (when-let [pvariant (->protein-variant rg pos ref alt seq-info options)]
       (let [{ppos :pos, pref :ref, palt :alt}
-            (if-not (#{:no-effect :unknown} (:type pvariant))
+            (if-not (#{:no-effect :unknown :overlap-exon-intron-boundary} (:type pvariant))
               (common/apply-3'-rule pvariant (:ref-prot-seq seq-info))
               pvariant)]
         (case (:type pvariant)
@@ -472,7 +481,8 @@
           :frame-shift (protein-frame-shift ppos seq-info)
           :extension (protein-extension ppos pref palt seq-info)
           :no-effect (mut/protein-no-effect)
-          :unknown (mut/protein-unknown-mutation))))))
+          :unknown (mut/protein-unknown-mutation)
+          :overlap-exon-intron-boundary nil)))))
 
 (defn ->hgvs
   ([variant seq-rdr rg]
