@@ -1,8 +1,15 @@
 # Changelog
 
+## [0.11.0] - date TBD
+
+### Fixed
+
+- Return protein-hgvs nil when variants overlapping exon/intron boundaries. [#89](https://github.com/chrovis/varity/pull/89)
+
+
 ## [0.10.1] - 2024-01-15
 
- ### Fixed
+### Fixed
 
 - Add conditional branch of unaffected stop codon to protein-extension. [#86](https://github.com/chrovis/varity/pull/86)
 
@@ -346,7 +353,8 @@ Strand representation is changed from string (`+`, `-`) to keyword (`:forward`,
 
 First release.
 
-[Unreleased]: https://github.com/chrovis/varity/compare/0.10.1...HEAD
+[Unreleased]: https://github.com/chrovis/varity/compare/0.11.0...HEAD
+[0.11.0]: https://github.com/chrovis/varity/compare/0.10.1...0.11.0
 [0.10.1]: https://github.com/chrovis/varity/compare/0.10.0...0.10.1
 [0.10.0]: https://github.com/chrovis/varity/compare/0.9.3...0.10.0
 [0.9.3]: https://github.com/chrovis/varity/compare/0.9.2...0.9.3
