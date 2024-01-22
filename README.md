@@ -17,17 +17,22 @@ Variant translation library for Clojure.
 Clojure CLI/deps.edn:
 
 ```clojure
-varity/varity {:mvn/version "0.10.1"}
+varity/varity {:mvn/version "0.11.0"}
 ```
 
 Leiningen/Boot:
 
 ```clojure
-[varity "0.10.1"]
+[varity "0.11.0"]
 ```
 
 To use varity with Clojure 1.8, you must include a dependency on
 [clojure-future-spec](https://github.com/tonsky/clojure-future-spec).
+
+## Breaking changes in 0.11.0
+
+We fixed the `varity.vcf-to-hgvs` implementation.
+It is confusing to throw the exception in `vcf-variant->protein-hgvs` when a variant overlaps the exon-intron boundaries, even if coding DNA HGVS is available. So we changed the behavior to return protein HGVS as `nil`.
 
 ## Breaking changes in 0.10.0
 
