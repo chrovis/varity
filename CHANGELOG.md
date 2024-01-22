@@ -1,6 +1,13 @@
 # Changelog
 
-## [0.11.0] - date TBD
+## [0.11.0] - 2024-01-22
+
+### BREAKING
+
+We fixed the `varity.vcf-to-hgvs` implementation. It is confusing to throw the
+exception in `vcf-variant->protein-hgvs` when a variant overlaps the exon-intron
+boundaries, even if coding DNA HGVS is available. So we changed the behavior to
+return protein HGVS as `nil`.
 
 ### Fixed
 
@@ -15,7 +22,26 @@
 
 ## [0.10.0] - 2023-12-27
 
- ### Fixed
+### BREAKING
+
+We introduced enhancements to the description of protein changes by
+`varity.vcf-to-hgvs`, specifically making deletions more clinically meaningful:
+
+1. exon-intron boundary deletions:
+
+The deletion that overlaps the exon-intron boundary will trigger an Exception
+because alterations affecting the splice sites are predicted to be splicing
+abnormalities.
+
+2. stop codon deletions:
+
+In cases where deletions contain a stop codon, `varity.vcf-to-hgvs` generates
+the following outputs based on the alteration sequence:
+
+- If the alteration sequence contains a stop codon, varity outputs as deletion-insertion.
+- Otherwise, this outputs `p.?`.
+
+### Fixed
 
 - Fix upstream and downstream sequence of sequence-info and delins process. [#81](https://github.com/chrovis/varity/pull/81)
 - Fix boundary of exon/intron determining process. [#82](https://github.com/chrovis/varity/pull/82)
