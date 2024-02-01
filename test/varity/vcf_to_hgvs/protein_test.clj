@@ -106,6 +106,36 @@
       [15 20] 15
       [5 10] 5)))
 
+(deftest include-utr-ini-site-boundary?-test
+  (let [forward-rg {:strand :forward
+                    :cds-start 10
+                    :cds-end 20}
+        reverse-rg {:strand :reverse
+                    :cds-start 10
+                    :cds-end 20}]
+    (are [p rg pos ref alt] (p (#'prot/include-utr-ini-site-boundary? rg pos ref alt))
+      true? forward-rg 8 "CCAT" "C"
+      true? forward-rg 9 "CAT" "GGG"
+      false? forward-rg 9 "CAT" "C"
+      true? reverse-rg 18 "CATGG" "C"
+      true? reverse-rg 20 "TGG" "ACC"
+      false? reverse-rg 20 "TGG" "T")))
+
+(deftest include-ter-site?-test
+  (let [forward-rg {:strand :forward
+                    :cds-start 10
+                    :cds-end 20}
+        reverse-rg {:strand :reverse
+                    :cds-start 10
+                    :cds-end 20}]
+    (are [p rg pos ref alt] (p (#'prot/include-ter-site? rg pos ref alt))
+      true? forward-rg 17 "ATG" "A"
+      true? forward-rg 20 "AG" "CC"
+      false? forward-rg 20 "AAT" "A"
+      true? reverse-rg 9 "TT" "T"
+      true? reverse-rg 10 "ACT" "G"
+      false? reverse-rg 8 "AG" "A")))
+
 (deftest ter-site-same-pos?-test
   (are [p ref alt] (p (#'prot/ter-site-same-pos? ref alt))
     true? "MTGA*" "MTGA*"

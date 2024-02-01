@@ -147,12 +147,26 @@
   (let [[_ exon-end] (first (filter (fn [[s e]] (<= s pos e)) exon-ranges))]
     [pos exon-end]))
 
+(defn- include-utr-ini-site-boundary?
+  [{:keys [strand cds-start cds-end]} pos ref alt]
+  (let [ini-site-boundary (set (cond
+                                 (= strand :forward) (range (- cds-start 1) (inc cds-start))
+                                 (= strand :reverse) (range cds-end (inc (+ cds-end 1)))))
+        nref (count ref)
+        alt-positions (set (if (= (first ref) (first alt))
+                             (range (inc pos) (+ (inc pos) (dec nref)))
+                             (range pos (+ pos nref))))]
+    (= 2 (count (s/intersection ini-site-boundary alt-positions)))))
+
 (defn- include-ter-site?
-  [{:keys [strand cds-start cds-end]} pos ref]
+  [{:keys [strand cds-start cds-end]} pos ref alt]
   (let [ter-site-positions (set (cond
                                   (= strand :forward) (range (- cds-end 2) (inc cds-end))
                                   (= strand :reverse) (range cds-start (inc (+ cds-start 2)))))
-        alt-positions (set (range pos (+ pos (count ref))))]
+        nref (count ref)
+        alt-positions (set (if (= (first ref) (first alt))
+                             (range (inc pos) (+ (inc pos) (dec nref)))
+                             (range pos (+ pos nref))))]
     (boolean (seq (s/intersection ter-site-positions alt-positions)))))
 
 (defn- ter-site-same-pos?
@@ -186,7 +200,8 @@
         alt-exon-seq (exon-sequence alt-seq cds-start alt-exon-ranges*)
         ter-site-adjusted-alt-seq (make-ter-site-adjusted-alt-seq alt-exon-seq alt-up-exon-seq alt-down-exon-seq
                                                                   strand cds-start cds-end pos ref)
-        ref-include-ter-site (include-ter-site? rg pos ref)
+        ref-include-utr-ini-site-boundary (include-utr-ini-site-boundary? rg pos ref alt)
+        ref-include-ter-site (include-ter-site? rg pos ref alt)
         apply-offset* (partial apply-offset pos ref alt alt-exon-ranges* ref-include-ter-site)]
     {:ref-exon-seq ref-exon-seq
      :ref-prot-seq (codon/amino-acid-sequence (cond-> ref-exon-seq
@@ -210,6 +225,7 @@
                    (update :cds-start apply-offset*)
                    (update :cds-end apply-offset*)
                    (update :tx-end apply-offset*)))
+     :ref-include-utr-ini-site-boundary ref-include-utr-ini-site-boundary
      :ref-include-ter-site ref-include-ter-site
      :overlap-exon-intron-boundary (overlap-exon-intron-boundary? exon-ranges pos ref alt)}))
 
@@ -423,7 +439,7 @@
                                alt-repeat)))
 
 (defn- protein-frame-shift
-  [ppos {:keys [ref-prot-seq alt-prot-seq] :as seq-info}]
+  [ppos {:keys [ref-prot-seq alt-prot-seq ref-include-utr-ini-site-boundary] :as seq-info}]
   (let [{:keys [ppos pref palt]} (get-first-diff-aa-info ppos ref-prot-seq alt-prot-seq)
         [_ _ offset _] (diff-bases pref palt)
         alt-prot-seq (format-alt-prot-seq seq-info)
@@ -433,8 +449,15 @@
                      format-alt-prot-seq
                      (subs (dec (+ ppos offset)))
                      (string/index-of "*"))]
-    (if (= alt \*)
+    (cond
+      (or ref-include-utr-ini-site-boundary
+          (not (string/starts-with? alt-prot-seq "M")))
+      (mut/protein-unknown-mutation)
+
+      (= alt \*)
       (protein-substitution (+ ppos offset) (str ref) (str alt)) ; eventually fs-ter-substitution
+
+      :else
       (mut/protein-frame-shift (mut/->long-amino-acid ref)
                                (coord/protein-coordinate (+ ppos offset))
                                (mut/->long-amino-acid alt)

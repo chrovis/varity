@@ -233,6 +233,8 @@
                                           "p.S1415Ifs*2") ; https://github.com/chrovis/varity/issues/58
         "chr17" 31261816 "CC" "C" '("p.N1542Tfs*11" "p.N1563Tfs*11") ; cf. rs1555619041 (+)
         "chr1" 16138274 "CG" "C" '("p.R327Dfs*66")
+        ;; initiation site is affected in DNA level but initiation site is not changed in protein level
+        "chr7" 55019279 "TGC" "T" '("p.R2Tfs*34") ; not actual example (+)
 
         ;; Frame shift without termination site
         "chr17" 81537070 "G" "GTA" '("p.W514Cfs*?" "p.W490Cfs*?") ; not actual example (+)
@@ -256,6 +258,13 @@
 
         ;; unknown
         "chr12" 40393453 "G" "A" '("p.?") ; not actual example (+)
+
+        ;; unknown because variant affects utr/initiation site boundary
+        ;; e.g. NM_007298:c.-19_80del from BRCA Share
+        "chr17" 43124016 "CCAGATGGGACACTCTAAGATTTTCTGCATAGCATTAATGACATTTTGTACTTCTTCAACGCGAAGAGCAGATAAATCCATTTCTTTCTGTTCCAATGAA" "C" '("p.?")
+
+        ;; unknwon because first amino acid of alt-prot-seq is M but variant affects utr/initiation site boundary in DNA level
+        "chr7" 55019277 "GATGCGA" "ATG" '("p.?") ; not actual example (+)
 
         ;; unknown because variant includes termination site and alternative termination site is not found
         "chr17" 81537074 "GTACTGAGGC" "G" '("p.?") ; not actual example(+)
@@ -312,8 +321,6 @@
         ;; Variants include exon/intron boundary.
         ;; cf. ClinVar 965170
         "chr8" 42838217 "GAGATTAACAGGGGTCTGAAGAGGCGGCATTAGTAATCCAATAGCAGCATCAACCTGGGAAACAGGAGGCGGTAAAGGAGGTGGGGGAAGCTGTTCCTGTGGCTCCAGAAGATCTTCTTTCTAAAACAAAAATACAAAGTATGTTTGAATTTAGTAACTAAAAACAGTTTAAA" "G"
-        ;; e.g. NM_007298:c.-19_80del from BRCA Share
-        "chr17" 43124016 "CCAGATGGGACACTCTAAGATTTTCTGCATAGCATTAATGACATTTTGTACTTCTTCAACGCGAAGAGCAGATAAATCCATTTCTTTCTGTTCCAATGAA" "C"
         ;; e.g. NM_001174080:c.3696-10_3710del
         "chr19" 13283381 "GCACAGGCGGCGAAGGCTGTTGGAGA" "G"))))
 
