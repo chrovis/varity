@@ -20,11 +20,14 @@
         nalt (count alt)]
     (and (not (= 1 nref nalt))
          (not= 1 (count exon-ranges))
-         (some (fn [[s e]]
-                 (and (not= s e)
-                      (or (and (< pos s) (<= s (+ pos nref -1)))
-                          (and (<= pos e) (< e (+ pos nref -1))))))
-               exon-ranges))))
+         (let [[pos nref] (if (= (first ref) (first alt))
+                            [(inc pos) (dec nref)]
+                            [pos nref])]
+           (some (fn [[s e]]
+                   (and (not= s e)
+                        (or (and (< pos s) (<= s (+ pos nref -1)))
+                            (and (<= pos e) (< e (+ pos nref -1))))))
+                 exon-ranges)))))
 
 (defn alt-exon-ranges
   "Returns exon ranges a variant applied."

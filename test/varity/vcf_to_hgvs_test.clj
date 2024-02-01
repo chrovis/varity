@@ -232,6 +232,7 @@
         "chr5" 112839837 "AGTGGCAT" "A" '("p.S1397Ifs*2"
                                           "p.S1415Ifs*2") ; https://github.com/chrovis/varity/issues/58
         "chr17" 31261816 "CC" "C" '("p.N1542Tfs*11" "p.N1563Tfs*11") ; cf. rs1555619041 (+)
+        "chr1" 16138274 "CG" "C" '("p.R327Dfs*66")
 
         ;; Frame shift without termination site
         "chr17" 81537070 "G" "GTA" '("p.W514Cfs*?" "p.W490Cfs*?") ; not actual example (+)
