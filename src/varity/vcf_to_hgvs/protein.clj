@@ -14,20 +14,23 @@
             [varity.ref-gene :as rg]
             [varity.vcf-to-hgvs.common :refer [diff-bases] :as common]))
 
-(defn- overlap-exon-intron-boundary?
+(defn- overlap-exon-intron-boundary?*
   [exon-ranges pos ref alt]
   (let [nref (count ref)
-        nalt (count alt)]
-    (and (not (= 1 nref nalt))
-         (not= 1 (count exon-ranges))
-         (let [[pos nref] (if (= (first ref) (first alt))
-                            [(inc pos) (dec nref)]
-                            [pos nref])]
-           (some (fn [[s e]]
-                   (and (not= s e)
-                        (or (and (< pos s) (<= s (+ pos nref -1)))
-                            (and (<= pos e) (< e (+ pos nref -1))))))
-                 exon-ranges)))))
+        nalt (count alt)
+        [_ _ d _] (diff-bases ref alt)
+        pos (+ pos d)
+        nref (- nref d)]
+    (boolean
+     (and (not (= 1 nref nalt))
+          (not= 1 (count exon-ranges))
+          (some (fn [[s e]]
+                  (and (not= s e)
+                       (or (and (< pos s) (<= s (+ pos nref -1)))
+                           (and (<= pos e) (< e (+ pos nref -1))))))
+                exon-ranges)))))
+
+(def ^:private overlap-exon-intron-boundary? (memoize overlap-exon-intron-boundary?*))
 
 (defn alt-exon-ranges
   "Returns exon ranges a variant applied."
