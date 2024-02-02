@@ -7,6 +7,17 @@
             [varity.t-common :refer [test-ref-seq-file
                                      defslowtest]]))
 
+(deftest overlap-exon-intron-boundary?-test
+  (let [exon-ranges [[123 321] [456 654] [789 987]]]
+    (are [p pos ref alt] (p (#'prot/overlap-exon-intron-boundary? exon-ranges pos ref alt))
+      false? 454 "X" "Y"
+      true? 454 "XXX" "X"
+      false? 455 "XX" "X"
+      false? 456 "XX" "X"
+      false? 654 "XX" "X"
+      true? 653 "XXX" "X"
+      false? 653 "XX" "X")))
+
 (deftest alt-exon-ranges-test
   ;; 1 [2 3 4] 5 6 7 [8 9 10 11] 12 13 14 15
   (are [p r a e] (= (#'prot/alt-exon-ranges [[2 4] [8 11]] p r a) e)
@@ -15,10 +26,10 @@
     2 "XX" "X" [[2 3] [7 10]]
     3 "XX" "X" [[2 3] [7 10]]
     6 "XX" "X" [[2 4] [7 10]]
-    9 "XXX" "XXX" [[2 4] [8 11]])
+    9 "XXX" "YYY" [[2 4] [8 11]])
   ;; Variants overlapping a boundary of exon/intron
   (are [p r a] (nil? (#'prot/alt-exon-ranges [[2 4] [8 11]] p r a))
-    3 "XXX" "XXX"
+    3 "XXX" "YYY"
     6 "XXX" "X"
     3 "XXX" "X"
     1 "XXXXX" "X"))
@@ -105,6 +116,36 @@
     (are [p pos] (= (#'prot/get-pos-exon-end-tuple pos exon-ranges) p)
       [15 20] 15
       [5 10] 5)))
+
+(deftest include-utr-ini-site-boundary?-test
+  (let [forward-rg {:strand :forward
+                    :cds-start 10
+                    :cds-end 20}
+        reverse-rg {:strand :reverse
+                    :cds-start 10
+                    :cds-end 20}]
+    (are [p rg pos ref alt] (p (#'prot/include-utr-ini-site-boundary? rg pos ref alt))
+      true? forward-rg 8 "CCAT" "C"
+      true? forward-rg 9 "CAT" "GGG"
+      false? forward-rg 9 "CAT" "C"
+      true? reverse-rg 18 "CATGG" "C"
+      true? reverse-rg 20 "TGG" "ACC"
+      false? reverse-rg 20 "TGG" "T")))
+
+(deftest include-ter-site?-test
+  (let [forward-rg {:strand :forward
+                    :cds-start 10
+                    :cds-end 20}
+        reverse-rg {:strand :reverse
+                    :cds-start 10
+                    :cds-end 20}]
+    (are [p rg pos ref alt] (p (#'prot/include-ter-site? rg pos ref alt))
+      true? forward-rg 17 "ATG" "A"
+      true? forward-rg 20 "AG" "CC"
+      false? forward-rg 20 "AAT" "A"
+      true? reverse-rg 9 "TT" "T"
+      true? reverse-rg 10 "ACT" "G"
+      false? reverse-rg 8 "AG" "A")))
 
 (deftest ter-site-same-pos?-test
   (are [p ref alt] (p (#'prot/ter-site-same-pos? ref alt))
