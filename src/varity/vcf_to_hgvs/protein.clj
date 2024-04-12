@@ -399,9 +399,10 @@
                            (->> (seq ins) (map mut/->long-amino-acid)))))
 
 (defn- protein-indel
-  [ppos pref palt {:keys [ref-prot-seq c-ter-adjusted-alt-prot-seq ref-include-ter-site]}]
+  [ppos pref palt {:keys [ref-prot-seq c-ter-adjusted-alt-prot-seq ref-include-ter-site] :as seq-info}]
   (let [[pref palt ppos] (if ref-include-ter-site
-                           (let [{:keys [ppos]} (get-first-diff-aa-info ppos ref-prot-seq c-ter-adjusted-alt-prot-seq)
+                           (let [{adjusted-ppos :ppos} (get-first-diff-aa-info ppos ref-prot-seq c-ter-adjusted-alt-prot-seq)
+                                 ppos (or adjusted-ppos ppos)
                                  get-seq-between-pos-ter-site (fn [seq pos]
                                                                 (-> (subs seq (dec pos))
                                                                     (string/split #"\*")
@@ -415,7 +416,17 @@
         alt-retain-ter-site? (if ref-include-ter-site
                                (string/includes? (subs c-ter-adjusted-alt-prot-seq (dec ppos)) "*")
                                true)]
-    (if alt-retain-ter-site?
+    (cond
+      (every? empty? [del ins])
+      (mut/protein-no-effect)
+
+      (empty? del)
+      (protein-insertion ppos pref palt seq-info)
+
+      (empty? ins)
+      (protein-deletion ppos pref palt)
+
+      alt-retain-ter-site?
       (mut/protein-indel (mut/->long-amino-acid (first del))
                          (coord/protein-coordinate (+ ppos offset))
                          (when (> ndel 1)
@@ -423,6 +434,7 @@
                          (when (> ndel 1)
                            (coord/protein-coordinate (+ ppos offset ndel -1)))
                          (->> (seq ins) (map mut/->long-amino-acid)))
+      :else
       (mut/protein-unknown-mutation))))
 
 (defn- protein-repeated-seqs
