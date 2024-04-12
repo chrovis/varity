@@ -199,7 +199,7 @@
         ref-up-exon-seq (read-exon-sequence seq-rdr chr tx-start (dec cds-start) exon-ranges)
         alt-up-exon-seq (make-alt-up-exon-seq ref-up-exon-seq cds-start pos ref alt)
         ref-down-exon-seq (read-exon-sequence seq-rdr chr (inc cds-end) tx-end exon-ranges)
-        alt-down-exon-seq (make-alt-down-exon-seq ref-down-exon-seq cds-start pos ref alt)
+        alt-down-exon-seq (make-alt-down-exon-seq ref-down-exon-seq cds-end pos ref alt)
         alt-exon-seq (exon-sequence alt-seq cds-start alt-exon-ranges*)
         ter-site-adjusted-alt-seq (make-ter-site-adjusted-alt-seq alt-exon-seq alt-up-exon-seq alt-down-exon-seq
                                                                   strand cds-start cds-end pos ref)
