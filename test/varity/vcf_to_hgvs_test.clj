@@ -203,7 +203,7 @@
         "chr1" 247815239 "AAGG" "A" '("p.S163del") ; cf. rs35979231 (-)
         "chr2" 29223408 "AAGCAGT" "A" '("p.Y1096_C1097del") ; cf. rs776101205 (-)
         "chr11" 108259071 "GT" "G" '("p.L822*") ; https://github.com/chrovis/varity/issues/49
-        "chr17" 7676206 "TGAACCATTGTTCAATATCGTCCGGGGACAGCATCAAATCATCCATTGCTTGGGACGGCAAGGGG" "T" '("p.P34Lfs*68" "p.M1ext-78" "p.M1ext-39") ; https://mutalyzer.nl/normalizer/NC_000017.11:g.7676209_7676272del
+        "chr17" 7676206 "TGAACCATTGTTCAATATCGTCCGGGGACAGCATCAAATCATCCATTGCTTGGGACGGCAAGGGG" "T" '("p.P34Lfs*68" "p.M1ext-50" "p.M1ext-11") ; https://mutalyzer.nl/normalizer/NC_000017.11:g.7676209_7676272del
 
         ;; Duplication
         "chr2" 26254257 "G" "GACT" '("p.T2dup") ; cf. rs3839049 (+)
@@ -255,6 +255,7 @@
         "chr7" 55181874 "TGAT" "T" '("p.=") ; not actual example (+)
         "chr7" 55181876 "A" "AGGT" '("p.=") ; not actual example (+)
         "chr3" 149520808 "C" "CTTAA" '("p.=") ; not actual example (-)
+        "chr17" 80090386 "CAGCACGTGCATGAACAACACAGGACACACACAGCACGTGCATGAACAACACAGGACACACACA" "C" '("p.=") ; not actural example (+)
 
         ;; unknown
         "chr12" 40393453 "G" "A" '("p.?") ; not actual example (+)
