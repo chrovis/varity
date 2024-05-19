@@ -256,6 +256,7 @@
         "chr7" 55181876 "A" "AGGT" '("p.=") ; not actual example (+)
         "chr3" 149520808 "C" "CTTAA" '("p.=") ; not actual example (-)
         "chr17" 80090386 "CAGCACGTGCATGAACAACACAGGACACACACAGCACGTGCATGAACAACACAGGACACACACA" "C" '("p.=") ; not actural example (+)
+        "chr11" 14279340 "G" "A" '("p.=") ; not actual example (-)
 
         ;; unknown
         "chr12" 40393453 "G" "A" '("p.?") ; not actual example (+)

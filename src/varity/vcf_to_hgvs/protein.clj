@@ -318,7 +318,9 @@
                                                      pref-only
                                                      palt-only)
           t (cond
-              (= (+ base-ppos offset) (count ref-prot-seq)) :extension
+              (= (+ base-ppos offset) (count ref-prot-seq)) (if (= "" pref-only palt-only)
+                                                              :no-effect
+                                                              :extension)
               (= (+ base-ppos offset) 1) (if (= ref-prot-rest alt-prot-rest)
                                            :extension
                                            :frame-shift)
