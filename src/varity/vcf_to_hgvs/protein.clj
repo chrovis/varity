@@ -268,12 +268,17 @@
 
 (defn- get-first-diff-aa-info
   [pos ref-seq alt-seq]
-  (let [[ref-only alt-only offset _] (diff-bases ref-seq alt-seq (dec pos))]
+  (let [alt-seq* (subs alt-seq 0 (min (count ref-seq) (count alt-seq)))
+        [ref-only alt-only offset _] (diff-bases ref-seq alt-seq* (dec pos))]
     (when (and (seq ref-only)
                (seq alt-only))
       {:ppos (+ pos offset)
        :pref (str (first ref-only))
        :palt (str (first alt-only))})))
+
+(defn- first-diff-aa-is-ter-site?
+  [pos ref-seq alt-seq]
+  (= "*" (:pref (get-first-diff-aa-info pos ref-seq alt-seq))))
 
 (defn- ->protein-variant
   [{:keys [strand] :as rg} pos ref alt
@@ -331,6 +336,9 @@
                                                             (= palt (subs pref 0 (count palt))))
                                                        (= (first palt-only) \*)) :fs-ter-substitution
                                                    ref-include-ter-site :indel
+                                                   (first-diff-aa-is-ter-site? ppos
+                                                                               ref-prot-seq
+                                                                               alt-prot-seq*) :extension
                                                    :else :frame-shift)
               (or (and (zero? nprefo) (zero? npalto))
                   (and (= nprefo 1) (= npalto 1))) :substitution
@@ -483,27 +491,33 @@
                                  (coord/unknown-coordinate))))))
 
 (defn- protein-extension
-  [ppos pref palt {:keys [ref-prot-seq alt-prot-seq alt-tx-prot-seq c-ter-adjusted-alt-prot-seq ini-offset]}]
+  [ppos pref palt {:keys [ref-prot-seq alt-tx-prot-seq c-ter-adjusted-alt-prot-seq ini-offset] :as seq-info}]
   (if (and (not= ppos 1)
            (ter-site-same-pos? ref-prot-seq c-ter-adjusted-alt-prot-seq))
     (mut/protein-no-effect)
     (let [[_ ins offset _] (diff-bases pref palt)
+          alt-prot-seq* (format-alt-prot-seq seq-info)
+          first-diff-aa-info (if (= ppos 1)
+                               {:ppos 1
+                                :pref "M"}
+                               (get-first-diff-aa-info ppos
+                                                       ref-prot-seq
+                                                       alt-prot-seq*))
           rest-seq (if (= ppos 1)
                      (-> alt-tx-prot-seq
                          (subs 0 ini-offset)
                          reverse
                          (#(apply str %)))
-                     (-> alt-tx-prot-seq
-                         (subs (+ ini-offset (count alt-prot-seq)))))
-          ter-site (some-> (string/index-of rest-seq (if (= ppos 1) "M" "*")) inc)]
+                     (subs alt-prot-seq* (:ppos first-diff-aa-info)))
+          new-aa-pos (some-> (string/index-of rest-seq (:pref first-diff-aa-info)) inc)]
       (mut/protein-extension (if (= ppos 1) "Met" "Ter")
                              (coord/protein-coordinate (if (= ppos 1) 1 (+ ppos offset)))
                              (mut/->long-amino-acid (if (= ppos 1)
                                                       (last ins)
-                                                      (or (last ins) (first rest-seq))))
+                                                      (:palt first-diff-aa-info)))
                              (if (= ppos 1) :upstream :downstream)
-                             (if ter-site
-                               (coord/protein-coordinate ter-site)
+                             (if new-aa-pos
+                               (coord/protein-coordinate new-aa-pos)
                                (coord/unknown-coordinate))))))
 
 (defn- mutation
