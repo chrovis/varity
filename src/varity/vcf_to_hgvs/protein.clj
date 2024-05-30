@@ -278,9 +278,7 @@
 
 (defn- first-diff-aa-is-ter-site?
   [pos ref-seq alt-seq]
-  (-> (get-first-diff-aa-info pos ref-seq alt-seq)
-      :pref
-      (= "*")))
+  (= "*" (:pref (get-first-diff-aa-info pos ref-seq alt-seq))))
 
 (defn- ->protein-variant
   [{:keys [strand] :as rg} pos ref alt
