@@ -174,6 +174,15 @@
       {:ppos 6 :pref "F" :palt "G"} "ABCDEG" 4
       {:ppos 13 :pref "M" :palt "K"} "ACBDEFGHIJKLK" 10)))
 
+(deftest first-diff-aa-is-ter-site?-test
+  (let [ref-seq "ABCDEFGHIJKLM*"]
+    (are [pred alt-seq pos] (pred (#'prot/first-diff-aa-is-ter-site? pos
+                                                                     ref-seq
+                                                                     alt-seq))
+      false? "ABCDEG" 1
+      true? "ABCDEFGHIJKLMNO" 1
+      true? "ABCDEFGHIJKLMNO*" 1)))
+
 (def ref-gene-EGFR
   {:bin 125
    :name "NM_005228"

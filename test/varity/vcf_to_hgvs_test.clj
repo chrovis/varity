@@ -244,6 +244,7 @@
         "chr2" 188974490 "A" "C" '("p.M1Lext-23")
         "chr2" 189011772 "T" "C" '("p.*1467Qext*45") ; cf. ClinVar 101338
         "chr11" 125655318 "TGA" "TAT" '("p.*477Yext*17" "p.*443Yext*17" "p.*477Yext*24")
+        "chr10" 8074014 "C" "CATGGGTT" '("p.*445Yext*64" "p.*444Yext*64") ; not actual example (+)
         ;; NOTE: There are very few correct examples...
 
         ;; Extension without termination site
