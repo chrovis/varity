@@ -467,7 +467,7 @@
   [ppos {:keys [ref-prot-seq alt-prot-seq ref-include-utr-ini-site-boundary] :as seq-info}]
   (let [{:keys [ppos pref palt]} (get-first-diff-aa-info ppos ref-prot-seq alt-prot-seq)
         [_ _ offset _] (diff-bases pref palt)
-        alt-prot-seq (format-alt-prot-seq seq-info)
+        alt-prot-seq* (format-alt-prot-seq seq-info)
         ref (nth ref-prot-seq (dec (+ ppos offset)))
         alt (nth alt-prot-seq (dec (+ ppos offset)))
         ter-site (-> seq-info
@@ -476,7 +476,7 @@
                      (string/index-of "*"))]
     (cond
       (or ref-include-utr-ini-site-boundary
-          (not (string/starts-with? alt-prot-seq "M")))
+          (not= (first ref-prot-seq) (first alt-prot-seq*)))
       (mut/protein-unknown-mutation)
 
       (= alt \*)
@@ -497,9 +497,10 @@
     (mut/protein-no-effect)
     (let [[_ ins offset _] (diff-bases pref palt)
           alt-prot-seq* (format-alt-prot-seq seq-info)
+          ini-site ((comp str first) ref-prot-seq)
           first-diff-aa-info (if (= ppos 1)
                                {:ppos 1
-                                :pref "M"}
+                                :pref ini-site}
                                (get-first-diff-aa-info ppos
                                                        ref-prot-seq
                                                        alt-prot-seq*))
@@ -510,7 +511,7 @@
                          (#(apply str %)))
                      (subs alt-prot-seq* (:ppos first-diff-aa-info)))
           new-aa-pos (some-> (string/index-of rest-seq (:pref first-diff-aa-info)) inc)]
-      (mut/protein-extension (if (= ppos 1) "Met" "Ter")
+      (mut/protein-extension (if (= ppos 1) (mut/->long-amino-acid ini-site) "Ter")
                              (coord/protein-coordinate (if (= ppos 1) 1 (+ ppos offset)))
                              (mut/->long-amino-acid (if (= ppos 1)
                                                       (last ins)

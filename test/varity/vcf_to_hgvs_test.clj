@@ -235,6 +235,7 @@
         "chr1" 16138274 "CG" "C" '("p.R327Dfs*66")
         ;; initiation site is affected in DNA level but initiation site is not changed in protein level
         "chr7" 55019279 "TGC" "T" '("p.R2Tfs*34") ; not actual example (+)
+        "chr11" 32396363 "C" "CGACCGTACAA" '("p.A170Cfs*6" "p.A153Cfs*6" "p.A365Cfs*6" "p.A382Cfs*6") ; not actual example (-)
 
         ;; Frame shift without termination site
         "chr17" 81537070 "G" "GTA" '("p.W514Cfs*?" "p.W490Cfs*?") ; not actual example (+)
