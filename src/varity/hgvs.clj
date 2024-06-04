@@ -9,7 +9,9 @@
   [{:prefer-deletion? false}
    {:prefer-deletion? true}
    {:prefer-insertion? false}
-   {:prefer-insertion? true}])
+   {:prefer-insertion? true}
+   {:prefer-extension-for-initial-codon-alt? false}
+   {:prefer-extension-for-initial-codon-alt? true}])
 
 (defn- dispatch
   [ref-seq ref-gene]

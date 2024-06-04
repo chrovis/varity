@@ -283,7 +283,7 @@
 (defn- ->protein-variant
   [{:keys [strand] :as rg} pos ref alt
    {:keys [ref-exon-seq ref-prot-seq alt-exon-seq alt-rg ref-include-ter-site] :as seq-info}
-   {:keys [prefer-deletion? prefer-insertion?]}]
+   {:keys [prefer-deletion? prefer-insertion? prefer-extension-for-initial-codon-alt?]}]
   (cond
     (= ref-exon-seq alt-exon-seq)
     {:type :no-effect, :pos 1, :ref nil, :alt nil}
@@ -326,7 +326,9 @@
               (= (+ base-ppos offset) (count ref-prot-seq)) (if (= "" pref-only palt-only)
                                                               :no-effect
                                                               :extension)
-              (= (+ base-ppos offset) 1) (if (= ref-prot-rest alt-prot-rest)
+              (= (+ base-ppos offset) 1) (if (or (= ref-prot-rest alt-prot-rest)
+                                                 (and prefer-extension-for-initial-codon-alt?
+                                                      (not= (first ref-prot-seq) (first alt-prot-seq*))))
                                            :extension
                                            :frame-shift)
               (and (pos? nprefo) (= (first palt-only) \*)) :substitution

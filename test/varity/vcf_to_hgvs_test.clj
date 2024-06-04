@@ -266,6 +266,7 @@
         ;; unknown because variant affects utr/initiation site boundary
         ;; e.g. NM_007298:c.-19_80del from BRCA Share
         "chr17" 43124016 "CCAGATGGGACACTCTAAGATTTTCTGCATAGCATTAATGACATTTTGTACTTCTTCAACGCGAAGAGCAGATAAATCCATTTCTTTCTGTTCCAATGAA" "C" '("p.?")
+        "chr2" 197434979 "AGTCTTGGCGATCTTCGCCATTTT" "A" '("p.?")
 
         ;; unknwon because first amino acid of alt-prot-seq is M but variant affects utr/initiation site boundary in DNA level
         "chr7" 55019277 "GATGCGA" "ATG" '("p.?") ; not actual example (+)
@@ -292,7 +293,10 @@
         "chr1" 47438996 "T" "TCCGCAC" {:prefer-insertion? true} '("p.H293_A294insPH")
 
         ;; prefer-insertion?, not actual example (+)
-        "chr1" 26773690 "C" "CGCAGCA" {:prefer-insertion? true} '("p.Q1334_R1335insQQ"))))
+        "chr1" 26773690 "C" "CGCAGCA" {:prefer-insertion? true} '("p.Q1334_R1335insQQ")
+
+        ;; prefer-extension-for-initial-codon-alt?, not actual example (-)
+        "chr2" 197434979 "AGTCTTGGCGATCTTCGCCATTTT" "A" {:prefer-extension-for-initial-codon-alt? true} '("p.M1Sext-?"))))
 
   (cavia-testing "throws Exception if inputs are illegal"
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
