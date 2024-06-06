@@ -69,6 +69,7 @@
 (def ^:private default-options
   {:prefer-deletion? false
    :prefer-insertion? false
+   :prefer-extension-for-initial-codon-alt? false
    :tx-margin 5000
    :verbose? false})
 
@@ -160,6 +161,9 @@
     :prefer-insertion? Prefer insertion (e.g. \"c.H9_L10insRPH\") to repeated
                        sequences (e.g. \"c.R4_H6[3]\"), default false.
 
+    :prefer-extension-for-initial-codon-alt? Prefer extension to protein unknown variant
+                                             that affects initial codon, default false.
+
     :verbose?          Print debug information, default false."
   {:arglists '([variant ref-seq ref-gene]
                [variant ref-seq ref-gene options])}
@@ -229,6 +233,9 @@
 
     :prefer-insertion? Prefer insertion (e.g. \"c.9_10insAGG\") to repeated
                        sequences (e.g. \"c.4_6[3]\"), default false.
+
+    :prefer-extension-for-initial-codon-alt? Prefer extension to protein unknown variant
+                                             that affects initial codon, default false.
 
     :tx-margin         The length of transcription margin, up to a maximum of
                        10000, default 5000.
