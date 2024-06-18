@@ -62,8 +62,8 @@
      (hgvs->vcf-variants hgvs gene seq-rdr rgidx))))
 
 (defmethod hgvs->vcf-variants :ref-gene-index
-  ([hgvs seq-rdr rgidx] (hgvs->vcf-variants hgvs nil seq-rdr rgidx))
-  ([{:keys [kind transcript] :as hgvs} gene seq-rdr rgidx]
+  ([hgvs seq-rdr gaidx] (hgvs->vcf-variants hgvs nil seq-rdr gaidx))
+  ([{:keys [kind transcript] :as hgvs} gene seq-rdr gaidx]
    (let [convert (case kind
                    :coding-dna coding-dna-hgvs->vcf-variants
                    :protein protein-hgvs->vcf-variants
@@ -71,9 +71,9 @@
                                    {:type ::unsupported-hgvs-kind
                                     :hgvs-kind kind})))
          rgs (if (supported-transcript? transcript)
-               (rg/ref-genes (str transcript) rgidx)
+               (rg/ref-genes (str transcript) gaidx)
                (if-not (string/blank? gene)
-                 (rg/ref-genes gene rgidx)
+                 (rg/ref-genes gene gaidx)
                  (throw (ex-info "Transcript (NM_, NR_, ENST, ENSP) or gene must be supplied."
                                  {:type ::ref-gene-clue-not-found}))))]
      (if (seq rgs)
@@ -115,9 +115,9 @@
      (protein-hgvs->vcf-variants-with-coding-dna-hgvs hgvs gene seq-rdr rgidx))))
 
 (defmethod protein-hgvs->vcf-variants-with-coding-dna-hgvs :ref-gene-index
-  ([hgvs seq-rdr rgidx] (protein-hgvs->vcf-variants-with-coding-dna-hgvs nil seq-rdr rgidx))
-  ([hgvs gene seq-rdr rgidx]
+  ([hgvs seq-rdr gaidx] (protein-hgvs->vcf-variants-with-coding-dna-hgvs nil seq-rdr gaidx))
+  ([hgvs gene seq-rdr gaidx]
    {:pre [(= (:kind hgvs) :protein)]}
-   (->> (rg/ref-genes gene rgidx)
+   (->> (rg/ref-genes gene gaidx)
         (keep #(prot/->vcf-variants-with-coding-dna-hgvs hgvs seq-rdr %))
         (apply concat))))

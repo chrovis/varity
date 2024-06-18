@@ -288,15 +288,15 @@
 (defn ref-genes
   "Searches refGene entries with ref-seq, gene or (chr, pos) using index,
   returning results as sequence. See also varity.ref-gene/index."
-  ([s rgidx]
-   (lookup rgidx (if (re-find #"^ENST|^(NC|LRG|NG|NM|NR|NP)_" s)
+  ([s gaidx]
+   (lookup gaidx (if (re-find #"^ENST|^(NC|LRG|NG|NM|NR|NP)_" s)
                    [:ref-seq s]
                    [:gene s])))
-  ([chr pos rgidx] (ref-genes chr pos rgidx 0))
-  ([chr pos rgidx tx-margin]
+  ([chr pos gaidx] (ref-genes chr pos gaidx 0))
+  ([chr pos gaidx tx-margin]
    {:pre [(<= 0 tx-margin max-tx-margin)]}
    (let [pos-r (round-int pos pos-index-block)]
-     (->> (lookup rgidx [:locus
+     (->> (lookup gaidx [:locus
                          (normalize-chromosome-key chr)
                          [pos-r (+ pos-r pos-index-block)]])
           (filter (fn [{:keys [tx-start tx-end]}]
@@ -304,8 +304,8 @@
 
 (defn in-any-exon?
   "Returns true if chr:pos is located in any ref-gene exon, else false."
-  [chr pos rgidx]
-  (->> (ref-genes chr pos rgidx)
+  [chr pos gaidx]
+  (->> (ref-genes chr pos gaidx)
        (some #(in-exon? pos %))
        (true?)))
 
@@ -385,12 +385,12 @@
 
 (defn seek-gene-region
   "Seeks chr:pos through exon entries in refGene and returns those indices"
-  ([chr pos rgidx]
-   (seek-gene-region chr pos rgidx nil))
-  ([chr pos rgidx name]
+  ([chr pos gaidx]
+   (seek-gene-region chr pos gaidx nil))
+  ([chr pos gaidx name]
    (->> (if name
-          (ref-genes name rgidx)
-          (ref-genes chr pos rgidx))
+          (ref-genes name gaidx)
+          (ref-genes chr pos gaidx))
         (map (fn [rg]
                (let [sgn (case (:strand rg)
                            :forward identity
