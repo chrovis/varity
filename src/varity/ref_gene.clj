@@ -271,7 +271,12 @@
   [rgs]
   (group-by :name2 rgs))
 
-(defrecord RefGeneIndex [locus ref-seq gene])
+(defprotocol GeneAnnotationIndex
+  (lookup [this ks] "Returns ref-gene records specified by the ks."))
+
+(defrecord RefGeneIndex [locus ref-seq gene]
+  GeneAnnotationIndex
+  (lookup [this ks] (get-in this ks)))
 
 (defn index
   "Creates refGene index for search."
@@ -284,14 +289,14 @@
   "Searches refGene entries with ref-seq, gene or (chr, pos) using index,
   returning results as sequence. See also varity.ref-gene/index."
   ([s rgidx]
-   (get-in rgidx (if (re-find #"^ENST|^(NC|LRG|NG|NM|NR|NP)_" s)
+   (lookup rgidx (if (re-find #"^ENST|^(NC|LRG|NG|NM|NR|NP)_" s)
                    [:ref-seq s]
                    [:gene s])))
   ([chr pos rgidx] (ref-genes chr pos rgidx 0))
   ([chr pos rgidx tx-margin]
    {:pre [(<= 0 tx-margin max-tx-margin)]}
    (let [pos-r (round-int pos pos-index-block)]
-     (->> (get-in rgidx [:locus
+     (->> (lookup rgidx [:locus
                          (normalize-chromosome-key chr)
                          [pos-r (+ pos-r pos-index-block)]])
           (filter (fn [{:keys [tx-start tx-end]}]
