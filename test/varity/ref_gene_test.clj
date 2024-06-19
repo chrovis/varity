@@ -185,7 +185,15 @@
       "KRAS" ["ENST00000311936.8" "ENSP00000000001.8"]
 
       "FOO" '()
-      "ENSP00000000001.8" '())))
+      "ENSP00000000001.8" '()))
+
+  (testing "ref-genes can handle GeneAnnotationIndex"
+    (let [gene-annotation {:name2 "KRAS" :tx-start 100 :tx-end 200}
+          index (reify rg/GeneAnnotationIndex
+                  (lookup [_ _] [gene-annotation]))]
+      (is (= [gene-annotation] (rg/ref-genes "gene-name" index)))
+      (is (= [gene-annotation] (rg/ref-genes "chr" 100 index)))
+      (is (= [gene-annotation] (rg/ref-genes "chr" 100 index 10))))))
 
 (defslowtest regions-slow
   (cavia-testing "region-tests"
