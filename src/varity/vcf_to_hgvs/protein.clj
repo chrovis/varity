@@ -187,7 +187,9 @@
                 apply-offset*))]
     (or (apply-offset* [[pos* pos*]])
         (and ref-include-ter-site (apply-ter-site-offset pos*))
-        (some (fn [[_ e]] (when (<= e pos*) e)) (reverse exon-ranges)))))
+        (some (fn [[_ e]] (when (<= e pos*) e)) (reverse exon-ranges))
+        (let [[s e] (first exon-ranges)] (when (<= s pos* e) pos*))
+        (let [[s e] (last exon-ranges)] (when (<= s pos* e) pos*)))))
 
 (defn- read-sequence-info
   [seq-rdr rg pos ref alt]
