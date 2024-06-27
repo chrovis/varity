@@ -268,6 +268,10 @@
         "chr17" 43124016 "CCAGATGGGACACTCTAAGATTTTCTGCATAGCATTAATGACATTTTGTACTTCTTCAACGCGAAGAGCAGATAAATCCATTTCTTTCTGTTCCAATGAA" "C" '("p.?")
         "chr2" 197434979 "AGTCTTGGCGATCTTCGCCATTTT" "A" '("p.?")
 
+        ;; unknown because variant affects initiation site
+        "chr11" 118436512 "CATG" "C" '("p.?")
+        "chrX" 48791109 "CATG" "C" '("p.?")
+
         ;; unknwon because first amino acid of alt-prot-seq is M but variant affects utr/initiation site boundary in DNA level
         "chr7" 55019277 "GATGCGA" "ATG" '("p.?") ; not actual example (+)
 
