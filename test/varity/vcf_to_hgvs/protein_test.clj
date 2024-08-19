@@ -44,7 +44,7 @@
     false? "T" "A" ; substitution
     true? "TAGTCTA" "T" ; deletion
     false? "T" "TGTGATC" ; insertion
-    true? "C" "GTCATCC" ; delins
+    true? "T" "GTCATCC" ; delins
     true? "ATC" "CATGCAT" ; delins
     ))
 
@@ -53,7 +53,7 @@
     false? "T" "A" ; substitution
     false? "TAGTCTA" "T" ; deletion
     true? "T" "TGTGATC" ; insertion
-    false? "C" "GTCATCC" ; delins
+    false? "T" "GTCATCC" ; delins
     false? "ATC" "CATGCAT" ; delins
     ))
 

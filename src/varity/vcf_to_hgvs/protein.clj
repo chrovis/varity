@@ -93,9 +93,11 @@
 
 (defn- is-deletion-variant?
   [ref alt]
-  (or (and (not= 1 (count ref)) (= 1 (count alt)))
-      (and (not= 1 (count ref) (count alt))
-           (not= (first ref) (first alt)))))
+  (let [[del ins offset _] (diff-bases ref alt)
+        ndel (count del)
+        nins (count ins)]
+    (and (<= 1 ndel) (or (= offset 1)
+                         (not= 1 ndel nins)))))
 
 (defn- is-insertion-variant?
   [ref alt]
