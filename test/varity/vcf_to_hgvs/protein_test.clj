@@ -48,6 +48,15 @@
     true? "ATC" "CATGCAT" ; delins
     ))
 
+(deftest is-insertion-variant?-test
+  (are [p ref alt] (p (#'prot/is-insertion-variant? ref alt))
+    false? "T" "A" ; substitution
+    false? "TAGTCTA" "T" ; deletion
+    true? "T" "TGTGATC" ; insertion
+    false? "C" "GTCATCC" ; delins
+    false? "ATC" "CATGCAT" ; delins
+    ))
+
 (deftest cds-start-upstream-to-cds-variant?-test
   (are [p cds-start pos ref] (p (#'prot/cds-start-upstream-to-cds-variant? cds-start pos ref))
     true? 100 99 "TCGA"
@@ -153,6 +162,35 @@
     true? "MTGA*" "MTGA*CT"
     false? "MTGA*" "MTGAQCT*"
     false? "MTGA*" "MTGA"))
+
+(deftest utr-variant?-test
+  (let [cds-start 10
+        cds-end 21]
+    (are [p pos ref alt] (p (#'prot/utr-variant? cds-start cds-end pos ref alt))
+      ;; cds-start upstream
+      true? 9 "G" "T"
+      true? 9 "G" "GA"
+      true? 8 "GT" "G"
+      true? 9 "A" "TCG"
+      true? 8 "GT" "AGA"
+      false? 10 "A" "T"
+      false? 10 "A" "AT"
+      false? 10 "ATG" "A"
+      false? 10 "A" "TCG"
+      false? 9 "GAT" "AGA"
+
+      ;; cds-end downstream
+      true? 22 "G" "T"
+      true? 21 "A" "AT"
+      true? 21 "AT" "A"
+      true? 22 "G" "ATC"
+      true? 22 "GTC" "AGA"
+      false? 21 "A" "T"
+      false? 20 "A" "AG"
+      false? 20 "AA" "A"
+      false? 21 "A" "GCT"
+      false? 21 "ATA" "CG"
+      )))
 
 (deftest apply-offset-test
   (let [pos 100

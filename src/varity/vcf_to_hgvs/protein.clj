@@ -97,6 +97,13 @@
       (and (not= 1 (count ref) (count alt))
            (not= (first ref) (first alt)))))
 
+(defn- is-insertion-variant?
+  [ref alt]
+  (let [[del ins offset _] (diff-bases ref alt)
+        ndel (count del)
+        nins (count ins)]
+    (and (= ndel 0) (<= 1 nins) (= offset 1))))
+
 (defn- cds-start-upstream-to-cds-variant?
   [cds-start pos ref]
   (and (< pos cds-start)
@@ -177,6 +184,31 @@
   (let [ter-site-pos (dec (count ref-prot-seq))]
     (= \* (get alt-prot-seq ter-site-pos))))
 
+(defn- cds-start-upstream?
+  [cds-start pos ref alt]
+  (let [[del _ offset _] (diff-bases ref alt)
+        ndel (count del)
+        pos (+ pos offset)
+        pos-end (+ pos (if (= ndel 0) 0 (dec ndel)))]
+    (if (is-insertion-variant? ref alt)
+      (<= pos cds-start)
+      (<= pos pos-end (dec cds-start)))))
+
+(defn- cds-end-downstream?
+  [cds-end pos ref alt]
+  (let [[del _ offset _] (diff-bases ref alt)
+        ndel (count del)
+        pos (+ pos offset)
+        pos-end (+ pos (if (= ndel 0) 0 (dec ndel)))]
+    (if (is-insertion-variant? ref alt)
+      (< cds-end pos)
+      (<= (inc cds-end) pos pos-end))))
+
+(defn- utr-variant?
+  [cds-start cds-end pos ref alt]
+  (or (cds-start-upstream? cds-start pos ref alt)
+      (cds-end-downstream? cds-end pos ref alt)))
+
 (defn- apply-offset
   [pos ref alt exon-ranges ref-include-ter-site pos*]
   (letfn [(apply-offset* [exon-ranges*]
@@ -232,7 +264,8 @@
                    (update :tx-end apply-offset*)))
      :ref-include-utr-ini-site-boundary ref-include-utr-ini-site-boundary
      :ref-include-ter-site ref-include-ter-site
-     :overlap-exon-intron-boundary (overlap-exon-intron-boundary? exon-ranges pos ref alt)}))
+     :overlap-exon-intron-boundary (overlap-exon-intron-boundary? exon-ranges pos ref alt)
+     :utr-variant (utr-variant? cds-start cds-end pos ref alt)}))
 
 (defn- protein-position
   "Converts genomic position to protein position. If pos is outside of CDS,
@@ -284,10 +317,10 @@
 
 (defn- ->protein-variant
   [{:keys [strand] :as rg} pos ref alt
-   {:keys [ref-exon-seq ref-prot-seq alt-exon-seq alt-rg ref-include-ter-site] :as seq-info}
+   {:keys [ref-exon-seq ref-prot-seq alt-exon-seq alt-rg ref-include-ter-site utr-variant] :as seq-info}
    {:keys [prefer-deletion? prefer-insertion? prefer-extension-for-initial-codon-alt?]}]
   (cond
-    (= ref-exon-seq alt-exon-seq)
+    (or (= ref-exon-seq alt-exon-seq) utr-variant)
     {:type :no-effect, :pos 1, :ref nil, :alt nil}
 
     (:overlap-exon-intron-boundary seq-info)
