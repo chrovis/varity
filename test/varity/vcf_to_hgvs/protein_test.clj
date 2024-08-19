@@ -44,8 +44,8 @@
     false? "T" "A" ; substitution
     true? "TAGTCTA" "T" ; deletion
     false? "T" "TGTGATC" ; insertion
-    true? "T" "GTCATCC" ; delins
-    true? "ATC" "CATGCAT" ; delins
+    true? "AT" "AGTCATCC" ; indel
+    true? "GATC" "GCATGCAT" ; indel
     ))
 
 (deftest is-insertion-variant?-test
@@ -53,8 +53,8 @@
     false? "T" "A" ; substitution
     false? "TAGTCTA" "T" ; deletion
     true? "T" "TGTGATC" ; insertion
-    false? "T" "GTCATCC" ; delins
-    false? "ATC" "CATGCAT" ; delins
+    false? "AT" "AGTCATCC" ; indel
+    false? "GATC" "GCATGCAT" ; indel
     ))
 
 (deftest cds-start-upstream-to-cds-variant?-test
@@ -135,10 +135,10 @@
                     :cds-end 20}]
     (are [p rg pos ref alt] (p (#'prot/include-utr-ini-site-boundary? rg pos ref alt))
       true? forward-rg 8 "CCAT" "C"
-      true? forward-rg 9 "CAT" "GGG"
+      true? forward-rg 8 "CCAT" "CGGG"
       false? forward-rg 9 "CAT" "C"
       true? reverse-rg 18 "CATGG" "C"
-      true? reverse-rg 20 "TGG" "ACC"
+      true? reverse-rg 19 "ATGG" "AACC"
       false? reverse-rg 20 "TGG" "T")))
 
 (deftest include-ter-site?-test
@@ -150,10 +150,10 @@
                     :cds-end 20}]
     (are [p rg pos ref alt] (p (#'prot/include-ter-site? rg pos ref alt))
       true? forward-rg 17 "ATG" "A"
-      true? forward-rg 20 "AG" "CC"
+      true? forward-rg 19 "GAG" "GCC"
       false? forward-rg 20 "AAT" "A"
       true? reverse-rg 9 "TT" "T"
-      true? reverse-rg 10 "ACT" "G"
+      true? reverse-rg 9 "AACT" "AG"
       false? reverse-rg 8 "AG" "A")))
 
 (deftest ter-site-same-pos?-test
@@ -171,25 +171,25 @@
       true? 9 "G" "T"
       true? 9 "G" "GA"
       true? 8 "GT" "G"
-      true? 9 "A" "TCG"
-      true? 8 "GT" "AGA"
+      true? 8 "TA" "TTCG"
+      true? 7 "CGT" "CAGA"
       false? 10 "A" "T"
       false? 10 "A" "AT"
       false? 10 "ATG" "A"
-      false? 10 "A" "TCG"
-      false? 9 "GAT" "AGA"
+      false? 9 "TA" "TTCG"
+      false? 8 "CGAT" "CAGA"
 
       ;; cds-end downstream
       true? 22 "G" "T"
       true? 21 "A" "AT"
       true? 21 "AT" "A"
-      true? 22 "G" "ATC"
-      true? 22 "GTC" "AGA"
+      true? 21 "AG" "AATC"
+      true? 21 "CGTC" "CAGA"
       false? 21 "A" "T"
       false? 20 "A" "AG"
       false? 20 "AA" "A"
-      false? 21 "A" "GCT"
-      false? 21 "ATA" "CG"
+      false? 20 "GA" "GGCT"
+      false? 20 "TATA" "TCG"
       )))
 
 (deftest apply-offset-test
