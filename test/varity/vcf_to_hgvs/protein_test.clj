@@ -98,24 +98,27 @@
         upstream-seq "YYYYYY"
         downstream-seq "ZZZZZZ"
         [cds-start cds-end] [7 12]]
-    (are [p strand pos ref] (#'prot/make-ter-site-adjusted-alt-seq alt-seq
-                                                                   upstream-seq
-                                                                   downstream-seq
-                                                                   strand
-                                                                   cds-start
-                                                                   cds-end
-                                                                   pos
-                                                                   ref)
-      "XXXXXX" :forward 8 "XX"
-      "XXXXXX" :forward 5 "YY"
-      "XXXXXX" :forward 5 "YYX"
-      "XXXXXX" :forward 13 "ZZ"
-      "XXXXXXZZZZZZ" :forward 12 "XZZ"
-      "XXXXXX" :reverse 8 "XX"
-      "XXXXXX" :reverse 5 "YY"
-      "YYYYYYXXXXXX" :reverse 5 "YYX"
-      "XXXXXX" :reverse 13 "ZZ"
-      "XXXXXX" :reverse 12 "XZZ")))
+    (are [p strand pos ref ref-include-ter-site] (= p (#'prot/make-ter-site-adjusted-alt-seq alt-seq
+                                                                                             upstream-seq
+                                                                                             downstream-seq
+                                                                                             strand
+                                                                                             cds-start
+                                                                                             cds-end
+                                                                                             pos
+                                                                                             ref
+                                                                                             ref-include-ter-site))
+      "XXXXXX" :forward 8 "XX" false
+      "XXXXXX" :forward 5 "YY" false
+      "XXXXXX" :forward 5 "YYX" false
+      "XXXXXX" :forward 13 "ZZ" false
+      "XXXXXXZZZZZZ" :forward 10 "XX" true
+      "XXXXXXZZZZZZ" :forward 12 "XZZ" true
+      "YYYYYYXXXXXX" :reverse 8 "XX" true
+      "YYYYYYXXXXXX" :reverse 9 "XX" true
+      "XXXXXX" :reverse 5 "YY" false
+      "YYYYYYXXXXXX" :reverse 5 "YYX" true
+      "XXXXXX" :reverse 13 "ZZ" false
+      "XXXXXX" :reverse 12 "XZZ" false)))
 
 (deftest include-utr-ini-site-boundary?-test
   (let [forward-rg {:strand :forward

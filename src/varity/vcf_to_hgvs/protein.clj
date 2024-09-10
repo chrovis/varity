@@ -119,14 +119,16 @@
       (subs alt-down-exon-seq* 0 (- nalt-down-exon-seq (mod nalt-down-exon-seq 3))))))
 
 (defn- make-ter-site-adjusted-alt-seq
-  [alt-exon-seq alt-up-exon-seq alt-down-exon-seq strand cds-start cds-end pos ref]
+  [alt-exon-seq alt-up-exon-seq alt-down-exon-seq strand cds-start cds-end pos ref ref-include-ter-site]
   (cond
     (and (= strand :forward)
-         (cds-to-cds-end-downstream-variant? cds-end pos ref))
+         (or (cds-to-cds-end-downstream-variant? cds-end pos ref)
+             ref-include-ter-site))
     (str alt-exon-seq alt-down-exon-seq)
 
     (and (= strand :reverse)
-         (cds-start-upstream-to-cds-variant? cds-start pos ref))
+         (or (cds-start-upstream-to-cds-variant? cds-start pos ref)
+             ref-include-ter-site))
     (str alt-up-exon-seq alt-exon-seq)
 
     :else
@@ -256,7 +258,7 @@
           alt-up-exon-seq (make-alt-up-exon-seq alt-up-exon-seq tx-start (dec alt-cds-start) alt-exon-ranges* strand)
           alt-down-exon-seq (make-alt-down-exon-seq alt-down-exon-seq (inc alt-cds-end) alt-tx-end alt-exon-ranges* strand)
           ter-site-adjusted-alt-seq (make-ter-site-adjusted-alt-seq alt-cds-exon-seq alt-up-exon-seq alt-down-exon-seq
-                                                                    strand cds-start cds-end pos ref)]
+                                                                    strand cds-start cds-end pos ref ref-include-ter-site)]
       {:ref-exon-seq ref-cds-exon-seq
        :ref-prot-seq (codon/amino-acid-sequence (cond-> ref-cds-exon-seq
                                                   (= strand :reverse) util-seq/revcomp))
