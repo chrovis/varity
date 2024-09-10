@@ -150,12 +150,48 @@
       true? reverse-rg 9 "AACT" "AG"
       false? reverse-rg 8 "AG" "A")))
 
+(deftest ref-include-from-ter-start-and-over-ter-end?-test
+  (let [cds-start 10
+        cds-end 21]
+    (are [p strand pos ref alt] (p (#'prot/ref-include-from-ter-start-and-over-ter-end? {:strand strand
+                                                                                         :cds-start cds-start
+                                                                                         :cds-end cds-end}
+                                                                                        pos
+                                                                                        ref
+                                                                                        alt))
+      true? :forward 18 "ATAA" "A"
+      true? :forward 18 "ATAAG" "AGC"
+      true? :reverse 9 "GTCA" "G"
+      true? :reverse 8 "CGTCA" "CTG"
+      false? :forward 18 "A" "T"
+      false? :forward 19 "T" "TCCCT"
+      false? :forward 18 "ATA" "A"
+      false? :reverse 10 "T" "A"
+      false? :reverse 11 "C" "CATG"
+      false? :reverse 8 "CGTC" "C")))
+
 (deftest ter-site-same-pos?-test
   (are [p ref alt] (p (#'prot/ter-site-same-pos? ref alt))
     true? "MTGA*" "MTGA*"
     true? "MTGA*" "MTGA*CT"
     false? "MTGA*" "MTGAQCT*"
     false? "MTGA*" "MTGA"))
+
+(deftest cds-variant?-test
+  (let [cds-start 10
+        cds-end 21]
+    (are [p pos ref alt] (p (#'prot/cds-variant? cds-start cds-end pos ref alt))
+      true? 10 "A" "A"
+      true? 10 "A" "ACT"
+      true? 9 "GATG" "G"
+      true? 10 "ATG" "AGC"
+      true? 21 "A" "T"
+      true? 20 "A" "ATC"
+      true? 20 "AA" "A"
+      false? 8 "CGA" "CTT"
+      false? 9 "C" "CGGT"
+      false? 20 "AAG" "ATC"
+      false? 21 "A" "AGC")))
 
 (deftest utr-variant?-test
   (let [cds-start 10
@@ -184,6 +220,23 @@
       false? 20 "AA" "A"
       false? 20 "GA" "GGCT"
       false? 20 "TATA" "TCG")))
+
+(deftest frameshift-within-cds?-test
+  (let [cds-start 10
+        cds-end 21]
+    (are [p pos ref alt] (p (#'prot/frameshift-within-cds? {:cds-start cds-start
+                                                            :cds-end cds-end}
+                                                           pos
+                                                           ref
+                                                           alt))
+      true? 13 "T" "TC"
+      true? 15 "AGCTC" "A"
+      true? 18 "GC" "GGA"
+      false? 15 "A" "T"
+      false? 11 "T" "TGCT"
+      false? 10 "ATGGCTC" "A"
+      false? 8 "GTATG" "G"
+      false? 20 "GTAAC" "GCTTA")))
 
 (deftest get-alt-cds-start-pos-test
   (let [cds-start 40

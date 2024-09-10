@@ -221,8 +221,20 @@
         "chr2" 47445589 "CTTACTGAT" "CCC" '("p.L440_D442delinsP" "p.L374_D376delinsP") ; cf. rs63749931 (+)
         "chr1" 152111364 "TGC" "TCG" '("p.E617_Q618delinsDE") ; cf. rs35444647 (-)
 
-        ;; indel include stop codon deletion
+        ;; indel includes stop codon deletion
         "chr8" 116847497 "TCCTTATATAATATGGAACCTTGGTCCAGGTGTTGCGATGATGTCACTGTA" "T" '("p.Y617_I631delinsS")
+        "chr17" 43045678 "TCAGTAG" "T" '("p.H758delinsQLQPATGTEPQDPKNELTKWPFQALGAPLTLQSFYCPG"
+                                         "p.H1815delinsQLQPATGTEPQDPKNELTKWPFQALGAPLTLQSFYCPG"
+                                         "p.H1862delinsQLQPATGTEPQDPKNELTKWPFQALGAPLTLQSFYCPG"
+                                         "p.H1883delinsQLQPATGTEPQDPKNELTKWPFQALGAPLTLQSFYCPG") ; not actual example (-)
+        "chr17" 43045679 "CAGTAGT" "C" '("p.H758delinsRLQPATGTEPQDPKNELTKWPFQALGAPLTLQSFYCPG"
+                                         "p.H1815delinsRLQPATGTEPQDPKNELTKWPFQALGAPLTLQSFYCPG"
+                                         "p.H1862delinsRLQPATGTEPQDPKNELTKWPFQALGAPLTLQSFYCPG"
+                                         "p.H1883delinsRLQPATGTEPQDPKNELTKWPFQALGAPLTLQSFYCPG") ; not actual example (-)
+        "chr10" 87965467 "GTCT" "G" '("p.V403delinsGIFFYQEG" "p.V576delinsGIFFYQEG" "p.V206delinsGIFFYQEG") ; not actual example (+)
+        "chr10" 87965464 "AAAGTCT" "A" '("p.K402_V403delinsRIFFYQEG" "p.K575_V576delinsRIFFYQEG" "p.K205_V206delinsRIFFYQEG") ; not actual example (+)
+        "chr13" 24421120 "TAGC" "T" '("p.G1724delinsEVK") ; not actual example (-)
+        "chr13" 24421120 "TAGCCTT" "T" '("p.G1724delinsVK") ; not actual example (-)
 
         ;; repeated sequences
         "chr1" 47438996 "T" "TCCGCAC" '("p.P286_H287[5]") ; cf. rs3046924 (+)
@@ -236,6 +248,8 @@
                                           "p.S1415Ifs*2") ; https://github.com/chrovis/varity/issues/58
         "chr17" 31261816 "CC" "C" '("p.N1542Tfs*11" "p.N1563Tfs*11") ; cf. rs1555619041 (+)
         "chr1" 16138274 "CG" "C" '("p.R327Dfs*66")
+        "chr3" 149520807 "ACAGC" "A" '("p.W399Cfs*62") ; not actual example (-)
+
         ;; initiation site is affected in DNA level but initiation site is not changed in protein level
         "chr7" 55019279 "TGC" "T" '("p.R2Tfs*34") ; not actual example (+)
         "chr11" 32396363 "C" "CGACCGTACAA" '("p.A170Cfs*6" "p.A153Cfs*6" "p.A365Cfs*6" "p.A382Cfs*6") ; not actual example (-)
@@ -244,16 +258,32 @@
         "chr17" 81537070 "G" "GTA" '("p.W514Cfs*?" "p.W490Cfs*?") ; not actual example (+)
         "chr17" 9771493 "CCT" "C" '("p.E310Gfs*?" "p.E311Gfs*?") ; not actual example (-)
 
+        ;; Frame shift includes termination site deletion
+        "chr17" 43045679 "CAGTAG" "C" '("p.H758Qfs*16" "p.H1815Qfs*16" "p.H1862Qfs*16" "p.H1883Qfs*16") ;; not actual example (-)
+        "chr13" 24421120 "TAGCC" "T" '("p.G1724Kfs*8") ; not actual example (-)
+        "chr13" 24421120 "TAGCCT" "T" '("p.G1724Sfs*36") ; not actual example (-)
+        "chr13" 24421120 "TAGCCTTG" "T" '("p.Q1723Kfs*8") ; not actual example (-)
+        "chr10" 87965466 "AGTCT" "A" '("p.V403Efs*12" "p.V576Efs*12" "p.V206Efs*12") ; not actual example (+)
+        "chr10" 87965465 "AAGTCT" "A" '("p.V403Nfs*17" "p.V576Nfs*17" "p.V206Nfs*17") ; not actual example (+)
+        "chr10" 87965463 "AAAAGTCT" "A" '("p.K402Efs*12" "p.K575Efs*12" "p.K205Efs*12") ; not actual example (+)
+
         ;; Extension
         "chr2" 188974490 "A" "C" '("p.M1Lext-23")
         "chr2" 189011772 "T" "C" '("p.*1467Qext*45") ; cf. ClinVar 101338
         "chr11" 125655318 "TGA" "TAT" '("p.*477Yext*17" "p.*443Yext*17" "p.*477Yext*24")
         "chr10" 8074014 "C" "CATGGGTT" '("p.*445Yext*64" "p.*444Yext*64") ; not actual example (+)
+        "chr10" 87965468 "TC" "T" '("p.*404Eext*11" "p.*577Eext*11" "p.*207Eext*11") ; not actual example (+)
         ;; NOTE: There are very few correct examples...
 
         ;; Extension without termination site
         "chr17" 81537077 "CT" "C" '("p.*517Eext*?" "p.*493Eext*?") ; not actual example (+)
         "chr17" 9771487 "GT" "G" '("p.*312Yext*?" "p.*313Yext*?") ; not actual example (-)
+
+        ;; Extension includes termination site deletion
+        "chr13" 24421117 "ACTT" "A" '("p.*1725Fext*2") ; not actual example (-)
+        "chr13" 24421116 "GACTT" "G" '("p.*1725Sext*6") ; not actual example (-)
+        "chr13" 24421117 "ACT" "A" '("p.*1725Yext*35") ; not actual example (-)
+        "chr13" 24421116 "GACT" "G" '("p.*1725Yext*2") ; not actual example (-)
 
         ;; no effect
         "chr7" 55181876 "A" "T" '("p.=") ; not actual example (+)
