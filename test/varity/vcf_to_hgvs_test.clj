@@ -183,8 +183,8 @@
   (cavia-testing "returns protein HGVS strings"
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
       (are [chr pos ref alt e]
-          (= (vcf-variant->protein-hgvs-texts {:chr chr, :pos pos, :ref ref, :alt alt}
-                                              test-ref-seq-file rgidx) e)
+           (= (vcf-variant->protein-hgvs-texts {:chr chr, :pos pos, :ref ref, :alt alt}
+                                               test-ref-seq-file rgidx) e)
         ;; Substitution
         "chr7" 55191822 "T" "G" '("p.L858R") ; cf. rs121434568
         "chr1" 11796321 "G" "A" '("p.A222V") ; cf. rs1801133
@@ -213,6 +213,9 @@
         "chr3" 73062352 "T" "TTGG" '("p.=" "p.L91_E92insV") ; cf. rs143235716 (+)
         "chr3" 122740443 "G" "GAGA" '("p.P456_Q457insS"
                                       "p.P428_Q429insS") ; cf. rs71270423 (-)
+
+        ;; deletion includes stop codon deletion
+        "chr17" 9771484 "GCAGTTACC" "G" '("p.E310_G311insAGGQMGHPLEIKVFLA" "p.E311_G312insAGGQMGHPLEIKVFLA") ; not actual example(-)
 
         ;; indel
         "chr2" 47445589 "CTTACTGAT" "CCC" '("p.L440_D442delinsP" "p.L374_D376delinsP") ; cf. rs63749931 (+)
@@ -279,7 +282,6 @@
 
         ;; unknown because variant includes termination site and alternative termination site is not found
         "chr17" 81537074 "GTACTGAGGC" "G" '("p.?") ; not actual example(+)
-        "chr17" 9771484 "GCAGTTACC" "G" '("p.?") ; not actual example(-)
         )))
 
   (cavia-testing "options"
