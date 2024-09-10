@@ -227,47 +227,48 @@
 
 (defn- read-sequence-info
   [seq-rdr rg pos ref alt]
-  (let [{:keys [chr tx-start tx-end cds-start cds-end exon-ranges strand]} rg
-        ref-seq (cseq/read-sequence seq-rdr {:chr chr, :start cds-start, :end cds-end})
-        alt-seq (common/alt-sequence ref-seq cds-start pos ref alt)
-        alt-exon-ranges* (alt-exon-ranges exon-ranges pos ref alt)
-        ref-exon-seq (exon-sequence ref-seq cds-start exon-ranges)
-        ref-up-exon-seq (read-exon-sequence seq-rdr chr tx-start (dec cds-start) exon-ranges)
-        alt-up-exon-seq (make-alt-up-exon-seq ref-up-exon-seq cds-start pos ref alt)
-        ref-down-exon-seq (read-exon-sequence seq-rdr chr (inc cds-end) tx-end exon-ranges)
-        alt-down-exon-seq (make-alt-down-exon-seq ref-down-exon-seq cds-end pos ref alt)
-        alt-exon-seq (exon-sequence alt-seq cds-start alt-exon-ranges*)
-        ter-site-adjusted-alt-seq (make-ter-site-adjusted-alt-seq alt-exon-seq alt-up-exon-seq alt-down-exon-seq
-                                                                  strand cds-start cds-end pos ref)
-        ref-include-utr-ini-site-boundary (include-utr-ini-site-boundary? rg pos ref alt)
-        ref-include-ter-site (include-ter-site? rg pos ref alt)
-        apply-offset* (partial apply-offset pos ref alt alt-exon-ranges* ref-include-ter-site)]
-    {:ref-exon-seq ref-exon-seq
-     :ref-prot-seq (codon/amino-acid-sequence (cond-> ref-exon-seq
-                                                (= strand :reverse) util-seq/revcomp))
-     :alt-exon-seq alt-exon-seq
-     :alt-prot-seq (codon/amino-acid-sequence (cond-> alt-exon-seq
-                                                (= strand :reverse) util-seq/revcomp))
-     :alt-tx-prot-seq (codon/amino-acid-sequence
-                       (cond-> (str alt-up-exon-seq alt-exon-seq alt-down-exon-seq)
-                         (= strand :reverse) util-seq/revcomp))
-     :ini-offset (quot (count (case strand
-                                :forward alt-up-exon-seq
-                                :reverse alt-down-exon-seq))
-                       3)
-     :c-ter-adjusted-alt-prot-seq (codon/amino-acid-sequence
-                                   (cond-> ter-site-adjusted-alt-seq
-                                     (= strand :reverse) util-seq/revcomp))
-     :alt-rg (when alt-exon-ranges*
-               (-> rg
-                   (assoc :exon-ranges alt-exon-ranges*)
-                   (update :cds-start apply-offset*)
-                   (update :cds-end apply-offset*)
-                   (update :tx-end apply-offset*)))
-     :ref-include-utr-ini-site-boundary ref-include-utr-ini-site-boundary
-     :ref-include-ter-site ref-include-ter-site
-     :overlap-exon-intron-boundary (overlap-exon-intron-boundary? exon-ranges pos ref alt)
-     :utr-variant (utr-variant? cds-start cds-end pos ref alt)}))
+  (if-let [overlap-exon-intron-boundary (overlap-exon-intron-boundary? (:exon-ranges rg) pos ref alt)]
+    {:overlap-exon-intron-boundary overlap-exon-intron-boundary}
+    (let [{:keys [chr tx-start tx-end cds-start cds-end exon-ranges strand]} rg
+          ref-seq (cseq/read-sequence seq-rdr {:chr chr, :start cds-start, :end cds-end})
+          alt-seq (common/alt-sequence ref-seq cds-start pos ref alt)
+          alt-exon-ranges* (alt-exon-ranges exon-ranges pos ref alt)
+          ref-exon-seq (exon-sequence ref-seq cds-start exon-ranges)
+          ref-up-exon-seq (read-exon-sequence seq-rdr chr tx-start (dec cds-start) exon-ranges)
+          alt-up-exon-seq (make-alt-up-exon-seq ref-up-exon-seq cds-start pos ref alt)
+          ref-down-exon-seq (read-exon-sequence seq-rdr chr (inc cds-end) tx-end exon-ranges)
+          alt-down-exon-seq (make-alt-down-exon-seq ref-down-exon-seq cds-end pos ref alt)
+          alt-exon-seq (exon-sequence alt-seq cds-start alt-exon-ranges*)
+          ter-site-adjusted-alt-seq (make-ter-site-adjusted-alt-seq alt-exon-seq alt-up-exon-seq alt-down-exon-seq
+                                                                    strand cds-start cds-end pos ref)
+          ref-include-utr-ini-site-boundary (include-utr-ini-site-boundary? rg pos ref alt)
+          ref-include-ter-site (include-ter-site? rg pos ref alt)
+          apply-offset* (partial apply-offset pos ref alt alt-exon-ranges* ref-include-ter-site)]
+      {:ref-exon-seq ref-exon-seq
+       :ref-prot-seq (codon/amino-acid-sequence (cond-> ref-exon-seq
+                                                  (= strand :reverse) util-seq/revcomp))
+       :alt-exon-seq alt-exon-seq
+       :alt-prot-seq (codon/amino-acid-sequence (cond-> alt-exon-seq
+                                                  (= strand :reverse) util-seq/revcomp))
+       :alt-tx-prot-seq (codon/amino-acid-sequence
+                         (cond-> (str alt-up-exon-seq alt-exon-seq alt-down-exon-seq)
+                           (= strand :reverse) util-seq/revcomp))
+       :ini-offset (quot (count (case strand
+                                  :forward alt-up-exon-seq
+                                  :reverse alt-down-exon-seq))
+                         3)
+       :c-ter-adjusted-alt-prot-seq (codon/amino-acid-sequence
+                                     (cond-> ter-site-adjusted-alt-seq
+                                       (= strand :reverse) util-seq/revcomp))
+       :alt-rg (when alt-exon-ranges*
+                 (-> rg
+                     (assoc :exon-ranges alt-exon-ranges*)
+                     (update :cds-start apply-offset*)
+                     (update :cds-end apply-offset*)
+                     (update :tx-end apply-offset*)))
+       :ref-include-utr-ini-site-boundary ref-include-utr-ini-site-boundary
+       :ref-include-ter-site ref-include-ter-site
+       :utr-variant (utr-variant? cds-start cds-end pos ref alt)})))
 
 (defn- protein-position
   "Converts genomic position to protein position. If pos is outside of CDS,
@@ -322,11 +323,11 @@
    {:keys [ref-exon-seq ref-prot-seq alt-exon-seq alt-rg ref-include-ter-site utr-variant] :as seq-info}
    {:keys [prefer-deletion? prefer-insertion? prefer-extension-for-initial-codon-alt?]}]
   (cond
-    (or (= ref-exon-seq alt-exon-seq) utr-variant)
-    {:type :no-effect, :pos 1, :ref nil, :alt nil}
-
     (:overlap-exon-intron-boundary seq-info)
     {:type :overlap-exon-intron-boundary, :pos nil, :ref nil, :alt nil}
+
+    (or (= ref-exon-seq alt-exon-seq) utr-variant)
+    {:type :no-effect, :pos 1, :ref nil, :alt nil}
 
     (pos? (mod (count ref-exon-seq) 3))
     (do (log/warnf "CDS length is indivisible by 3: %d (%s, %s)"
