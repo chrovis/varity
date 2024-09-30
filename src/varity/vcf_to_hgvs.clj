@@ -23,7 +23,7 @@
     (io-util/sequence-reader? ref-seq)
     (cond
       (string? ref-gene) :ref-gene-path
-      (instance? varity.ref_gene.RefGeneIndex ref-gene) :ref-gene-index
+      (instance? varity.ref_gene.GeneAnnotationIndex ref-gene) :ref-gene-index
       (map? ref-gene) :ref-gene-entity)))
 
 (defn- coding-dna-ref-gene? [rg]
