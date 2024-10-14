@@ -333,6 +333,11 @@
                    (count ref-exon-seq) (:name rg) (:name2 rg))
         {:type :unknown, :pos nil, :ref nil, :alt nil})
 
+    (not= (last ref-prot-seq) \*)
+    (do (log/warnf "Last codon is not stop codon: %s (%s, %s)"
+                   (str (last ref-prot-seq)) (:name rg) (:name2 rg))
+        {:type :unknown, :pos nil, :ref nil, :alt nil})
+
     :else
     (let [alt-prot-seq* (format-alt-prot-seq seq-info)
           ppos (protein-position pos rg)
