@@ -151,6 +151,10 @@
         "c.477_478insT" "OR4F5" '({:chr "chr1", :pos 69567, :ref "A", :alt "AT"})
         "c.1368_1369insTCT" "HSPBAP1" '({:chr "chr3", :pos 122740443, :ref "G", :alt "GAGA"}
                                         {:chr "chr3", :pos 122740359, :ref "C", :alt "CAGA"}) ; cf. rs16338 (-)
+        "c.1368_1369insNNN" "HSPBAP1" '({:chr "chr3", :pos 122740443, :ref "G", :alt "GNNN"}
+                                        {:chr "chr3", :pos 122740359, :ref "C", :alt "CNNN"})
+        "c.1368_1369insN[3]" "HSPBAP1" '({:chr "chr3", :pos 122740443, :ref "G", :alt "GNNN"}
+                                         {:chr "chr3", :pos 122740359, :ref "C", :alt "CNNN"})
 
         ;; inversion
         "c.4002-31_4002-8inv" "MSH6" '({:chr "chr2", :pos 47806747, :ref "AAAACTTTTTTTTTTTTTTTTTTAA", :alt "ATTAAAAAAAAAAAAAAAAAAGTTT"}) ; cf. rs267608133 (+)
@@ -158,6 +162,8 @@
         ;; indel
         "c.385_386delAGinsGTT" "MLH1" '({:chr "chr3", :pos 37006994, :ref "AAG", :alt "AGTT"}) ; cf. rs63751710 (+)
         "c.862_863delCAinsG" "HSPG2" '({:chr "chr1", :pos 21887514, :ref "CTG", :alt "CC"}) ; cf. rs2010297 (-)
+        "c.862_863delCAinsNNN" "HSPG2" '({:chr "chr1", :pos 21887514, :ref "CTG", :alt "CNNN"})
+        "c.862_863delCAinsN[3]" "HSPG2" '({:chr "chr1", :pos 21887514, :ref "CTG", :alt "CNNN"})
 
         ;; repeated sequences
         "c.2571_2573[3]" "EGFR" '({:chr "chr7", :pos 55191819, :ref "G", :alt "GGCTGCT"})
@@ -197,6 +203,10 @@
         "c.477_478insT" "OR4F5" '({:alt "GT", :chr "chr1", :pos 69504, :ref "G"})
         "c.1368_1369insTCT" "HSPBAP1" '({:chr "chr3", :pos 122740443, :ref "G", :alt "GAGA"}
                                         {:chr "chr3", :pos 122740359, :ref "C", :alt "CAGA"})
+        "c.1368_1369insNNN" "HSPBAP1" '({:chr "chr3", :pos 122740443, :ref "G", :alt "GNNN"}
+                                        {:chr "chr3", :pos 122740359, :ref "C", :alt "CNNN"})
+        "c.1368_1369insN[3]" "HSPBAP1" '({:chr "chr3", :pos 122740443, :ref "G", :alt "GNNN"}
+                                         {:chr "chr3", :pos 122740359, :ref "C", :alt "CNNN"})
 
         ;; inversion
         "c.4002-31_4002-8inv" "MSH6" '({:chr "chr2", :pos 47806747, :ref "AAAACTTTTTTTTTTTTTTTTTTAA", :alt "ATTAAAAAAAAAAAAAAAAAAGTTT"})
@@ -206,6 +216,8 @@
                                         {:alt "AGTT", :chr "chr3", :pos 37006994, :ref "AAG"}
                                         {:alt "CGTT", :chr "chr3", :pos 37026005, :ref "CAG"})
         "c.862_863delCAinsG" "HSPG2" '({:chr "chr1", :pos 21887514, :ref "CTG", :alt "CC"})
+        "c.862_863delCAinsNNN" "HSPG2" '({:chr "chr1", :pos 21887514, :ref "CTG", :alt "CNNN"})
+        "c.862_863delCAinsN[3]" "HSPG2" '({:chr "chr1", :pos 21887514, :ref "CTG", :alt "CNNN"})
 
         ;; repeated sequences
         "c.2571_2573[3]" "EGFR" '({:alt "TGACGAC", :chr "chr7", :pos 55198720, :ref "T"}

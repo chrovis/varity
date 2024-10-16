@@ -3,7 +3,7 @@
   (:require [clojure.string :as string]))
 
 ;; See https://en.wikipedia.org/wiki/DNA_codon_table
-(def ^:private codon-amino-acid-map
+(def ^:private codon-amino-acid-map*
   {"TTT" "F"
    "TTC" "F"
    "TTA" "L"
@@ -68,6 +68,18 @@
    "GGC" "G"
    "GGA" "G"
    "GGG" "G"})
+
+(def ^:private uncertain-codon-map
+  (let [bases ["A" "T" "G" "C" "N"]
+        uncertain-base "N"
+        other-base-combinations (mapcat #(map (fn [b] (vector % b)) bases) bases)
+        first-uncertain-base-codons (map #(str uncertain-base (first %) (second %)) other-base-combinations)
+        second-uncertain-base-codons (map #(str (first %) uncertain-base (second %)) other-base-combinations)
+        third-uncertain-base-codons (map #(str (first %) (second %) uncertain-base) other-base-combinations)
+        uncertain-codons (set (concat first-uncertain-base-codons second-uncertain-base-codons third-uncertain-base-codons))]
+    (into {} (map #(vector % "X") uncertain-codons))))
+
+(def codon-amino-acid-map (merge codon-amino-acid-map* uncertain-codon-map))
 
 (def ^:private amino-acid-codon-map
   (->> (group-by second codon-amino-acid-map)
