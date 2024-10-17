@@ -528,32 +528,28 @@
 (defn- protein-frame-shift
   [ppos {:keys [ref-prot-seq ref-include-utr-ini-site-boundary
                 ref-include-from-ter-start-and-over-ter-end] :as seq-info}]
-  (let [alt-prot-seq* (format-alt-prot-seq seq-info)
-        {:keys [ppos pref palt]} (get-first-diff-aa-info ppos ref-prot-seq alt-prot-seq*)
-        [_ _ offset _] (diff-bases (or pref "") (or palt ""))
-        ppos (if ref-include-from-ter-start-and-over-ter-end (count ref-prot-seq) ppos)
-        alt-prot-seq* (format-alt-prot-seq seq-info)
-        ref (nth ref-prot-seq (dec (+ ppos offset)))
-        alt (nth alt-prot-seq* (dec (+ ppos offset)))
-        ter-site (-> seq-info
-                     format-alt-prot-seq
-                     (subs (dec (+ ppos offset)))
-                     (string/index-of "*"))]
-    (cond
-      (or ref-include-utr-ini-site-boundary
-          (not= (first ref-prot-seq) (first alt-prot-seq*)))
+  (let [alt-prot-seq* (format-alt-prot-seq seq-info)]
+    (if (or ref-include-utr-ini-site-boundary
+            (not= (first ref-prot-seq) (first alt-prot-seq*)))
       (mut/protein-unknown-mutation)
-
-      (= alt \*)
-      (protein-substitution (+ ppos offset) (str ref) (str alt)) ; eventually fs-ter-substitution
-
-      :else
-      (mut/protein-frame-shift (mut/->long-amino-acid ref)
-                               (coord/protein-coordinate (+ ppos offset))
-                               (mut/->long-amino-acid alt)
-                               (if (and ter-site (pos? ter-site))
-                                 (coord/protein-coordinate (inc ter-site))
-                                 (coord/unknown-coordinate))))))
+      (let [{:keys [ppos pref palt]} (get-first-diff-aa-info ppos ref-prot-seq alt-prot-seq*)
+            [_ _ offset _] (diff-bases (or pref "") (or palt ""))
+            ppos (if ref-include-from-ter-start-and-over-ter-end (count ref-prot-seq) ppos)
+            alt-prot-seq* (format-alt-prot-seq seq-info)
+            ref (nth ref-prot-seq (dec (+ ppos offset)))
+            alt (nth alt-prot-seq* (dec (+ ppos offset)))
+            ter-site (-> seq-info
+                         format-alt-prot-seq
+                         (subs (dec (+ ppos offset)))
+                         (string/index-of "*"))]
+        (if (= alt \*)
+          (protein-substitution (+ ppos offset) (str ref) (str alt)) ; eventually fs-ter-substitution
+          (mut/protein-frame-shift (mut/->long-amino-acid ref)
+                                   (coord/protein-coordinate (+ ppos offset))
+                                   (mut/->long-amino-acid alt)
+                                   (if (and ter-site (pos? ter-site))
+                                     (coord/protein-coordinate (inc ter-site))
+                                     (coord/unknown-coordinate))))))))
 
 (defn- protein-extension
   [ppos pref palt {:keys [ref-prot-seq alt-tx-prot-seq c-ter-adjusted-alt-prot-seq ini-offset] :as seq-info}]
