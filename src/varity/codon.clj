@@ -72,7 +72,7 @@
 (def ^:private uncertain-codon-map
   (let [bases ["A" "T" "G" "C" "N"]
         uncertain-base "N"
-        other-base-combinations (mapcat #(map (fn [b] (vector % b)) bases) bases)
+        other-base-combinations (for [a bases b bases] (vector a b))
         first-uncertain-base-codons (map #(str uncertain-base (first %) (second %)) other-base-combinations)
         second-uncertain-base-codons (map #(str (first %) uncertain-base (second %)) other-base-combinations)
         third-uncertain-base-codons (map #(str (first %) (second %) uncertain-base) other-base-combinations)
