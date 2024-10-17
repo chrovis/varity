@@ -309,6 +309,7 @@
         ;; e.g. NM_007298:c.-19_80del from BRCA Share
         "chr17" 43124016 "CCAGATGGGACACTCTAAGATTTTCTGCATAGCATTAATGACATTTTGTACTTCTTCAACGCGAAGAGCAGATAAATCCATTTCTTTCTGTTCCAATGAA" "C" '("p.?")
         "chr2" 197434979 "AGTCTTGGCGATCTTCGCCATTTT" "A" '("p.?")
+        "chr3" 53495165 "GGAT" "G" '("p.?")
 
         ;; unknown because variant affects initiation site
         "chr11" 118436512 "CATG" "C" '("p.?")
