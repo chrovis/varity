@@ -21,8 +21,8 @@
   (cavia-testing "returns coding DNA HGVS strings"
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
       (are [chr pos ref alt e]
-          (= (vcf-variant->coding-dna-hgvs-texts {:chr chr, :pos pos, :ref ref, :alt alt}
-                                                 test-ref-seq-file rgidx) e)
+           (= (vcf-variant->coding-dna-hgvs-texts {:chr chr, :pos pos, :ref ref, :alt alt}
+                                                  test-ref-seq-file rgidx) e)
         ;; Substitution
         "chr7" 55191822 "T" "G" '("NM_005228:c.2573T>G") ; cf. rs121434568 (+)
         "chr1" 11796321 "G" "A" '("NM_005957:c.665C>T") ; cf. rs1801133 (-)
@@ -110,6 +110,8 @@
         "chr1" 69567 "A" "AT" '("NM_001005484:c.477_478insT")
         "chr3" 122740443 "G" "GAGA" '("NM_024610:c.1368_1369insTCT"
                                       "NM_001320728:c.1284_1285insTCT") ; cf. rs16338 (-)
+        "chr3" 122740443 "G" "GNNN" '("NM_024610:c.1368_1369insNNN"
+                                      "NM_001320728:c.1284_1285insNNN")
 
         ;; inversion
         "chr2" 47806747 "AAAACTTTTTTTTTTTTTTTTTTAA" "ATTAAAAAAAAAAAAAAAAAAGTTT"
@@ -131,6 +133,8 @@
                                        "NM_001258274:c.-339_-338delAGinsGTT") ; cf. rs63751710 (+)
         "chr1" 21887514 "CTG" "CC" '("NM_001291860:c.862_863delCAinsG"
                                      "NM_005529:c.862_863delCAinsG") ; cf. rs2010297 (-)
+        "chr1" 21887514 "CTG" "CN" '("NM_001291860:c.862_863delCAinsN"
+                                     "NM_005529:c.862_863delCAinsN")
 
         ;; repeated sequences
         "chr7" 55191822 "T" "TGCTGCT" '("NM_005228:c.2572_2574[3]") ; not actual example (+)
@@ -213,10 +217,13 @@
         "chr3" 73062352 "T" "TTGG" '("p.=" "p.L91_E92insV") ; cf. rs143235716 (+)
         "chr3" 122740443 "G" "GAGA" '("p.P456_Q457insS"
                                       "p.P428_Q429insS") ; cf. rs71270423 (-)
+        "chr3" 122740443 "G" "GNNN" '("p.P456_Q457insX"
+                                      "p.P428_Q429insX")
 
         ;; indel
         "chr2" 47445589 "CTTACTGAT" "CCC" '("p.L440_D442delinsP" "p.L374_D376delinsP") ; cf. rs63749931 (+)
         "chr1" 152111364 "TGC" "TCG" '("p.E617_Q618delinsDE") ; cf. rs35444647 (-)
+        "chr2" 47445589 "CTTACTGAT" "CNN" '("p.L440_D442delinsX" "p.L374_D376delinsX")
 
         ;; indel include stop codon deletion
         "chr8" 116847497 "TCCTTATATAATATGGAACCTTGGTCCAGGTGTTGCGATGATGTCACTGTA" "T" '("p.Y617_I631delinsS")
