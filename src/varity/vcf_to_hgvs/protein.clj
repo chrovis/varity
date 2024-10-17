@@ -86,19 +86,6 @@
                  (subs sequence* (- s start) (inc (- e start)))))
           (apply str)))))
 
-(defn- read-exon-sequence
-  [seq-rdr chr start end exon-ranges]
-  (exon-sequence (cseq/read-sequence seq-rdr {:chr chr, :start start, :end end})
-                 start end exon-ranges))
-
-(defn- is-deletion-variant?
-  [ref alt]
-  (let [[del ins offset _] (diff-bases ref alt)
-        ndel (count del)
-        nins (count ins)]
-    (and (<= 1 ndel) (or (= offset 1)
-                         (not= 1 ndel nins)))))
-
 (defn- is-insertion-variant?
   [ref alt]
   (let [[del ins offset _] (diff-bases ref alt)
@@ -117,47 +104,35 @@
        (< cds-end (dec (+ pos (count ref))))))
 
 (defn- make-alt-up-exon-seq
-  [ref-up-exon-seq cds-start pos ref alt]
-  (let [is-deletion (is-deletion-variant? ref alt)
-        alt-up-exon-seq (if (cds-start-upstream-to-cds-variant? cds-start pos ref)
-                          (let [offset (if is-deletion
-                                         (- cds-start pos)
-                                         0)]
-                            (string/join "" (drop-last offset ref-up-exon-seq)))
-                          ref-up-exon-seq)]
-    (subs alt-up-exon-seq (mod (count alt-up-exon-seq) 3))))
+  [alt-up-exon-seq start end alt-exon-ranges strand]
+  (let [alt-up-exon-seq* (exon-sequence alt-up-exon-seq start end alt-exon-ranges)]
+    (if (= strand :forward)
+      (subs alt-up-exon-seq* (mod (count alt-up-exon-seq*) 3))
+      alt-up-exon-seq*)))
 
 (defn- make-alt-down-exon-seq
-  [ref-down-exon-seq cds-end pos ref alt]
-  (let [is-deletion (is-deletion-variant? ref alt)
-        ref-end (dec (+ pos (count ref)))
-        alt-down-exon-seq (if (cds-to-cds-end-downstream-variant? cds-end pos ref)
-                            (let [offset (if is-deletion
-                                           (- ref-end cds-end)
-                                           0)]
-                              (string/join "" (drop offset ref-down-exon-seq)))
-                            ref-down-exon-seq)
-        nalt-down-exon-seq (count alt-down-exon-seq)]
-    (subs alt-down-exon-seq 0 (- nalt-down-exon-seq (mod nalt-down-exon-seq 3)))))
+  [alt-down-exon-seq start end alt-exon-ranges strand]
+  (let [alt-down-exon-seq* (exon-sequence alt-down-exon-seq start end alt-exon-ranges)
+        nalt-down-exon-seq (count alt-down-exon-seq*)]
+    (if (= strand :forward)
+      alt-down-exon-seq*
+      (subs alt-down-exon-seq* 0 (- nalt-down-exon-seq (mod nalt-down-exon-seq 3))))))
 
 (defn- make-ter-site-adjusted-alt-seq
-  [alt-exon-seq alt-up-exon-seq alt-down-exon-seq strand cds-start cds-end pos ref]
+  [alt-exon-seq alt-up-exon-seq alt-down-exon-seq strand cds-start cds-end pos ref ref-include-ter-site]
   (cond
     (and (= strand :forward)
-         (cds-to-cds-end-downstream-variant? cds-end pos ref))
+         (or (cds-to-cds-end-downstream-variant? cds-end pos ref)
+             ref-include-ter-site))
     (str alt-exon-seq alt-down-exon-seq)
 
     (and (= strand :reverse)
-         (cds-start-upstream-to-cds-variant? cds-start pos ref))
+         (or (cds-start-upstream-to-cds-variant? cds-start pos ref)
+             ref-include-ter-site))
     (str alt-up-exon-seq alt-exon-seq)
 
     :else
     alt-exon-seq))
-
-(defn- get-pos-exon-end-tuple
-  [pos exon-ranges]
-  (let [[_ exon-end] (first (filter (fn [[s e]] (<= s pos e)) exon-ranges))]
-    [pos exon-end]))
 
 (defn- include-utr-ini-site-boundary?
   [{:keys [strand cds-start cds-end]} pos ref alt]
@@ -175,11 +150,28 @@
   (let [ter-site-positions (set (cond
                                   (= strand :forward) (range (- cds-end 2) (inc cds-end))
                                   (= strand :reverse) (range cds-start (inc (+ cds-start 2)))))
-        nref (count ref)
-        alt-positions (set (if (= (first ref) (first alt))
-                             (range (inc pos) (+ (inc pos) (dec nref)))
-                             (range pos (+ pos nref))))]
+        [del _ offset _] (diff-bases ref alt)
+        pos (+ pos offset)
+        ndel (count del)
+        end-pos (+ pos (if (is-insertion-variant? ref alt) 0 (dec ndel)))
+        alt-positions (set (range pos (inc end-pos)))]
     (boolean (seq (s/intersection ter-site-positions alt-positions)))))
+
+(defn- ref-include-from-ter-start-and-over-ter-end?
+  [{:keys [strand cds-start cds-end]} pos ref alt]
+  (let [[del _ offset _] (diff-bases ref alt)
+        pos (+ pos offset)
+        ndel (count del)
+        ter-start-pos (if (= strand :forward)
+                        (- cds-end 2)
+                        (+ cds-start 2))
+        ter-end-pos (if (= strand :forward)
+                      cds-end
+                      cds-start)
+        pos-end (+ pos (if (= ndel 0) 0 (dec ndel)))]
+    (if (= strand :forward)
+      (and (= pos ter-start-pos) (<= ter-end-pos pos-end))
+      (and (= pos-end ter-start-pos) (<= pos ter-end-pos)))))
 
 (defn- ter-site-same-pos?
   [ref-prot-seq alt-prot-seq]
@@ -206,68 +198,130 @@
       (< cds-end pos)
       (<= (inc cds-end) pos pos-end))))
 
+(defn- cds-variant?
+  [cds-start cds-end pos ref alt]
+  (let [[del _ offset _] (diff-bases ref alt)
+        ndel (count del)
+        pos (+ pos offset)
+        pos-end (+ pos (if (= ndel 0) 0 (dec ndel)))]
+    (if (is-insertion-variant? ref alt)
+      (and (< cds-start pos) (<= pos cds-end))
+      (<= cds-start pos pos-end cds-end))))
+
 (defn- utr-variant?
   [cds-start cds-end pos ref alt]
   (or (cds-start-upstream? cds-start pos ref alt)
       (cds-end-downstream? cds-end pos ref alt)))
 
+(defn- frameshift-within-cds?
+  [{:keys [cds-start cds-end]} pos ref alt]
+  (let [[del ins _ _] (diff-bases ref alt)
+        ndel (count del)
+        nins (count ins)]
+    (and (cds-variant? cds-start cds-end pos ref alt)
+         (not= 0 (rem (Math/abs (- ndel nins)) 3)))))
+
+(defn- get-alt-cds-start-pos
+  [cds-start pos-start pos-end exon-ranges pos*]
+  (let [[_ exon-end] (first (filter (fn [[s e]] (<= s pos* e)) exon-ranges))
+        pos-end* (inc pos-end)]
+    (cond
+      (= cds-start pos-start pos-end)
+      pos*
+      (< exon-end pos-end*)
+      (let [[exon-start* _] (first (filter (fn [[s e]] (or (<= pos-end* s)
+                                                           (<= s pos-end* e))) exon-ranges))]
+        (if (< pos-end* exon-start*)
+          exon-start*
+          pos-end*))
+      :else
+      pos-end*)))
+
+(defn- get-alt-cds-end-pos
+  [cds-end pos-start pos-end exon-ranges pos*]
+  (let [[exon-start _] (first (filter (fn [[s e]] (<= s pos* e)) exon-ranges))
+        pos-start* (dec pos-start)]
+    (cond
+      (= cds-end pos-start pos-end)
+      pos*
+      (< pos-start* exon-start)
+      (let [[_ exon-end*] (first (filter (fn [[s e]] (or (<= e pos-start*)
+                                                         (<= s pos-start* e))) (reverse exon-ranges)))]
+        (if (< exon-end* pos-start*)
+          exon-end*
+          pos-start*))
+      :else
+      pos-start*)))
+
 (defn- apply-offset
-  [pos ref alt exon-ranges ref-include-ter-site pos*]
-  (letfn [(apply-offset* [exon-ranges*]
-            (ffirst (alt-exon-ranges exon-ranges* pos ref alt)))
-          (apply-ter-site-offset [pos*]
-            (-> (get-pos-exon-end-tuple pos* exon-ranges)
-                vector
-                apply-offset*))]
-    (or (apply-offset* [[pos* pos*]])
-        (and ref-include-ter-site (apply-ter-site-offset pos*))
-        (some (fn [[_ e]] (when (<= e pos*) e)) (reverse exon-ranges))
-        (let [[s e] (first exon-ranges)] (when (<= s pos* e) pos*))
-        (let [[s e] (last exon-ranges)] (when (<= s pos* e) pos*)))))
+  [pos ref alt cds-start cds-end exon-ranges pos*]
+  (let [[del ins offset _] (diff-bases ref alt)
+        ndel (count del)
+        nins (count ins)
+        pos-start (+ pos offset)
+        pos-end (+ pos-start (if (or (= 1 ndel nins) (zero? ndel)) 0 ndel))
+        apply-offset* (fn [exon-ranges*]
+                        (ffirst (alt-exon-ranges exon-ranges* pos ref alt)))
+        pos** (cond (and (= pos* cds-start) (<= pos-start cds-start pos-end))
+                    (get-alt-cds-start-pos cds-start pos-start pos-end exon-ranges pos*)
+                    (and (= pos* cds-end) (<= pos-start cds-end pos-end))
+                    (get-alt-cds-end-pos cds-end pos-start pos-end exon-ranges pos*)
+                    :else
+                    pos*)]
+    (apply-offset* [[pos** pos**]])))
 
 (defn- read-sequence-info
   [seq-rdr rg pos ref alt]
-  (let [{:keys [chr tx-start tx-end cds-start cds-end exon-ranges strand]} rg
-        ref-seq (cseq/read-sequence seq-rdr {:chr chr, :start cds-start, :end cds-end})
-        alt-seq (common/alt-sequence ref-seq cds-start pos ref alt)
-        alt-exon-ranges* (alt-exon-ranges exon-ranges pos ref alt)
-        ref-exon-seq (exon-sequence ref-seq cds-start exon-ranges)
-        ref-up-exon-seq (read-exon-sequence seq-rdr chr tx-start (dec cds-start) exon-ranges)
-        alt-up-exon-seq (make-alt-up-exon-seq ref-up-exon-seq cds-start pos ref alt)
-        ref-down-exon-seq (read-exon-sequence seq-rdr chr (inc cds-end) tx-end exon-ranges)
-        alt-down-exon-seq (make-alt-down-exon-seq ref-down-exon-seq cds-end pos ref alt)
-        alt-exon-seq (exon-sequence alt-seq cds-start alt-exon-ranges*)
-        ter-site-adjusted-alt-seq (make-ter-site-adjusted-alt-seq alt-exon-seq alt-up-exon-seq alt-down-exon-seq
-                                                                  strand cds-start cds-end pos ref)
-        ref-include-utr-ini-site-boundary (include-utr-ini-site-boundary? rg pos ref alt)
-        ref-include-ter-site (include-ter-site? rg pos ref alt)
-        apply-offset* (partial apply-offset pos ref alt alt-exon-ranges* ref-include-ter-site)]
-    {:ref-exon-seq ref-exon-seq
-     :ref-prot-seq (codon/amino-acid-sequence (cond-> ref-exon-seq
-                                                (= strand :reverse) util-seq/revcomp))
-     :alt-exon-seq alt-exon-seq
-     :alt-prot-seq (codon/amino-acid-sequence (cond-> alt-exon-seq
-                                                (= strand :reverse) util-seq/revcomp))
-     :alt-tx-prot-seq (codon/amino-acid-sequence
-                       (cond-> (str alt-up-exon-seq alt-exon-seq alt-down-exon-seq)
-                         (= strand :reverse) util-seq/revcomp))
-     :ini-offset (quot (count (case strand
-                                :forward alt-up-exon-seq
-                                :reverse alt-down-exon-seq))
-                       3)
-     :c-ter-adjusted-alt-prot-seq (codon/amino-acid-sequence
-                                   (cond-> ter-site-adjusted-alt-seq
-                                     (= strand :reverse) util-seq/revcomp))
-     :alt-rg (when alt-exon-ranges*
-               (-> rg
-                   (assoc :exon-ranges alt-exon-ranges*)
-                   (update :cds-start apply-offset*)
-                   (update :cds-end apply-offset*)
-                   (update :tx-end apply-offset*)))
-     :ref-include-utr-ini-site-boundary ref-include-utr-ini-site-boundary
-     :ref-include-ter-site ref-include-ter-site
-     :overlap-exon-intron-boundary (overlap-exon-intron-boundary? exon-ranges pos ref alt)
-     :utr-variant (utr-variant? cds-start cds-end pos ref alt)}))
+  (if-let [overlap-exon-intron-boundary (overlap-exon-intron-boundary? (:exon-ranges rg) pos ref alt)]
+    {:overlap-exon-intron-boundary overlap-exon-intron-boundary}
+    (let [{:keys [chr tx-start tx-end cds-start cds-end exon-ranges strand]} rg
+          ref-seq (cseq/read-sequence seq-rdr {:chr chr, :start tx-start, :end tx-end})
+          ref-cds-seq (cseq/read-sequence seq-rdr {:chr chr, :start cds-start, :end cds-end})
+          ref-cds-exon-seq (exon-sequence ref-cds-seq cds-start cds-end exon-ranges)
+          ref-include-utr-ini-site-boundary (include-utr-ini-site-boundary? rg pos ref alt)
+          ref-include-ter-site (include-ter-site? rg pos ref alt)
+          ref-include-from-ter-start-and-over-ter-end (ref-include-from-ter-start-and-over-ter-end? rg pos ref alt)
+          frameshift-within-cds (frameshift-within-cds? rg pos ref alt)
+          alt-seq (common/alt-sequence ref-seq tx-start pos ref alt)
+          alt-exon-ranges* (alt-exon-ranges exon-ranges pos ref alt)
+          apply-offset* (partial apply-offset pos ref alt cds-start cds-end exon-ranges)
+          alt-cds-start (apply-offset* cds-start)
+          alt-cds-end (apply-offset* cds-end)
+          alt-tx-end (apply-offset* tx-end)
+          [alt-up-exon-seq alt-cds-exon-seq alt-down-exon-seq] (when (and alt-cds-start alt-cds-end)
+                                                                 (pstring/split-at alt-seq [(- alt-cds-start tx-start) (inc (- alt-cds-end tx-start))]))
+          alt-cds-exon-seq (exon-sequence alt-cds-exon-seq alt-cds-start alt-cds-end alt-exon-ranges*)
+          alt-up-exon-seq (make-alt-up-exon-seq alt-up-exon-seq tx-start (dec alt-cds-start) alt-exon-ranges* strand)
+          alt-down-exon-seq (make-alt-down-exon-seq alt-down-exon-seq (inc alt-cds-end) alt-tx-end alt-exon-ranges* strand)
+          ter-site-adjusted-alt-seq (make-ter-site-adjusted-alt-seq alt-cds-exon-seq alt-up-exon-seq alt-down-exon-seq
+                                                                    strand cds-start cds-end pos ref ref-include-ter-site)]
+      {:ref-exon-seq ref-cds-exon-seq
+       :ref-prot-seq (codon/amino-acid-sequence (cond-> ref-cds-exon-seq
+                                                  (= strand :reverse) util-seq/revcomp))
+       :alt-exon-seq alt-cds-exon-seq
+       :alt-prot-seq (codon/amino-acid-sequence (cond-> alt-cds-exon-seq
+                                                  (= strand :reverse) util-seq/revcomp))
+       :alt-tx-prot-seq (codon/amino-acid-sequence
+                         (cond-> (str alt-up-exon-seq alt-cds-exon-seq alt-down-exon-seq)
+                           (= strand :reverse) util-seq/revcomp))
+       :ini-offset (quot (count (case strand
+                                  :forward alt-up-exon-seq
+                                  :reverse alt-down-exon-seq))
+                         3)
+       :c-ter-adjusted-alt-prot-seq (codon/amino-acid-sequence
+                                     (cond-> ter-site-adjusted-alt-seq
+                                       (= strand :reverse) util-seq/revcomp))
+       :alt-rg (when alt-exon-ranges*
+                 (assoc rg
+                        :exon-ranges alt-exon-ranges*
+                        :cds-start alt-cds-start
+                        :cds-end alt-cds-end
+                        :tx-end alt-tx-end))
+       :ref-include-utr-ini-site-boundary ref-include-utr-ini-site-boundary
+       :ref-include-ter-site ref-include-ter-site
+       :ref-include-from-ter-start-and-over-ter-end ref-include-from-ter-start-and-over-ter-end
+       :frameshift-within-cds frameshift-within-cds
+       :utr-variant (utr-variant? cds-start cds-end pos ref alt)})))
 
 (defn- protein-position
   "Converts genomic position to protein position. If pos is outside of CDS,
@@ -319,14 +373,15 @@
 
 (defn- ->protein-variant
   [{:keys [strand] :as rg} pos ref alt
-   {:keys [ref-exon-seq ref-prot-seq alt-exon-seq alt-rg ref-include-ter-site utr-variant] :as seq-info}
+   {:keys [ref-exon-seq ref-prot-seq alt-exon-seq alt-rg ref-include-ter-site
+           ref-include-from-ter-start-and-over-ter-end utr-variant] :as seq-info}
    {:keys [prefer-deletion? prefer-insertion? prefer-extension-for-initial-codon-alt?]}]
   (cond
-    (or (= ref-exon-seq alt-exon-seq) utr-variant)
-    {:type :no-effect, :pos 1, :ref nil, :alt nil}
-
     (:overlap-exon-intron-boundary seq-info)
     {:type :overlap-exon-intron-boundary, :pos nil, :ref nil, :alt nil}
+
+    (or (= ref-exon-seq alt-exon-seq) utr-variant)
+    {:type :no-effect, :pos 1, :ref nil, :alt nil}
 
     (pos? (mod (count ref-exon-seq) 3))
     (do (log/warnf "CDS length is indivisible by 3: %d (%s, %s)"
@@ -365,7 +420,9 @@
                                                      pref-only
                                                      palt-only)
           t (cond
-              (= (+ base-ppos offset) (count ref-prot-seq)) (if (= "" pref-only palt-only)
+              ref-include-from-ter-start-and-over-ter-end :frame-shift
+              (= (+ base-ppos offset) (count ref-prot-seq)) (if (and (= "" pref-only palt-only)
+                                                                     (ter-site-same-pos? ref-prot-seq alt-prot-seq*))
                                                               :no-effect
                                                               :extension)
               (= (+ base-ppos offset) 1) (if (or (= ref-prot-rest alt-prot-rest)
@@ -380,7 +437,7 @@
                                                             (= palt (subs pref 0 (count palt))))
                                                        (= (first palt-only) \*)) :fs-ter-substitution
                                                    ref-include-ter-site :indel
-                                                   (first-diff-aa-is-ter-site? ppos
+                                                   (first-diff-aa-is-ter-site? base-ppos
                                                                                ref-prot-seq
                                                                                alt-prot-seq*) :extension
                                                    :else :frame-shift)
@@ -452,45 +509,6 @@
                            (coord/protein-coordinate end)
                            (->> (seq ins) (map mut/->long-amino-acid)))))
 
-(defn- protein-indel
-  [ppos pref palt {:keys [ref-prot-seq c-ter-adjusted-alt-prot-seq ref-include-ter-site] :as seq-info}]
-  (let [[pref palt ppos] (if ref-include-ter-site
-                           (let [{adjusted-ppos :ppos} (get-first-diff-aa-info ppos ref-prot-seq c-ter-adjusted-alt-prot-seq)
-                                 ppos (or adjusted-ppos ppos)
-                                 get-seq-between-pos-ter-site (fn [seq pos]
-                                                                (-> (subs seq (dec pos))
-                                                                    (string/split #"\*")
-                                                                    first))
-                                 pref (get-seq-between-pos-ter-site ref-prot-seq ppos)
-                                 palt (get-seq-between-pos-ter-site c-ter-adjusted-alt-prot-seq ppos)]
-                             [pref palt ppos])
-                           [pref palt ppos])
-        [del ins offset _] (diff-bases pref palt)
-        ndel (count del)
-        alt-retain-ter-site? (if ref-include-ter-site
-                               (string/includes? (subs c-ter-adjusted-alt-prot-seq (dec ppos)) "*")
-                               true)]
-    (cond
-      (every? empty? [del ins])
-      (mut/protein-no-effect)
-
-      (empty? del)
-      (protein-insertion ppos pref palt seq-info)
-
-      (empty? ins)
-      (protein-deletion ppos pref palt)
-
-      alt-retain-ter-site?
-      (mut/protein-indel (mut/->long-amino-acid (first del))
-                         (coord/protein-coordinate (+ ppos offset))
-                         (when (> ndel 1)
-                           (mut/->long-amino-acid (last del)))
-                         (when (> ndel 1)
-                           (coord/protein-coordinate (+ ppos offset ndel -1)))
-                         (->> (seq ins) (map mut/->long-amino-acid)))
-      :else
-      (mut/protein-unknown-mutation))))
-
 (defn- protein-repeated-seqs
   [ppos pref palt seq-info]
   (let [[pref-only palt-only offset _] (diff-bases pref palt)
@@ -508,12 +526,15 @@
                                alt-repeat)))
 
 (defn- protein-frame-shift
-  [ppos {:keys [ref-prot-seq alt-prot-seq ref-include-utr-ini-site-boundary] :as seq-info}]
-  (let [{:keys [ppos pref palt]} (get-first-diff-aa-info ppos ref-prot-seq alt-prot-seq)
-        [_ _ offset _] (diff-bases pref palt)
+  [ppos {:keys [ref-prot-seq ref-include-utr-ini-site-boundary
+                ref-include-from-ter-start-and-over-ter-end] :as seq-info}]
+  (let [alt-prot-seq* (format-alt-prot-seq seq-info)
+        {:keys [ppos pref palt]} (get-first-diff-aa-info ppos ref-prot-seq alt-prot-seq*)
+        [_ _ offset _] (diff-bases (or pref "") (or palt ""))
+        ppos (if ref-include-from-ter-start-and-over-ter-end (count ref-prot-seq) ppos)
         alt-prot-seq* (format-alt-prot-seq seq-info)
         ref (nth ref-prot-seq (dec (+ ppos offset)))
-        alt (nth alt-prot-seq (dec (+ ppos offset)))
+        alt (nth alt-prot-seq* (dec (+ ppos offset)))
         ter-site (-> seq-info
                      format-alt-prot-seq
                      (subs (dec (+ ppos offset)))
@@ -539,7 +560,7 @@
   (if (and (not= ppos 1)
            (ter-site-same-pos? ref-prot-seq c-ter-adjusted-alt-prot-seq))
     (mut/protein-no-effect)
-    (let [[_ ins offset _] (diff-bases pref palt)
+    (let [[_ ins offset _] (diff-bases (or pref "") (or palt ""))
           alt-prot-seq* (format-alt-prot-seq seq-info)
           ini-site ((comp str first) ref-prot-seq)
           first-diff-aa-info (if (= ppos 1)
@@ -564,6 +585,54 @@
                              (if new-aa-pos
                                (coord/protein-coordinate new-aa-pos)
                                (coord/unknown-coordinate))))))
+
+(defn- protein-indel
+  [ppos pref palt {:keys [ref-prot-seq c-ter-adjusted-alt-prot-seq
+                          ref-include-ter-site frameshift-within-cds] :as seq-info}]
+  (let [[pref* palt* ppos*] (if ref-include-ter-site
+                              (let [{adjusted-ppos :ppos} (get-first-diff-aa-info ppos ref-prot-seq c-ter-adjusted-alt-prot-seq)
+                                    ppos (or adjusted-ppos ppos)
+                                    get-seq-between-pos-ter-site (fn [seq pos]
+                                                                   (-> (subs seq (dec pos))
+                                                                       (string/split #"\*")
+                                                                       first))
+                                    pref (get-seq-between-pos-ter-site ref-prot-seq ppos)
+                                    palt (get-seq-between-pos-ter-site c-ter-adjusted-alt-prot-seq ppos)]
+                                [pref palt ppos])
+                              [pref palt ppos])
+        [del ins offset _] (diff-bases (or pref* "") (or palt* ""))
+        ndel (count del)
+        alt-retain-ter-site? (if ref-include-ter-site
+                               (string/includes? (subs c-ter-adjusted-alt-prot-seq (dec ppos*)) "*")
+                               true)]
+    (cond
+      (first-diff-aa-is-ter-site? ppos*
+                                  ref-prot-seq
+                                  c-ter-adjusted-alt-prot-seq)
+      (protein-extension ppos* pref* palt* seq-info)
+
+      frameshift-within-cds
+      (protein-frame-shift ppos* seq-info)
+
+      (every? empty? [del ins])
+      (mut/protein-no-effect)
+
+      (empty? del)
+      (protein-insertion ppos* pref* palt* seq-info)
+
+      (empty? ins)
+      (protein-deletion ppos* pref* palt*)
+
+      alt-retain-ter-site?
+      (mut/protein-indel (mut/->long-amino-acid (first del))
+                         (coord/protein-coordinate (+ ppos* offset))
+                         (when (> ndel 1)
+                           (mut/->long-amino-acid (last del)))
+                         (when (> ndel 1)
+                           (coord/protein-coordinate (+ ppos* offset ndel -1)))
+                         (->> (seq ins) (map mut/->long-amino-acid)))
+      :else
+      (mut/protein-unknown-mutation))))
 
 (defn- mutation
   [seq-rdr rg pos ref alt options]

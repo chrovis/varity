@@ -39,15 +39,6 @@
   ;; 1 [2 3 4] 5 6 7 [8 9 10 11] 12 13 14 15
   (is (= (#'prot/exon-sequence "ACGTACGTACGTACG" 1 [[2 4] [8 11]]) "CGTTACG")))
 
-(deftest is-deletion-variant?-test
-  (are [p ref alt] (p (#'prot/is-deletion-variant? ref alt))
-    false? "T" "A" ; substitution
-    true? "TAGTCTA" "T" ; deletion
-    false? "T" "TGTGATC" ; insertion
-    true? "AT" "AGTCATCC" ; indel
-    true? "GATC" "GCATGCAT" ; indel
-    ))
-
 (deftest is-insertion-variant?-test
   (are [p ref alt] (p (#'prot/is-insertion-variant? ref alt))
     false? "T" "A" ; substitution
@@ -75,56 +66,59 @@
     false? 100 101 "GTCAT"))
 
 (deftest make-alt-up-exon-seq-test
-  (let [ref-up-exon-seq "AATGCTTCTAGCTCC"
-        cds-start 100]
-    (are [p pos ref alt] (= p (#'prot/make-alt-up-exon-seq ref-up-exon-seq
-                                                           cds-start
-                                                           pos
-                                                           ref
-                                                           alt))
-      "AATGCTTCTAGCTCC" 102 "ATGTC" "A"
-      "ATGCTTCTAGCT" 98 "CCTT" "C")))
+  (let [alt-up-seq "AATGCTTCTAGCTCCATGGCTATCGGC"
+        start 3
+        exon-ranges [[3 10] [13 18] [23 28] [35 45]]]
+    (are [p end strand] (= p (#'prot/make-alt-up-exon-seq alt-up-seq
+                                                          start
+                                                          end
+                                                          exon-ranges
+                                                          strand))
+      "TGCTTCGCTCCATAT"    25 :forward
+      "AATGCTTCGCTCCATATC" 26 :forward
+      "AATGCTTCGCTCCATAT"  25 :reverse
+      "AATGCTTCGCTCCATATC" 26 :reverse)))
 
 (deftest make-alt-down-exon-seq-test
-  (let [ref-up-exon-seq "CTTATAATAATAA"
-        cds-end 1000]
-    (are [p pos ref alt] (= p (#'prot/make-alt-down-exon-seq ref-up-exon-seq
-                                                             cds-end
-                                                             pos
-                                                             ref
-                                                             alt))
-      "CTTATAATAATA" 1002 "TTATAA" "T"
-      "TATAATAAT" 998 "GGCCT" "G")))
+  (let [alt-down-seq "AATGCTTCTAGCTCCATGGCTATCGGC"
+        end 50
+        exon-ranges [[3 10] [13 18] [23 28] [35 45]]]
+    (are [p start strand] (= p (#'prot/make-alt-down-exon-seq alt-down-seq
+                                                              start
+                                                              end
+                                                              exon-ranges
+                                                              strand))
+      "AATGCCTCCATGGCTA" 24 :forward
+      "AATGGCTCCATGGCT"  25 :forward
+      "AATGCCTCCATGGCT"  24 :reverse
+      "AATGGCTCCATGGCT"  25 :reverse)))
 
 (deftest make-ter-site-adjusted-alt-seq-test
   (let [alt-seq "XXXXXX"
         upstream-seq "YYYYYY"
         downstream-seq "ZZZZZZ"
         [cds-start cds-end] [7 12]]
-    (are [p strand pos ref] (#'prot/make-ter-site-adjusted-alt-seq alt-seq
-                                                                   upstream-seq
-                                                                   downstream-seq
-                                                                   strand
-                                                                   cds-start
-                                                                   cds-end
-                                                                   pos
-                                                                   ref)
-      "XXXXXX" :forward 8 "XX"
-      "XXXXXX" :forward 5 "YY"
-      "XXXXXX" :forward 5 "YYX"
-      "XXXXXX" :forward 13 "ZZ"
-      "XXXXXXZZZZZZ" :forward 12 "XZZ"
-      "XXXXXX" :reverse 8 "XX"
-      "XXXXXX" :reverse 5 "YY"
-      "YYYYYYXXXXXX" :reverse 5 "YYX"
-      "XXXXXX" :reverse 13 "ZZ"
-      "XXXXXX" :reverse 12 "XZZ")))
-
-(deftest get-pos-exon-end-tuple-test
-  (let [exon-ranges [[1 10] [15 20] [25 40]]]
-    (are [p pos] (= (#'prot/get-pos-exon-end-tuple pos exon-ranges) p)
-      [15 20] 15
-      [5 10] 5)))
+    (are [p strand pos ref ref-include-ter-site] (= p (#'prot/make-ter-site-adjusted-alt-seq alt-seq
+                                                                                             upstream-seq
+                                                                                             downstream-seq
+                                                                                             strand
+                                                                                             cds-start
+                                                                                             cds-end
+                                                                                             pos
+                                                                                             ref
+                                                                                             ref-include-ter-site))
+      "XXXXXX" :forward 8 "XX" false
+      "XXXXXX" :forward 5 "YY" false
+      "XXXXXX" :forward 5 "YYX" false
+      "XXXXXX" :forward 13 "ZZ" false
+      "XXXXXXZZZZZZ" :forward 10 "XX" true
+      "XXXXXXZZZZZZ" :forward 12 "XZZ" true
+      "YYYYYYXXXXXX" :reverse 8 "XX" true
+      "YYYYYYXXXXXX" :reverse 9 "XX" true
+      "XXXXXX" :reverse 5 "YY" false
+      "YYYYYYXXXXXX" :reverse 5 "YYX" true
+      "XXXXXX" :reverse 13 "ZZ" false
+      "XXXXXX" :reverse 12 "XZZ" false)))
 
 (deftest include-utr-ini-site-boundary?-test
   (let [forward-rg {:strand :forward
@@ -156,12 +150,48 @@
       true? reverse-rg 9 "AACT" "AG"
       false? reverse-rg 8 "AG" "A")))
 
+(deftest ref-include-from-ter-start-and-over-ter-end?-test
+  (let [cds-start 10
+        cds-end 21]
+    (are [p strand pos ref alt] (p (#'prot/ref-include-from-ter-start-and-over-ter-end? {:strand strand
+                                                                                         :cds-start cds-start
+                                                                                         :cds-end cds-end}
+                                                                                        pos
+                                                                                        ref
+                                                                                        alt))
+      true? :forward 18 "ATAA" "A"
+      true? :forward 18 "ATAAG" "AGC"
+      true? :reverse 9 "GTCA" "G"
+      true? :reverse 8 "CGTCA" "CTG"
+      false? :forward 18 "A" "T"
+      false? :forward 19 "T" "TCCCT"
+      false? :forward 18 "ATA" "A"
+      false? :reverse 10 "T" "A"
+      false? :reverse 11 "C" "CATG"
+      false? :reverse 8 "CGTC" "C")))
+
 (deftest ter-site-same-pos?-test
   (are [p ref alt] (p (#'prot/ter-site-same-pos? ref alt))
     true? "MTGA*" "MTGA*"
     true? "MTGA*" "MTGA*CT"
     false? "MTGA*" "MTGAQCT*"
     false? "MTGA*" "MTGA"))
+
+(deftest cds-variant?-test
+  (let [cds-start 10
+        cds-end 21]
+    (are [p pos ref alt] (p (#'prot/cds-variant? cds-start cds-end pos ref alt))
+      true? 10 "A" "A"
+      true? 10 "A" "ACT"
+      true? 9 "GATG" "G"
+      true? 10 "ATG" "AGC"
+      true? 21 "A" "T"
+      true? 20 "A" "ATC"
+      true? 20 "AA" "A"
+      false? 8 "CGA" "CTT"
+      false? 9 "C" "CGGT"
+      false? 20 "AAG" "ATC"
+      false? 21 "A" "AGC")))
 
 (deftest utr-variant?-test
   (let [cds-start 10
@@ -189,19 +219,72 @@
       false? 20 "A" "AG"
       false? 20 "AA" "A"
       false? 20 "GA" "GGCT"
-      false? 20 "TATA" "TCG"
-      )))
+      false? 20 "TATA" "TCG")))
+
+(deftest frameshift-within-cds?-test
+  (let [cds-start 10
+        cds-end 21]
+    (are [p pos ref alt] (p (#'prot/frameshift-within-cds? {:cds-start cds-start
+                                                            :cds-end cds-end}
+                                                           pos
+                                                           ref
+                                                           alt))
+      true? 13 "T" "TC"
+      true? 15 "AGCTC" "A"
+      true? 18 "GC" "GGA"
+      false? 15 "A" "T"
+      false? 11 "T" "TGCT"
+      false? 10 "ATGGCTC" "A"
+      false? 8 "GTATG" "G"
+      false? 20 "GTAAC" "GCTTA")))
+
+(deftest get-alt-cds-start-pos-test
+  (let [cds-start 40
+        exon-ranges [[10 50] [80 120] [150 200]]
+        pos* 40]
+    (are [pos-start pos-end p] (= (#'prot/get-alt-cds-start-pos cds-start pos-start pos-end exon-ranges pos*) p)
+      40 40 40
+      35 45 46
+      35 55 80)))
+
+(deftest get-alt-cds-end-pos-test
+  (let [cds-end 100
+        exon-ranges [[10 50] [80 120] [150 200]]
+        pos* 100]
+    (are [pos-start pos-end p] (= (#'prot/get-alt-cds-end-pos cds-end pos-start pos-end exon-ranges pos*) p)
+      100 100 100
+      100 115 99
+      75  110 50)))
 
 (deftest apply-offset-test
-  (let [pos 100
-        ref "GCTGACC"
-        alt "G"
-        exon-ranges [[10 50] [80 120] [150 200]]]
-    (are [pos* ref-include-ter-site p] (= (#'prot/apply-offset pos ref alt exon-ranges ref-include-ter-site pos*) p)
-      40 false 40
-      110 false 104
-      105 true 101
-      112 true 106)))
+  (testing "ref not include exon terminal"
+    (let [ref "GCTGACC"
+          alt "G"
+          cds-start 40
+          cds-end 110
+          exon-ranges [[10 50] [80 120] [150 200]]]
+      (are [pos pos* p] (= (#'prot/apply-offset pos ref alt cds-start cds-end exon-ranges pos*) p)
+        ;; position is between cds-start and cds-end
+        100 40 40
+        100 110 104
+        100 200 194
+        ;; position is upstream of cds-start
+        20 40 34
+        20 110 104
+        20 200 194
+        ;; position is downstream of cds-end
+        160 40 40
+        160 110 110
+        160 200 194)))
+  (testing "ref includes exon terminal"
+    (let [ref "GCTGACC"
+          alt "G"
+          exon-ranges [[10 50] [80 120] [150 200]]]
+      (are [pos cds-start cds-end pos* p] (= (#'prot/apply-offset pos ref alt cds-start cds-end exon-ranges pos*) p)
+        ;; variant around cds-start: 45_50del
+        44 45 160 45 74
+        ;; variant around cds-end: 150_155del
+        149 45 155 155 120))))
 
 (deftest get-first-diff-aa-info-test
   (let [ref-seq "ABCDEFGHIJKLMN"]
