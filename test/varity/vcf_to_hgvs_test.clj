@@ -207,7 +207,7 @@
         "chr1" 247815239 "AAGG" "A" '("p.S163del") ; cf. rs35979231 (-)
         "chr2" 29223408 "AAGCAGT" "A" '("p.Y1096_C1097del") ; cf. rs776101205 (-)
         "chr11" 108259071 "GT" "G" '("p.L822*") ; https://github.com/chrovis/varity/issues/49
-        "chr17" 7676206 "TGAACCATTGTTCAATATCGTCCGGGGACAGCATCAAATCATCCATTGCTTGGGACGGCAAGGGG" "T" '("p.P34Lfs*68" "p.M1ext-50" "p.M1ext-11") ; https://mutalyzer.nl/normalizer/NC_000017.11:g.7676209_7676272del
+        "chr17" 7676206 "TGAACCATTGTTCAATATCGTCCGGGGACAGCATCAAATCATCCATTGCTTGGGACGGCAAGGGG" "T" '("p.P34Lfs*68" "p.?") ; https://mutalyzer.nl/normalizer/NC_000017.11:g.7676209_7676272del
 
         ;; Duplication
         "chr2" 26254257 "G" "GACT" '("p.T2dup") ; cf. rs3839049 (+)
@@ -275,7 +275,6 @@
         "chr10" 87965463 "AAAAGTCT" "A" '("p.K402Efs*12" "p.K575Efs*12" "p.K205Efs*12") ; not actual example (+)
 
         ;; Extension
-        "chr2" 188974490 "A" "C" '("p.M1Lext-23")
         "chr2" 189011772 "T" "C" '("p.*1467Qext*45") ; cf. ClinVar 101338
         "chr11" 125655318 "TGA" "TAT" '("p.*477Yext*17" "p.*443Yext*17" "p.*477Yext*24")
         "chr10" 8074014 "C" "CATGGGTT" '("p.*445Yext*64" "p.*444Yext*64") ; not actual example (+)
@@ -312,6 +311,7 @@
         "chr3" 53495165 "GGAT" "G" '("p.?")
 
         ;; unknown because variant affects initiation site
+        "chr2" 188974490 "A" "C" '("p.?")
         "chr11" 118436512 "CATG" "C" '("p.?")
         "chrX" 48791109 "CATG" "C" '("p.?")
 
@@ -341,8 +341,11 @@
         ;; prefer-insertion?, not actual example (+)
         "chr1" 26773690 "C" "CGCAGCA" {:prefer-insertion? true} '("p.Q1334_R1335insQQ")
 
-        ;; prefer-extension-for-initial-codon-alt?, not actual example (-)
-        "chr2" 197434979 "AGTCTTGGCGATCTTCGCCATTTT" "A" {:prefer-extension-for-initial-codon-alt? true} '("p.M1Sext-?"))))
+        ;; prefer-extension-for-initial-codon-alt?
+        "chr10" 121593814 "CCATGGT" "C" {:prefer-extension-for-initial-codon-alt? true} '("p.M1Vext-17") ;; not actual example (-)
+        "chr2" 197434979 "AGTCTTGGCGATCTTCGCCATTTT" "A" {:prefer-extension-for-initial-codon-alt? true} '("p.M1Sext-?")))) ;; not actual example (-)
+        ;; prefer-extension-for-initial-codon-alt?, initiation codon is altered to termination codon
+        "chr9" 27109592 "T" "TTTA" {:prefer-extension-for-initial-codon-alt? true} '("p.?") ;; not actual example (+)
 
   (cavia-testing "throws Exception if inputs are illegal"
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
