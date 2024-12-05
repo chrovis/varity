@@ -417,6 +417,7 @@
                                           :reverse (protein-position pos alt-rg))
                                         (count alt-prot-seq*))])
           [pref-only palt-only offset _] (diff-bases pref palt)
+          npref (count pref)
           nprefo (count pref-only)
           npalto (count palt-only)
           [unit ref-repeat alt-repeat] (repeat-info* ref-prot-seq
@@ -436,13 +437,13 @@
                                            :unknown
 
                                            (or (= ref-prot-rest alt-prot-rest)
-                                                 (and prefer-extension-for-initial-codon-alt?
-                                                      (not= (first ref-prot-seq) (first alt-prot-seq*))))
+                                               (and prefer-extension-for-initial-codon-alt?
+                                                    (not= (first ref-prot-seq) (first alt-prot-seq*))))
                                            :extension
 
                                            :else
                                            :frame-shift)
-              (and (pos? nprefo) (= (first palt-only) \*)) :substitution
+              (and (pos? npref) (= (first palt-only) \*)) :substitution
               (not= ref-prot-rest alt-prot-rest) (cond
                                                    (or (and (= (first alt-prot-rest) \*)
                                                             (>= nprefo npalto)
@@ -480,12 +481,19 @@
               palt)})))
 
 (defn- protein-substitution
-  [ppos pref palt]
+  [ppos pref palt {:keys [ref-prot-seq alt-prot-seq]}]
   (let [[s-ref s-alt offset _] (diff-bases pref palt)]
-    (if (and (empty? s-ref) (empty? s-alt))
+    (cond
+      (and (empty? s-ref) (empty? s-alt))
       (mut/protein-substitution (mut/->long-amino-acid (last pref))
                                 (coord/protein-coordinate ppos)
                                 (mut/->long-amino-acid (last palt)))
+      (empty? s-ref)
+      (let [{:keys [ppos pref palt]} (get-first-diff-aa-info ppos ref-prot-seq alt-prot-seq)]
+        (mut/protein-substitution (mut/->long-amino-acid pref)
+                                  (coord/protein-coordinate ppos)
+                                  (mut/->long-amino-acid palt)))
+      :else
       (mut/protein-substitution (mut/->long-amino-acid (first s-ref))
                                 (coord/protein-coordinate (+ ppos offset))
                                 (mut/->long-amino-acid (first s-alt))))))
@@ -555,7 +563,7 @@
                          (subs (dec (+ ppos offset)))
                          (string/index-of "*"))]
         (if (= alt \*)
-          (protein-substitution (+ ppos offset) (str ref) (str alt)) ; eventually fs-ter-substitution
+          (protein-substitution (+ ppos offset) (str ref) (str alt) seq-info) ; eventually fs-ter-substitution
           (mut/protein-frame-shift (mut/->long-amino-acid ref)
                                    (coord/protein-coordinate (+ ppos offset))
                                    (mut/->long-amino-acid alt)
@@ -662,7 +670,7 @@
               pvariant)
             seq-info (merge seq-info options)]
         (case (:type pvariant)
-          :substitution (protein-substitution ppos pref palt)
+          :substitution (protein-substitution ppos pref palt seq-info)
           :deletion (protein-deletion ppos pref palt)
           :duplication (protein-duplication ppos pref palt)
           :insertion (protein-insertion ppos pref palt seq-info)
