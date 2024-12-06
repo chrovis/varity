@@ -197,6 +197,7 @@
                                   "p.A35=") ; cf. rs786201577 (synonymous)
         "chr6" 33086236 "TA" "T" '("p.*259=") ; cf. rs67523850 (deletion in border of UTR)
         "chr7" 152247986 "G" "GT" '("p.Y816*") ; cf. rs150073007 (-, nonsense mutation)
+        "chr18" 51048782 "C" "CAGT" '("p.Y117*") ; cf. not actual example (+, inframe nonsense mutation)
         "chr17" 31159027 "TGC" "T" '("p.A75*") ; not actual example (+, nonsense in del case)
         "chr2" 47478341 "TG" "T" '("p.L762*" "p.L696*") ;; rs786204050 (+) frameshift with termination
         "chr17" 7676202 "T" "TGTCCCTTAGTCTT" '("p.P58*" "p.P19*") ; cf. not actual example (-, frameshift with termination)
