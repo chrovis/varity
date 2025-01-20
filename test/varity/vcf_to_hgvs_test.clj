@@ -301,6 +301,7 @@
         "chr11" 14279340 "G" "A" '("p.=") ; not actual example (-)
         "chr7" 55019277 "G" "GTC" '("p.=") ; not actual example (+)
         "chr17" 21042835 "T" "TG" '("p.=") ; not actual example (-)
+        "chr13" 24421121 "A" "ATTA" '("p.=") ; not actual example (-)
 
         ;; unknown
         "chr12" 40393453 "G" "A" '("p.?") ; not actual example (+)
