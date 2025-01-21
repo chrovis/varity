@@ -179,10 +179,10 @@
 
 (defn- ter-site-same-pos?
   [ref-prot-seq alt-prot-seq]
-  (let [ref-ter-pos (count ref-prot-seq)
-        alt-ter-pos (inc (count (first (string/split alt-prot-seq #"\*"))))]
-    (and (string/includes? ref-prot-seq "*")
-         (string/includes? alt-prot-seq "*")
+  (and (string/includes? ref-prot-seq "*")
+       (string/includes? alt-prot-seq "*")
+       (let [ref-ter-pos (count ref-prot-seq)
+             alt-ter-pos (inc (count (first (string/split alt-prot-seq #"\*"))))]
          (= ref-ter-pos alt-ter-pos))))
 
 (defn- cds-start-upstream?
