@@ -428,8 +428,12 @@
                                                      pref-only
                                                      palt-only)
           ini-site-affected (ini-site-affected? ref-exon-seq alt-exon-seq)
+          first-diff-aa-is-ter-site (first-diff-aa-is-ter-site? base-ppos
+                                                                ref-prot-seq
+                                                                alt-prot-seq*)
           t (cond
-              ref-include-from-ter-start-and-over-ter-end :frame-shift
+              (and ref-include-from-ter-start-and-over-ter-end
+                   (not first-diff-aa-is-ter-site)) :frame-shift
               (= (+ base-ppos offset) (count ref-prot-seq)) (if (and (= "" pref-only palt-only)
                                                                      (ter-site-same-pos? ref-prot-seq alt-prot-seq*))
                                                               :no-effect
@@ -455,9 +459,7 @@
                                                             (= palt (subs pref 0 (count palt))))
                                                        (= (first palt-only) \*)) :fs-ter-substitution
                                                    ref-include-ter-site :indel
-                                                   (first-diff-aa-is-ter-site? base-ppos
-                                                                               ref-prot-seq
-                                                                               alt-prot-seq*) :extension
+                                                   first-diff-aa-is-ter-site :extension
                                                    :else :frame-shift)
               (or (and (zero? nprefo) (zero? npalto))
                   (and (= nprefo 1) (= npalto 1))) :substitution
