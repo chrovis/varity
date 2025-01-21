@@ -280,6 +280,8 @@
         "chr11" 125655318 "TGA" "TAT" '("p.*477Yext*17" "p.*443Yext*17" "p.*477Yext*24")
         "chr10" 8074014 "C" "CATGGGTT" '("p.*445Yext*64" "p.*444Yext*64") ; not actual example (+)
         "chr10" 87965468 "TC" "T" '("p.*404Eext*11" "p.*577Eext*11" "p.*207Eext*11") ; not actual example (+)
+        "chrX" 15823239 "ATAA" "A" '("p.*483Text*?") ; not actual example (+)
+        "chr13" 24421118 "CTTA" "C" '("p.*1725Vext*2") ; not actual example (-)
         ;; NOTE: There are very few correct examples...
 
         ;; Extension without termination site
@@ -301,6 +303,7 @@
         "chr11" 14279340 "G" "A" '("p.=") ; not actual example (-)
         "chr7" 55019277 "G" "GTC" '("p.=") ; not actual example (+)
         "chr17" 21042835 "T" "TG" '("p.=") ; not actual example (-)
+        "chr13" 24421121 "A" "ATTA" '("p.=") ; not actual example (-)
 
         ;; unknown
         "chr12" 40393453 "G" "A" '("p.?") ; not actual example (+)
