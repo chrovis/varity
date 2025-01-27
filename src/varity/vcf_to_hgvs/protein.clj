@@ -650,6 +650,9 @@
       (every? empty? [del ins])
       (mut/protein-no-effect)
 
+      (= 1 (count del) (count ins))
+      (protein-substitution ppos* pref* palt* seq-info)
+
       (empty? del)
       (protein-insertion ppos* pref* palt* seq-info)
 
