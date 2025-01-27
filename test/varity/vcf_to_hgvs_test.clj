@@ -283,6 +283,7 @@
         "chr10" 87965468 "TC" "T" '("p.*404Eext*11" "p.*577Eext*11" "p.*207Eext*11") ; not actual example (+)
         "chrX" 15823239 "ATAA" "A" '("p.*483Text*?") ; not actual example (+)
         "chr13" 24421118 "CTTA" "C" '("p.*1725Vext*2") ; not actual example (-)
+        "chrX" 15823235 "CCAAA" "C" '("p.*483Lext*?") ; not actual example (+)
         ;; NOTE: There are very few correct examples...
 
         ;; Extension without termination site

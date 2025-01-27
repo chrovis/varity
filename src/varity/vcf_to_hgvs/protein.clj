@@ -590,7 +590,7 @@
       (mut/protein-unknown-mutation)
 
       :else
-      (let [[_ ins offset _] (diff-bases (or pref "") (or palt ""))
+      (let [[_ ins _ _] (diff-bases (or pref "") (or palt ""))
             ini-site ((comp str first) ref-prot-seq)
             first-diff-aa-info (if (= ppos 1)
                                  {:ppos 1
@@ -612,7 +612,7 @@
         (if (and (= ppos 1) (= alt-aa "Ter"))
           (mut/protein-unknown-mutation)
           (mut/protein-extension (if (= ppos 1) (mut/->long-amino-acid ini-site) "Ter")
-                                 (coord/protein-coordinate (if (= ppos 1) 1 (+ ppos offset)))
+                                 (coord/protein-coordinate (if (= ppos 1) 1 (:ppos first-diff-aa-info)))
                                  alt-aa
                                  (if (= ppos 1) :upstream :downstream)
                                  (if new-aa-pos
