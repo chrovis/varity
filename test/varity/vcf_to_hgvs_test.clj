@@ -201,6 +201,7 @@
         "chr17" 31159027 "TGC" "T" '("p.A75*") ; not actual example (+, nonsense in del case)
         "chr2" 47478341 "TG" "T" '("p.L762*" "p.L696*") ;; rs786204050 (+) frameshift with termination
         "chr17" 7676202 "T" "TGTCCCTTAGTCTT" '("p.P58*" "p.P19*") ; cf. not actual example (-, frameshift with termination)
+        "chr13" 24421115 "TGACTTAGCC" "T" '("p.G1724K") ; not actual example (-, del includes termination codon)
 
         ;; deletion
         "chr1" 240092288 "AGTC" "A" '("p.S61del") ; cf. rs772088733 (+)
@@ -282,6 +283,7 @@
         "chr10" 87965468 "TC" "T" '("p.*404Eext*11" "p.*577Eext*11" "p.*207Eext*11") ; not actual example (+)
         "chrX" 15823239 "ATAA" "A" '("p.*483Text*?") ; not actual example (+)
         "chr13" 24421118 "CTTA" "C" '("p.*1725Vext*2") ; not actual example (-)
+        "chrX" 15823235 "CCAAA" "C" '("p.*483Lext*?") ; not actual example (+)
         ;; NOTE: There are very few correct examples...
 
         ;; Extension without termination site
