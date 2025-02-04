@@ -275,6 +275,7 @@
         "chr10" 87965466 "AGTCT" "A" '("p.V403Efs*12" "p.V576Efs*12" "p.V206Efs*12") ; not actual example (+)
         "chr10" 87965465 "AAGTCT" "A" '("p.V403Nfs*17" "p.V576Nfs*17" "p.V206Nfs*17") ; not actual example (+)
         "chr10" 87965463 "AAAAGTCT" "A" '("p.K402Efs*12" "p.K575Efs*12" "p.K205Efs*12") ; not actual example (+)
+        "chr13" 24421117 "ACTTAGC" "A" '("p.G1724Vfs*3") ; not actual example (-)
 
         ;; Extension
         "chr2" 189011772 "T" "C" '("p.*1467Qext*45") ; cf. ClinVar 101338
