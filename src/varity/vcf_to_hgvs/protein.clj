@@ -382,7 +382,8 @@
   [{:keys [strand] :as rg} pos ref alt
    {:keys [ref-exon-seq ref-prot-seq alt-exon-seq alt-rg ref-include-ter-site
            ref-include-from-ter-start-and-over-ter-end utr-variant] :as seq-info}
-   {:keys [prefer-deletion? prefer-insertion? prefer-extension-for-initial-codon-alt?]}]
+   {:keys [prefer-deletion? prefer-insertion? prefer-deletion-insertion?
+           prefer-extension-for-initial-codon-alt?]}]
   (cond
     (:overlap-exon-intron-boundary seq-info)
     {:type :overlap-exon-intron-boundary, :pos nil, :ref nil, :alt nil}
@@ -466,7 +467,9 @@
               (and prefer-deletion? (pos? nprefo) (zero? npalto)) :deletion
               (and prefer-insertion? (zero? nprefo) (pos? npalto)) :insertion
               (and (some? unit) (= ref-repeat 1) (= alt-repeat 2)) :duplication
-              (and (some? unit) (pos? alt-repeat)) :repeated-seqs
+              (and (some? unit) (pos? alt-repeat)) (if (and prefer-deletion-insertion? (pos? npref) (pos? npalto))
+                                                     :indel
+                                                     :repeated-seqs)
               (and (pos? nprefo) (zero? npalto)) :deletion
               (and (pos? nprefo) (pos? npalto)) (if (= base-ppos 1)
                                                   :extension

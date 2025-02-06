@@ -10,6 +10,8 @@
    {:prefer-deletion? true}
    {:prefer-insertion? false}
    {:prefer-insertion? true}
+   {:prefer-deletion-insertion? false}
+   {:prefer-deletion-insertion? true}
    {:prefer-extension-for-initial-codon-alt? false}
    {:prefer-extension-for-initial-codon-alt? true}])
 

@@ -166,6 +166,15 @@
         "chr3" 126492636 "C" "CCTCT" {:prefer-insertion? true} '("NM_001165974:c.1690-121_1690-120insAGAG"
                                                                  "NM_144639:c.1510-121_1510-120insAGAG")
 
+        ;; prefer-deletion-inserion?
+        ;; inversion cf. rs267608133 (+)
+        "chr2" 47806747 "AAAACTTTTTTTTTTTTTTTTTTAA" "ATTAAAAAAAAAAAAAAAAAAGTTT" {:prefer-deletion-insertion? true} '("NM_000179:c.4002-31_4002-8delAAACTTTTTTTTTTTTTTTTTTAAinsTTAAAAAAAAAAAAAAAAAAGTTT"
+                                                                                                                     "NM_001281492:c.3612-31_3612-8delAAACTTTTTTTTTTTTTTTTTTAAinsTTAAAAAAAAAAAAAAAAAAGTTT"
+                                                                                                                     "NM_001281493:c.3096-31_3096-8delAAACTTTTTTTTTTTTTTTTTTAAinsTTAAAAAAAAAAAAAAAAAAGTTT"
+                                                                                                                     "NM_001281494:c.3096-31_3096-8delAAACTTTTTTTTTTTTTTTTTTAAinsTTAAAAAAAAAAAAAAAAAAGTTT"
+                                                                                                                     "NM_025133:c.*1347_*1370delTTAAAAAAAAAAAAAAAAAAGTTTinsAAACTTTTTTTTTTTTTTTTTTAA"
+                                                                                                                     "NM_001190274:c.*1347_*1370delTTAAAAAAAAAAAAAAAAAAGTTTinsAAACTTTTTTTTTTTTTTTTTTAA")
+
         ;; tx-margin
         "chr5" 1295113 "G" "A" {:tx-margin 5000} '("NM_001193376:c.-124C>T"
                                                    "NM_198253:c.-124C>T")

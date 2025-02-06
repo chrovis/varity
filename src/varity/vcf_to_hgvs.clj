@@ -69,6 +69,7 @@
 (def ^:private default-options
   {:prefer-deletion? false
    :prefer-insertion? false
+   :prefer-deletion-insertion? false
    :prefer-extension-for-initial-codon-alt? false
    :tx-margin 5000
    :verbose? false})
@@ -90,6 +91,10 @@
 
     :prefer-insertion? Prefer insertion (e.g. \"c.9_10insAGG\") to repeated
                        sequences (e.g. \"c.4_6[3]\"), default false.
+
+    :prefer-deletion-insertion? Prefer indel (e.g. \"c.18_20delATCinsGAT\")
+                                to repeated sequences and inversion (e.g. \"c.18_20inv\"),
+                                default false.
 
     :tx-margin         The length of transcription margin, up to a maximum of
                        10000, default 5000.
@@ -158,8 +163,10 @@
     :prefer-deletion?  Prefer deletion (e.g. \"p.P7_H8del\") to repeated
                        sequences (e.g. \"p.P5_H6[1]\"), default false.
 
-    :prefer-insertion? Prefer insertion (e.g. \"c.H9_L10insRPH\") to repeated
-                       sequences (e.g. \"c.R4_H6[3]\"), default false.
+    :prefer-insertion? Prefer insertion (e.g. \"p.H9_L10insRPH\") to repeated
+                       sequences (e.g. \"p.R4_H6[3]\"), default false.
+
+    :prefer-deletion-insertion? Prefer indel to repeated sequences, default false.
 
     :prefer-extension-for-initial-codon-alt? Prefer extension to protein unknown variant
                                              that affects initial codon, default false.
@@ -233,6 +240,10 @@
 
     :prefer-insertion? Prefer insertion (e.g. \"c.9_10insAGG\") to repeated
                        sequences (e.g. \"c.4_6[3]\"), default false.
+
+    :prefer-deletion-insertion? Prefer indel (e.g. \"c.18_20delATCinsGAT\")
+                                to repeated sequences and inversion (e.g. \"c.18_20inv\"),
+                                default false.
 
     :prefer-extension-for-initial-codon-alt? Prefer extension to protein unknown variant
                                              that affects initial codon, default false.
