@@ -464,14 +464,18 @@
               (or (and (zero? nprefo) (zero? npalto))
                   (and (= nprefo 1) (= npalto 1))) :substitution
               (and prefer-deletion? (pos? nprefo) (zero? npalto)) :deletion
-              (and prefer-insertion? (zero? nprefo) (pos? npalto)) :insertion
+              (and prefer-insertion? (zero? nprefo) (pos? npalto)) (if first-diff-aa-is-ter-site
+                                                                     :extension
+                                                                     :insertion)
               (and (some? unit) (= ref-repeat 1) (= alt-repeat 2)) :duplication
               (and (some? unit) (pos? alt-repeat)) :repeated-seqs
               (and (pos? nprefo) (zero? npalto)) :deletion
               (and (pos? nprefo) (pos? npalto)) (if (= base-ppos 1)
                                                   :extension
                                                   :indel)
-              (and (zero? nprefo) (pos? npalto)) :insertion
+              (and (zero? nprefo) (pos? npalto)) (if first-diff-aa-is-ter-site
+                                                   :extension
+                                                   :insertion)
               :else (throw (ex-info "Unsupported variant" {:type ::unsupported-variant})))]
       {:type (if (= t :fs-ter-substitution) :substitution t)
        :pos base-ppos
