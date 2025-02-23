@@ -169,7 +169,17 @@
         ;; tx-margin
         "chr5" 1295113 "G" "A" {:tx-margin 5000} '("NM_001193376:c.-124C>T"
                                                    "NM_198253:c.-124C>T")
-        "chr5" 1295113 "G" "A" {:tx-margin 0} '())))
+        "chr5" 1295113 "G" "A" {:tx-margin 0} '()
+
+        ;; three-prime-rule
+        "chr13" 24421115 "TGACTTAGCCT" "T" {:three-prime-rule {:restrict-cds true}} '("NM_006437:c.5169_*3delAGGCTAAGTC") ;; not actual example (-)
+        "chr13" 24421115 "TGACTTAGCCT" "T" {:three-prime-rule {:restrict-cds false}} '("NM_006437:c.5170_*4delGGCTAAGTCA") ;; not actual example (-)
+        "chr3" 53495165 "GGAT" "G" {:three-prime-rule {:restrict-cds true} :prefer-insertion? true :prefer-deletion? true} '("NM_000720:c.-1_2delGAT"
+                                                                                                                             "NM_001128839:c.-1_2delGAT"
+                                                                                                                             "NM_001128840:c.-1_2delGAT") ;; not actual example (+)
+        "chr3" 53495165 "GGAT" "G" {:three-prime-rule {:restrict-cds false} :prefer-insertion? true :prefer-deletion? true} '("NM_000720:c.20_22delTGA"
+                                                                                                                              "NM_001128839:c.20_22delTGA"
+                                                                                                                              "NM_001128840:c.20_22delTGA")))) ;; not actual example (+)
   (cavia-testing "throws Exception if inputs are illegal"
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
       (is (thrown? Exception
@@ -350,9 +360,15 @@
 
         ;; prefer-extension-for-initial-codon-alt?
         "chr10" 121593814 "CCATGGT" "C" {:prefer-extension-for-initial-codon-alt? true} '("p.M1Vext-17") ;; not actual example (-)
-        "chr2" 197434979 "AGTCTTGGCGATCTTCGCCATTTT" "A" {:prefer-extension-for-initial-codon-alt? true} '("p.M1Sext-?")))) ;; not actual example (-)
+        "chr2" 197434979 "AGTCTTGGCGATCTTCGCCATTTT" "A" {:prefer-extension-for-initial-codon-alt? true} '("p.M1Sext-?") ;; not actual example (-)
         ;; prefer-extension-for-initial-codon-alt?, initiation codon is altered to termination codon
         "chr9" 27109592 "T" "TTTA" {:prefer-extension-for-initial-codon-alt? true} '("p.?") ;; not actual example (+)
+
+        ;; three-prime-rule
+        "chr13" 24421115 "TGACTTAGCCT" "T" {:three-prime-rule {:restrict-cds true}} '("p.G1724Nfs*6") ;; not actual example (-)
+        "chr13" 24421115 "TGACTTAGCCT" "T" {:three-prime-rule {:restrict-cds false}} '("p.G1724delinsNETEF") ;; not actual example (-)
+        "chr3" 53495165 "GGAT" "G" {:three-prime-rule {:restrict-cds true} :prefer-insertion? true :prefer-deletion? true} '("p.?") ;; not actual example (+)
+        "chr3" 53495165 "GGAT" "G" {:three-prime-rule {:restrict-cds false} :prefer-insertion? true :prefer-deletion? true} '("p.M7del")))) ;; not actual example (+)
 
   (cavia-testing "throws Exception if inputs are illegal"
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
@@ -403,3 +419,25 @@
       "NR_024540"
       "ENSP00000496776.1"
       "ENSP00000496776")))
+
+(defn- vcf-variant->hgvs-texts
+  [variant seq-rdr rgidx & [options]]
+  (map (fn [{:keys [coding-dna protein]}]
+         {:coding-dna (hgvs/format coding-dna {:show-bases? true
+                                               :range-format :coord})
+          :protein (hgvs/format protein {:amino-acid-format :short
+                                         :show-ter-site? true
+                                         :ter-format :short})})
+       (vcf-variant->hgvs variant seq-rdr rgidx options)))
+
+(defslowtest vcf-variant->hgvs-test
+  (cavia-testing "options"
+                 (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
+                   (are [chr pos ref alt opts e]
+                        (= (vcf-variant->hgvs-texts {:chr chr, :pos pos, :ref ref, :alt alt}
+                                                    test-ref-seq-file rgidx (merge {:prefer-insertion? true
+                                                                                    :prefer-deletion? true}
+                                                                                   opts)) e)
+                     ;; three-prime-rule
+                     "chr13" 24421115 "TGACTTAGCCT" "T" {:three-prime-rule {:coding-dna {:restrict-cds true} :protein {:restrict-cds true}}} '({:coding-dna "NM_006437:c.5169_*3delAGGCTAAGTC", :protein "p.G1724Nfs*6"}) ;; not actual example (-)
+                     "chr13" 24421115 "TGACTTAGCCT" "T" {:three-prime-rule {:coding-dna {:restrict-cds false} :protein {:restrict-cds false}}} '({:coding-dna "NM_006437:c.5170_*4delGGCTAAGTCA", :protein "p.G1724delinsNETEF"}))))) ;; not actual example (-)
