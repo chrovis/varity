@@ -68,7 +68,7 @@
       :reverse (repeat-info-backward seq-rdr rg pos alt type))))
 
 (defn- mutation-type
-  [seq-rdr rg pos ref alt {:keys [prefer-deletion? prefer-insertion?]}]
+  [seq-rdr rg pos ref alt {:keys [prefer-deletion? prefer-insertion? prefer-deletion-insertion?]}]
   (if (re-matches #"[acgntACGNT]*" alt)
     (let [[ref-only alt-only offset _] (diff-bases ref alt)
           nrefo (count ref-only)
@@ -79,6 +79,7 @@
         (or (= nrefo nalto 0) (= nrefo nalto 1)) :substitution
         (and prefer-deletion? (pos? nrefo) (zero? nalto)) :deletion
         (and prefer-insertion? (zero? nrefo) (pos? nalto)) :insertion
+        (and prefer-deletion-insertion? (pos? nrefo) (pos? nalto)) :indel
         (= ref-only (util-seq/revcomp alt-only)) :inversion
         (and (some? unit) (= ref-repeat 1) (= alt-repeat 2)) :duplication
         (and (some? unit) (pos? alt-repeat)
