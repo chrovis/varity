@@ -355,8 +355,9 @@
         "chr1" 47438996 "T" "TCCGCAC" {:prefer-insertion? false} '("p.P286_H287[5]")
         "chr1" 47438996 "T" "TCCGCAC" {:prefer-insertion? true} '("p.H293_A294insPH")
 
-        ;; prefer-insertion?, not actual example (+)
-        "chr1" 26773690 "C" "CGCAGCA" {:prefer-insertion? true} '("p.Q1334_R1335insQQ")
+        ;; prefer-insertion?
+        "chr1" 26773690 "C" "CGCAGCA" {:prefer-insertion? true} '("p.Q1334_R1335insQQ") ;; not actual example (+)
+        "chr10" 103089678 "T" "TTCC" {:prefer-insertion? true} '("p.*562Eext*1") ;; not actual example (-)
 
         ;; prefer-extension-for-initial-codon-alt?
         "chr10" 121593814 "CCATGGT" "C" {:prefer-extension-for-initial-codon-alt? true} '("p.M1Vext-17") ;; not actual example (-)
