@@ -177,6 +177,22 @@
       (and (= pos ter-start-pos) (<= ter-end-pos pos-end))
       (and (= pos-end ter-start-pos) (<= pos ter-end-pos)))))
 
+(defn- ref-include-from-ter-upstream-and-over-ter-end?
+  [{:keys [strand cds-start cds-end]} pos ref alt]
+  (let [[del _ offset _] (diff-bases ref alt)
+        pos (+ pos offset)
+        ndel (count del)
+        ter-start-pos (if (= strand :forward)
+                        (- cds-end 2)
+                        (+ cds-start 2))
+        ter-end-pos (if (= strand :forward)
+                      cds-end
+                      cds-start)
+        pos-end (+ pos (if (= ndel 0) 0 (dec ndel)))]
+    (if (= strand :forward)
+      (and (< pos ter-start-pos) (< ter-end-pos pos-end))
+      (and (< ter-start-pos pos-end) (< pos ter-end-pos)))))
+
 (defn- ter-site-same-pos?
   [ref-prot-seq alt-prot-seq]
   (and (string/includes? ref-prot-seq "*")
@@ -260,6 +276,25 @@
       :else
       pos-start*)))
 
+(defn- in-frame?
+  [pos ref alt {:keys [cds-start cds-end strand] :as _rg}]
+  (let [[del ins offset] (diff-bases ref alt)
+        ndel (count del)
+        nins (count ins)
+        pos* (+ pos offset)
+        pos-end (+ pos offset (dec ndel))
+        over-ter-site? (if (= strand :forward)
+                         (< pos cds-end pos-end)
+                         (< pos cds-start pos-end))
+        ndel-to-cds-end (if (= strand :forward)
+                          (inc (- cds-end pos*))
+                          (inc (- pos-end cds-start)))
+        ndel* (if over-ter-site?
+                ndel-to-cds-end
+                ndel)]
+    (or (= ndel nins 1)
+        (= 0 (rem (- ndel* nins) 3)))))
+
 (defn- apply-offset
   [pos ref alt cds-start cds-end exon-ranges pos*]
   (let [[del ins offset _] (diff-bases ref alt)
@@ -288,6 +323,7 @@
           ref-include-utr-ini-site-boundary (include-utr-ini-site-boundary? rg pos ref alt)
           ref-include-ter-site (include-ter-site? rg pos ref alt)
           ref-include-from-ter-start-and-over-ter-end (ref-include-from-ter-start-and-over-ter-end? rg pos ref alt)
+          ref-include-from-ter-upstream-and-over-ter-end (ref-include-from-ter-upstream-and-over-ter-end? rg pos ref alt)
           frameshift-within-cds (frameshift-within-cds? rg pos ref alt)
           alt-seq (common/alt-sequence ref-seq tx-start pos ref alt)
           alt-exon-ranges* (alt-exon-ranges exon-ranges pos ref alt)
@@ -301,7 +337,8 @@
           alt-up-exon-seq (make-alt-up-exon-seq alt-up-exon-seq tx-start (dec alt-cds-start) alt-exon-ranges* strand)
           alt-down-exon-seq (make-alt-down-exon-seq alt-down-exon-seq (inc alt-cds-end) alt-tx-end alt-exon-ranges* strand)
           ter-site-adjusted-alt-seq (make-ter-site-adjusted-alt-seq alt-cds-exon-seq alt-up-exon-seq alt-down-exon-seq
-                                                                    strand cds-start cds-end pos ref ref-include-ter-site)]
+                                                                    strand cds-start cds-end pos ref ref-include-ter-site)
+          in-frame (in-frame? pos ref alt rg)]
       {:ref-exon-seq ref-cds-exon-seq
        :ref-prot-seq (codon/amino-acid-sequence (cond-> ref-cds-exon-seq
                                                   (= strand :reverse) util-seq/revcomp))
@@ -327,8 +364,10 @@
        :ref-include-utr-ini-site-boundary ref-include-utr-ini-site-boundary
        :ref-include-ter-site ref-include-ter-site
        :ref-include-from-ter-start-and-over-ter-end ref-include-from-ter-start-and-over-ter-end
+       :ref-include-from-ter-upstream-and-over-ter-end ref-include-from-ter-upstream-and-over-ter-end
        :frameshift-within-cds frameshift-within-cds
-       :utr-variant (utr-variant? cds-start cds-end pos ref alt)})))
+       :utr-variant (utr-variant? cds-start cds-end pos ref alt)
+       :in-frame in-frame})))
 
 (defn- protein-position
   "Converts genomic position to protein position. If pos is outside of CDS,
@@ -621,7 +660,8 @@
 
 (defn- protein-indel
   [ppos pref palt {:keys [ref-prot-seq c-ter-adjusted-alt-prot-seq
-                          ref-include-ter-site frameshift-within-cds] :as seq-info}]
+                          ref-include-ter-site frameshift-within-cds
+                          ref-include-from-ter-upstream-and-over-ter-end in-frame] :as seq-info}]
   (let [[pref* palt* ppos*] (if ref-include-ter-site
                               (let [{adjusted-ppos :ppos} (get-first-diff-aa-info ppos ref-prot-seq c-ter-adjusted-alt-prot-seq)
                                     ppos (or adjusted-ppos ppos)
@@ -658,6 +698,10 @@
 
       (empty? ins)
       (protein-deletion ppos* pref* palt*)
+
+      (and ref-include-from-ter-upstream-and-over-ter-end
+           (not in-frame))
+      (protein-frame-shift ppos* seq-info)
 
       alt-retain-ter-site?
       (mut/protein-indel (mut/->long-amino-acid (first del))
