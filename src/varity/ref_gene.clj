@@ -526,3 +526,25 @@
         :else
         (throw (ex-info "The coordinate is invalid for the refGene."
                         {:type ::invalid-coordinate, :coordinate coord}))))))
+
+(defn- ranges->regions
+  [ranges region strand]
+  (let [ranges (if (= strand :forward)
+                 ranges
+                 (reverse ranges))]
+    (map-indexed (fn [idx range] {:range range
+                                  :region region
+                                  :index (inc idx)
+                                  :length (count ranges)})
+                 ranges)))
+
+(defn pos->region
+  "Returns exon or intron region of the given position"
+  [pos {:keys [strand exon-ranges]}]
+  (let [intron-ranges (exon-ranges->intron-ranges exon-ranges)
+        regions (concat (ranges->regions exon-ranges "exon" strand)
+                        (ranges->regions intron-ranges "intron" strand))
+        include-pos? (fn [{:keys [range]}]
+                       (let [[s e] range]
+                         (<= s pos e)))]
+    (first (filter include-pos? regions))))

@@ -544,3 +544,27 @@
       "5+1" :reverse
       "4-1" :reverse
       "3+1" :reverse)))
+
+(deftest ranges->regions-test
+  (let [ranges [[10 20] [30 40] [50 60]]]
+    (is (= (#'rg/ranges->regions ranges "exon" :forward)
+           [{:range [10 20] :region "exon" :index 1 :length 3}
+            {:range [30 40] :region "exon" :index 2 :length 3}
+            {:range [50 60] :region "exon" :index 3 :length 3}]))
+    (is (= (#'rg/ranges->regions ranges "exon" :reverse)
+           [{:range [50 60] :region "exon" :index 1 :length 3}
+            {:range [30 40] :region "exon" :index 2 :length 3}
+            {:range [10 20] :region "exon" :index 3 :length 3}]))))
+
+(deftest pos->region
+  (let [ranges [[10 20] [30 40] [50 60]]]
+    (testing "forward"
+      (are [pos pred] (= (rg/pos->region pos {:strand :forward :exon-ranges ranges})
+                         pred)
+        10 {:range [10 20] :region "exon" :index 1 :length 3}
+        25 {:range [21 29] :region "intron" :index 1 :length 2}))
+    (testing "reverse"
+      (are [pos pred] (= (rg/pos->region pos {:strand :reverse :exon-ranges ranges})
+                         pred)
+        10 {:range [10 20] :region "exon" :index 3 :length 3}
+        25 {:range [21 29] :region "intron" :index 2 :length 2}))))
