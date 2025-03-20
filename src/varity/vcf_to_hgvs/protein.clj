@@ -503,6 +503,7 @@
                                                    :else :frame-shift)
               (or (and (zero? nprefo) (zero? npalto))
                   (and (= nprefo 1) (= npalto 1))) :substitution
+              (and ref-include-ter-site (pos? (count pref)) (= (first palt) \*)) :ter-substitution
               (and prefer-deletion? (pos? nprefo) (zero? npalto)) :deletion
               (and prefer-insertion? (zero? nprefo) (pos? npalto)) (if first-diff-aa-is-ter-site
                                                                      :extension
@@ -519,17 +520,22 @@
                                                    :extension
                                                    :insertion)
               :else (throw (ex-info "Unsupported variant" {:type ::unsupported-variant})))]
-      {:type (if (= t :fs-ter-substitution) :substitution t)
+      {:type (if (#{:fs-ter-substitution :ter-substitution} t) :substitution t)
        :pos base-ppos
-       :ref (if (= t :fs-ter-substitution)
+       :ref (cond
+              (= t :fs-ter-substitution)
               (let [pref-len (count pref)
                     palt-len (count palt)
                     palt-ter-len (inc palt-len)]
                 (if (<= pref-len palt-ter-len)
                   (str pref (subs ref-prot-rest 0 (inc (- palt-len pref-len))))
                   (subs pref 0 palt-ter-len)))
-              pref)
-       :alt (if (= t :fs-ter-substitution)
+
+              (= t :ter-substitution)
+              (first (string/split pref #"\*"))
+
+              :else pref)
+       :alt (if (#{:fs-ter-substitution :ter-substitution} t)
               (str palt \*)
               palt)})))
 
