@@ -16,7 +16,7 @@
   :test-selectors {:default (complement :slow)
                    :slow :slow
                    :all (constantly true)}
-  :profiles {:dev {:dependencies [[cavia "0.5.1"]
+  :profiles {:dev {:dependencies [[cavia "0.7.2"]
                                   [codox-theme-rdash "0.1.2"]
                                   [criterium "0.4.6"]
                                   [net.totakke/libra "0.1.1"]]}
