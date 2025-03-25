@@ -1,9 +1,9 @@
 (ns varity.t-common
-  (:require [clojure.java.io :as io]
-            [clojure.tools.logging :refer [*logger-factory*]]
-            [clojure.tools.logging.impl :refer [disabled-logger-factory]]
+  (:require [cavia.core :as cavia :refer [defprofile with-profile]]
+            [clojure.java.io :as io]
             [clojure.test :refer [assert-expr deftest do-report testing]]
-            [cavia.core :as cavia :refer [defprofile with-profile]]))
+            [clojure.tools.logging :refer [*logger-factory*]]
+            [clojure.tools.logging.impl :refer [disabled-logger-factory]]))
 
 (defmethod assert-expr 'thrown-with-error-type? [msg form]
   ;; (is (thrown-with-error-type? key expr))
@@ -26,24 +26,26 @@
 
 (defmacro defslowtest
   [name & body]
-  (if-not (in-cloverage?)
+  (when-not (in-cloverage?)
     `(deftest ~(vary-meta name assoc :slow true)
        ~@body)))
 
 (defprofile prof
   {:resources [{:id "test.2bit"
-                :url "https://test.chrov.is/data/varity/hg38.2bit"
+                :url "https://test-resources.chrov.is/data/varity/hg38.2bit"
                 :sha1 "6fb20ba4de0b49247b78e08c2394d0c4f8594148"}
                {:id "test-refGene.txt.gz"
-                :url "https://test.chrov.is/data/varity/hg38-refGene.txt.gz"
+                :url "https://test-resources.chrov.is/data/varity/hg38-refGene.txt.gz"
                 :sha1 "941d514e57f4e842743f5c9269a0279906a072a0"}
                {:id "test-ncbiRefSeq.txt.gz"
-                :url "https://test.chrov.is/data/varity/ncbiRefSeq_hg38_20210909.txt.gz"
+                :url "https://test-resources.chrov.is/data/varity/ncbiRefSeq_hg38_20210909.txt.gz"
                 :sha1 "b9bbc52296ec64da03b38db28be47a1925f69ee9"}]})
 
 (defn prepare-cavia! []
   (with-profile prof
-    (cavia/without-print (cavia/get!))))
+    (cavia/with-verbosity {:message false
+                           :download false}
+      (cavia/get!))))
 
 (defmacro cavia-testing
   {:style/indent 1}
