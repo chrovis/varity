@@ -21,8 +21,6 @@
                                   [criterium "0.4.6"]
                                   [net.totakke/libra "0.1.1"]]}
              :repl {:source-paths ["bench"]}
-             :1.8 {:dependencies [[org.clojure/clojure "1.8.0"]
-                                  [clojure-future-spec "1.9.0"]]}
              :1.9 {:dependencies [[org.clojure/clojure "1.9.0"]]}
              :1.10 {:dependencies [[org.clojure/clojure "1.10.3"]]}
              :1.11 {:dependencies [[org.clojure/clojure "1.11.1"]]}}
