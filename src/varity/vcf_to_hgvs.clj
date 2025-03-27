@@ -342,7 +342,6 @@
         (when (:verbose? options)
           (print-debug-info dnv seq-rdr rg)
           (print-debug-info pnv seq-rdr rg))
-        (println (:three-prime-rule options))
         {:coding-dna (coding-dna/->hgvs dnv seq-rdr rg options)
          :protein (when (cds-affected? dnv rg)
                     (prot/->hgvs pnv seq-rdr rg options))})
