@@ -279,39 +279,38 @@
       75  110 50)))
 
 (deftest in-frame?-test
-  (let [in-frame? (fn [pos ref alt strand] (#'prot/in-frame? pos ref alt {:cds-start 101
-                                                                          :cds-end 300
-                                                                          :strand strand}))]
+  (let [in-frame? (fn [pos ref alt] (#'prot/in-frame? pos ref alt {:cds-start 101
+                                                                   :cds-end 300}))]
     (testing "within cds"
-      (are [pred pos ref alt strand] (pred (in-frame? pos ref alt strand))
-        true? 200 "A" "T" :forward
-        true? 200 "AGGC" "A" :forward
-        true? 200 "A" "ATCG" :forward
-        true? 200 "AGT" "ACCCTG" :forward
-        true? 150 "T" "A" :reverse
-        true? 150 "GCTC" "G" :reverse
-        true? 150 "T" "TCCG" :reverse
-        true? 150 "TGG" "TCCAAC" :reverse
-        false? 200 "AGG" "A" :forward
-        false? 200 "A" "ATC" :forward
-        false? 200 "AGT" "ACCCT" :forward
-        false? 150 "GCT" "G" :reverse
-        false? 150 "T" "TCC" :reverse
-        false? 150 "TGG" "TCCAA" :reverse))
+      (are [pred pos ref alt] (pred (in-frame? pos ref alt))
+        true? 200 "A" "T"
+        true? 200 "AGGC" "A"
+        true? 200 "A" "ATCG"
+        true? 200 "AGT" "ACCCTG"
+        true? 150 "T" "A"
+        true? 150 "GCTC" "G"
+        true? 150 "T" "TCCG"
+        true? 150 "TGG" "TCCAAC"
+        false? 200 "AGG" "A"
+        false? 200 "A" "ATC"
+        false? 200 "AGT" "ACCCT"
+        false? 150 "GCT" "G"
+        false? 150 "T" "TCC"
+        false? 150 "TGG" "TCCAA"))
     (testing "over ter site"
-      (are [pred pos ref alt strand] (pred (in-frame? pos ref alt strand))
-        true? 294 "CAGTTGAAG" "C" :forward
-        true? 294 "CAGTTGAAG" "CGTC" :forward
-        true? 296 "GTTGAAG" "GCCAA" :forward
-        false? 295 "AGTTGAAG" "A" :forward
-        false? 295 "AGTTGAAG" "ACTC" :forward
-        false? 294 "CAGTTGAAG" "CGT" :forward
-        true? 99 "GTTTACGA" "G" :reverse
-        true? 99 "GTTTACGA" "GCCT" :reverse
-        true? 99 "GTTTACGAC" "GA" :reverse
-        false? 99 "GTTTACG" "G" :reverse
-        false? 96 "CAAGTTTACG" "C" :reverse
-        false? 99 "GTTTACGA" "GAT" :reverse))))
+      (are [pred pos ref alt] (pred (in-frame? pos ref alt))
+        true? 294 "CAGTTGAAG" "C"
+        true? 294 "CAGTTGAAG" "CGTC"
+        true? 296 "GTTGAAG" "GCCAA"
+        false? 295 "AGTTGAAG" "A"
+        false? 295 "AGTTGAAG" "ACTC"
+        false? 294 "CAGTTGAAG" "CGT"
+        true? 99 "GTTTACGA" "G"
+        true? 99 "GTTTACGA" "GCCT"
+        true? 99 "GTTTACGAC" "GA"
+        false? 99 "GTTTACG" "G"
+        false? 96 "CAAGTTTACG" "C"
+        false? 99 "GTTTACGA" "GAT"))))
 
 (deftest apply-offset-test
   (testing "ref not include exon terminal"

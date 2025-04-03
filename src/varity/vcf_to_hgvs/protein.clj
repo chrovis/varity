@@ -277,23 +277,23 @@
       pos-start*)))
 
 (defn- in-frame?
-  [pos ref alt {:keys [cds-start cds-end strand] :as _rg}]
+  [pos ref alt {:keys [cds-start cds-end] :as _rg}]
   (let [[del ins offset] (diff-bases ref alt)
-        ndel (count del)
+        start-pos* (+ pos offset)
+        end-pos* (+ pos offset (dec (count del)))
+        start-pos (if (< start-pos* cds-start)
+                    cds-start
+                    start-pos*)
+        end-pos (if (< cds-end end-pos*)
+                  cds-end
+                  end-pos*)
+        ndel (inc (- end-pos start-pos))
         nins (count ins)
-        pos* (+ pos offset)
-        pos-end (+ pos offset (dec ndel))
-        over-ter-site? (if (= strand :forward)
-                         (< pos cds-end pos-end)
-                         (< pos cds-start pos-end))
-        ndel-to-cds-end (if (= strand :forward)
-                          (inc (- cds-end pos*))
-                          (inc (- pos-end cds-start)))
-        ndel* (if over-ter-site?
-                ndel-to-cds-end
-                ndel)]
-    (or (= ndel nins 1)
-        (= 0 (rem (- ndel* nins) 3)))))
+        multiple-of-3? #(= 0 (rem % 3))]
+    (if (or (< start-pos* end-pos* cds-start)
+            (< cds-end start-pos* end-pos*))
+      true
+      (multiple-of-3? (- ndel nins)))))
 
 (defn- apply-offset
   [pos ref alt cds-start cds-end exon-ranges pos*]
