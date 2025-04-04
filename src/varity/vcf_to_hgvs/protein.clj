@@ -57,6 +57,7 @@
                                 dele (dec (+ tpos d))]
                             (cond
                               (< dele s) [(- s d) (- e d)]
+                              (= s e dels dele) [dels dele]
                               (<= dels s) (when (< dele e) [dels (- e d)])
                               (<= dels e) (if (< dele e)
                                             [s (- e d)]
@@ -297,11 +298,10 @@
 
 (defn- apply-offset
   [pos ref alt cds-start cds-end exon-ranges pos*]
-  (let [[del ins offset _] (diff-bases ref alt)
+  (let [[del _ offset _] (diff-bases ref alt)
         ndel (count del)
-        nins (count ins)
         pos-start (+ pos offset)
-        pos-end (+ pos-start (if (or (= 1 ndel nins) (zero? ndel)) 0 ndel))
+        pos-end (+ pos-start (if (zero? ndel) 0 (dec ndel)))
         apply-offset* (fn [exon-ranges*]
                         (ffirst (alt-exon-ranges exon-ranges* pos ref alt)))
         pos** (cond (and (= pos* cds-start) (<= pos-start cds-start pos-end))
