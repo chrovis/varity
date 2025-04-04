@@ -223,13 +223,17 @@
         "chr13" 24421115 "TGACTTAGCC" "T" '("p.G1724K") ; not actual example (-, del includes termination codon)
         "chrX" 15823233 "ATCCAAATAAAC" "A" '("p.S481*") ; not actual example (+, del includes termination codon)
 
-        ;; deletion
+        ;; Deletion
         "chr1" 240092288 "AGTC" "A" '("p.S61del") ; cf. rs772088733 (+)
         "chr7" 55174771 "AGGAATTAAGAGAAGC" "A" '("p.E746_A750del") ; cf. rs121913421 (+)
         "chr1" 247815239 "AAGG" "A" '("p.S163del") ; cf. rs35979231 (-)
         "chr2" 29223408 "AAGCAGT" "A" '("p.Y1096_C1097del") ; cf. rs776101205 (-)
         "chr11" 108259071 "GT" "G" '("p.L822*") ; https://github.com/chrovis/varity/issues/49
         "chr17" 7676206 "TGAACCATTGTTCAATATCGTCCGGGGACAGCATCAAATCATCCATTGCTTGGGACGGCAAGGGG" "T" '("p.P34Lfs*68" "p.?") ; https://mutalyzer.nl/normalizer/NC_000017.11:g.7676209_7676272del
+
+        ;; deletion includes initiation codon
+        "chr13" 24503770 "TCACCATC" "T" '("p.V2_M3del") ; not actual example(-)
+        "chr13" 24503770 "TCACCA" "T" '("p.?") ; not actual example(-)
 
         ;; Duplication
         "chr2" 26254257 "G" "GACT" '("p.T2dup") ; cf. rs3839049 (+)
@@ -379,7 +383,10 @@
         "chr13" 24421115 "TGACTTAGCCT" "T" {:three-prime-rule {:restrict-cds true}} '("p.G1724Nfs*6") ;; not actual example (-)
         "chr13" 24421115 "TGACTTAGCCT" "T" {:three-prime-rule {:restrict-cds false}} '("p.G1724delinsNETEF") ;; not actual example (-)
         "chr3" 53495165 "GGAT" "G" {:three-prime-rule {:restrict-cds true} :prefer-insertion? true :prefer-deletion? true} '("p.?") ;; not actual example (+)
-        "chr3" 53495165 "GGAT" "G" {:three-prime-rule {:restrict-cds false} :prefer-insertion? true :prefer-deletion? true} '("p.M7del")))) ;; not actual example (+)
+        "chr3" 53495165 "GGAT" "G" {:three-prime-rule {:restrict-cds false} :prefer-insertion? true :prefer-deletion? true} '("p.M7del") ;; not actual example (+)
+        "chr13" 24503771 "CACCATCC" "C" {:three-prime-rule {:restrict-cds true} :prefer-insertion? true :prefer-deletion? true} '() ; not actual example(-), affects exon/intron boundary
+        "chr13" 24503771 "CACCATCC" "C" {:three-prime-rule {:restrict-cds false} :prefer-insertion? true :prefer-deletion? true} '("p.V2_M3del") ; not actual example(-)
+        )))
 
   (cavia-testing "throws Exception if inputs are illegal"
     (let [rgidx (rg/index (rg/load-ref-genes test-ref-gene-file))]
