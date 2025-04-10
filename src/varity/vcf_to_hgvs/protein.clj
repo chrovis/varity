@@ -501,7 +501,9 @@
                                                    first-diff-aa-is-ter-site :extension
                                                    :else :frame-shift)
               (or (and (zero? nprefo) (zero? npalto))
-                  (and (= nprefo 1) (= npalto 1))) :substitution
+                  (and (= nprefo 1) (= npalto 1))) (if (= pref-only palt-only)
+                                                    :no-effect
+                                                    :substitution)
               (and ref-include-ter-site (pos? (count pref)) (= (first palt) \*)) :ter-substitution
               (and prefer-deletion? (pos? nprefo) (zero? npalto)) :deletion
               (and prefer-insertion? (zero? nprefo) (pos? npalto)) (if first-diff-aa-is-ter-site

@@ -264,9 +264,8 @@
         "chr7" 55191822 "T" "G" '("p.L858R") ; cf. rs121434568
         "chr1" 11796321 "G" "A" '("p.A222V") ; cf. rs1801133
         "chr12" 25245350 "C" "A" '("p.G12V") ; cf. rs121913529 (-)
-        "chr17" 7676147 "G" "A" '("p.A74="
-                                  "p.A35=") ; cf. rs786201577 (synonymous)
-        "chr6" 33086236 "TA" "T" '("p.*259=") ; cf. rs67523850 (deletion in border of UTR)
+        "chr17" 7676147 "G" "A" '("p.=") ; cf. rs786201577 (synonymous)
+        "chr6" 33086236 "TA" "T" '("p.=") ; cf. rs67523850 (deletion in border of UTR)
         "chr7" 152247986 "G" "GT" '("p.Y816*") ; cf. rs150073007 (-, nonsense mutation)
         "chr18" 51048782 "C" "CAGT" '("p.Y117*") ; cf. not actual example (+, inframe nonsense mutation)
         "chr17" 31159027 "TGC" "T" '("p.A75*") ; not actual example (+, nonsense in del case)
