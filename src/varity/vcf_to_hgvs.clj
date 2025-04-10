@@ -8,7 +8,7 @@
             [varity.ref-gene :as rg]
             [varity.vcf-to-hgvs.genome :as genome]
             [varity.vcf-to-hgvs.coding-dna :as coding-dna]
-            [varity.vcf-to-hgvs.common :refer [normalize-variant]]
+            [varity.vcf-to-hgvs.common :refer [normalize-variant diff-bases]]
             [varity.vcf-to-hgvs.protein :as prot]))
 
 (defn- valid-ref?
@@ -29,16 +29,38 @@
 (defn- coding-dna-ref-gene? [rg]
   (some? (re-matches #"(NM_|ENST)\d+(\.\d+)?" (:name rg))))
 
+(defn- insertion?
+  [del ins]
+  (and (zero? (count del)) (pos? (count ins))))
+
+(defn- var->start-end-cds-coord
+  [{:keys [pos ref alt]} {:keys [strand cds-start cds-end] :as rg}]
+  (let [[del ins offset] (diff-bases ref alt)
+        pos (+ pos offset)
+        pos (if (insertion? del ins)
+              (cond
+                (= strand :forward) (if (< cds-end pos)
+                                      pos
+                                      (dec pos))
+                (= strand :reverse) (if (>= cds-start pos)
+                                      (dec pos)
+                                      pos))
+              pos)
+        ndel (count del)
+        end-pos (+ pos (if (zero? ndel) 0 (dec (count del))))
+        start-cds-coord (rg/cds-coord pos rg)
+        end-cds-coord (rg/cds-coord end-pos rg)]
+    {:start-cds-coord start-cds-coord
+     :end-cds-coord end-cds-coord}))
+
 (defn select-variant
   [var seq-rdr rg & {:keys [three-prime-rule]}]
   (if-let [nvar (normalize-variant var seq-rdr rg)]
-    (let [var-start-cds-coord (rg/cds-coord (:pos var) rg)
-          var-end-cds-coord (rg/cds-coord (+ (:pos var) (max (count (:ref var)) (count (:alt var)))) rg)
-          nvar-start-cds-coord (rg/cds-coord (:pos nvar) rg)
-          nvar-end-cds-coord (rg/cds-coord (+ (:pos nvar) (max (count (:ref nvar)) (count (:alt nvar)))) rg)
+    (let [{var-start-cds-coord :start-cds-coord var-end-cds-coord :end-cds-coord} (var->start-end-cds-coord var rg)
+          {nvar-start-cds-coord :start-cds-coord nvar-end-cds-coord :end-cds-coord} (var->start-end-cds-coord nvar rg)
           restrict-cds (:restrict-cds three-prime-rule)]
       (if (or (= (:region var-start-cds-coord) (:region nvar-start-cds-coord)
-                  (:region var-end-cds-coord) (:region nvar-end-cds-coord))
+                 (:region var-end-cds-coord) (:region nvar-end-cds-coord))
               (not restrict-cds))
         nvar
         var))

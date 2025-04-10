@@ -9,6 +9,56 @@
                                      disable-log-fixture
                                      defslowtest]]))
 
+(deftest var->start-end-cds-coord-test
+  (let [forward-rg {:strand :forward
+                    :tx-start 10
+                    :tx-end 40
+                    :cds-start 15
+                    :cds-end 35
+                    :exon-ranges [[10 20] [24 40]]}
+        reverse-rg {:strand :reverse
+                    :tx-start 10
+                    :tx-end 40
+                    :cds-start 15
+                    :cds-end 35
+                    :exon-ranges [[10 20] [24 40]]}
+        start-end-coord->pos-region (fn [{:keys [start-cds-coord end-cds-coord]}]
+                                      (let [->pos-region #(select-keys % [:position :region])]
+                                        {:start-cds-coord (->pos-region start-cds-coord)
+                                         :end-cds-coord (->pos-region end-cds-coord)}))]
+    (testing "forward"
+      (are [v p] (= p (start-end-coord->pos-region (#'v2h/var->start-end-cds-coord v forward-rg)))
+        {:pos 15 :ref "A" :alt "G"} {:start-cds-coord {:position 1 :region nil}
+                                     :end-cds-coord {:position 1 :region nil}}
+        {:pos 15 :ref "A" :alt "AG"} {:start-cds-coord {:position 1 :region nil}
+                                      :end-cds-coord {:position 1 :region nil}}
+        {:pos 14 :ref "GATG" :alt "G"} {:start-cds-coord {:position 1 :region nil}
+                                        :end-cds-coord {:position 3 :region nil}}
+        {:pos 15 :ref "A" :alt "TG"} {:start-cds-coord {:position 1 :region nil}
+                                      :end-cds-coord {:position 1 :region nil}}
+        {:pos 14 :ref "G" :alt "GT"} {:start-cds-coord {:position 1 :region :upstream}
+                                      :end-cds-coord {:position 1 :region :upstream}}
+        {:pos 34 :ref "A" :alt "AT"} {:start-cds-coord {:position 17 :region nil}
+                                      :end-cds-coord {:position 17 :region nil}}
+        {:pos 35 :ref "A" :alt "AT"} {:start-cds-coord {:position 1 :region :downstream}
+                                      :end-cds-coord {:position 1 :region :downstream}}))
+    (testing "reverse"
+      (are [v p] (= p (start-end-coord->pos-region (#'v2h/var->start-end-cds-coord v reverse-rg)))
+        {:pos 35 :ref "T" :alt "G"} {:start-cds-coord {:position 1 :region nil}
+                                     :end-cds-coord {:position 1 :region nil}}
+        {:pos 34 :ref "A" :alt "ACC"} {:start-cds-coord {:position 1 :region nil}
+                                       :end-cds-coord {:position 1 :region nil}}
+        {:pos 33 :ref "CAT" :alt "C"} {:start-cds-coord {:position 2 :region nil}
+                                       :end-cds-coord {:position 1 :region nil}}
+        {:pos 35 :ref "T" :alt "AG"} {:start-cds-coord {:position 1 :region nil}
+                                      :end-cds-coord {:position 1 :region nil}}
+        {:pos 35 :ref "T" :alt "TC"} {:start-cds-coord {:position 1 :region :upstream}
+                                      :end-cds-coord {:position 1 :region :upstream}}
+        {:pos 15 :ref "T" :alt "TT"} {:start-cds-coord {:position 17 :region nil}
+                                      :end-cds-coord {:position 17 :region nil}}
+        {:pos 14 :ref "T" :alt "TT"} {:start-cds-coord {:position 1 :region :downstream}
+                                      :end-cds-coord {:position 1 :region :downstream}}))))
+
 (use-fixtures :once disable-log-fixture)
 
 (defn- vcf-variant->coding-dna-hgvs-texts
@@ -159,6 +209,8 @@
           "NM_001309883:c.1172_1207delCGACTCCGGGGCGGCCCCTGACGCCCCAGCCGATCC"
           "NM_001077490:c.1172_1207delCGACTCCGGGGCGGCCCCTGACGCCCCAGCCGATCC"
           "NM_080425:c.1359_1394delCGACTCCGGGGCGGCCCCTGACGCCCCAGCCGATCC")
+        "chr7" 141764158 "CATG" "C" {:prefer-deletion? false} '("NM_016943:c.1_3[1]") ; not actual example (+)
+        "chr7" 141764158 "CATG" "C" {:prefer-deletion? true} '("NM_016943:c.4_6delATG") ; not actual example (+)
 
         ;; prefer-insertion?, cf. rs2307882 (-)
         "chr3" 126492636 "C" "CCTCT" {:prefer-insertion? false} '("NM_001165974:c.1690-122_1690-121[3]"
@@ -212,9 +264,8 @@
         "chr7" 55191822 "T" "G" '("p.L858R") ; cf. rs121434568
         "chr1" 11796321 "G" "A" '("p.A222V") ; cf. rs1801133
         "chr12" 25245350 "C" "A" '("p.G12V") ; cf. rs121913529 (-)
-        "chr17" 7676147 "G" "A" '("p.A74="
-                                  "p.A35=") ; cf. rs786201577 (synonymous)
-        "chr6" 33086236 "TA" "T" '("p.*259=") ; cf. rs67523850 (deletion in border of UTR)
+        "chr17" 7676147 "G" "A" '("p.=") ; cf. rs786201577 (synonymous)
+        "chr6" 33086236 "TA" "T" '("p.=") ; cf. rs67523850 (deletion in border of UTR)
         "chr7" 152247986 "G" "GT" '("p.Y816*") ; cf. rs150073007 (-, nonsense mutation)
         "chr18" 51048782 "C" "CAGT" '("p.Y117*") ; cf. not actual example (+, inframe nonsense mutation)
         "chr17" 31159027 "TGC" "T" '("p.A75*") ; not actual example (+, nonsense in del case)
@@ -364,6 +415,8 @@
         "chr1" 47439008 "CCCGCAC" "C" {:prefer-deletion? true} '("p.P292_H293del")
         "chr20" 58854572 "CCGCCCCAGCCGATCCCGACTCCGGGGCGGCCCCTGA" "C" {:prefer-deletion? true}
         '("p.P391_I402del" "p.S455_D466del")
+        "chr7" 141764158 "CATG" "C" {:prefer-deletion? false} '("p.M1[1]") ; not actual example (+)
+        "chr7" 141764158 "CATG" "C" {:prefer-deletion? true} '("p.M2del") ; not actual example (+)
 
         ;; prefer-insertion?, cf. rs3046924 (+)
         "chr1" 47438996 "T" "TCCGCAC" {:prefer-insertion? false} '("p.P286_H287[5]")
