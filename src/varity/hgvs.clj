@@ -36,44 +36,52 @@
   `hgvs` must be a coding DNA HGVS with a transcript. `ref-seq` must be a path
   to reference or an instance which implements
   `cljam.io.protocols/ISequenceReader`. `ref-gene` must be a path to
-  refGene.txt(.gz), a ref-gene index, or a ref-gene entity."
-  {:arglists '([hgvs ref-seq ref-gene])}
-  (fn [& args]
-    (apply dispatch (take-last 2 args))))
+  refGene.txt(.gz), a ref-gene index, or a ref-gene entity.
+
+  You can select type of returned variant by variant-type option. Default is coding-dna."
+  {:arglists '([hgvs ref-seq ref-gene opts])}
+  (fn [_hgvs & args]
+    (apply dispatch (take 2 args))))
 
 (defmethod find-aliases :ref-seq-path
-  [hgvs ref-seq ref-gene]
+  [hgvs ref-seq ref-gene & {:as opts}]
   (with-open [seq-rdr (cseq/reader ref-seq)]
-    (doall (find-aliases hgvs seq-rdr ref-gene))))
+    (doall (find-aliases hgvs seq-rdr ref-gene opts))))
 
 (defmethod find-aliases :ref-gene-path
-  [hgvs seq-rdr ref-gene]
+  [hgvs seq-rdr ref-gene & {:as opts}]
   (let [rgidx (rg/index (rg/load-ref-genes ref-gene))]
-    (find-aliases hgvs seq-rdr rgidx)))
+    (find-aliases hgvs seq-rdr rgidx opts)))
 
 (defmethod find-aliases :ref-gene-index
-  [hgvs seq-rdr rgidx]
+  [hgvs seq-rdr rgidx & {:keys [variant-type] :or {variant-type :coding-dna}}]
   {:pre [(= (:kind hgvs) :coding-dna)]}
-  (let [variants (h2v/hgvs->vcf-variants hgvs seq-rdr rgidx)
-        vcf-variant->coding-dna-hgvs (fn [variant]
-                                       (mapcat #(v2h/vcf-variant->coding-dna-hgvs variant seq-rdr rgidx %)
-                                               option-patterns))]
+  (let [rgidx* (rg/index (rg/ref-genes (:transcript hgvs) rgidx))
+        variants (h2v/hgvs->vcf-variants hgvs seq-rdr rgidx*)
+        vcf-variant->hgvs* (case variant-type
+                             :coding-dna v2h/vcf-variant->coding-dna-hgvs
+                             :protein v2h/vcf-variant->protein-hgvs)
+        vcf-variant->hgvs (fn [variant]
+                            (mapcat #(vcf-variant->hgvs* variant seq-rdr rgidx* %)
+                                    option-patterns))]
     (if (seq variants)
       (->> variants
-           (mapcat vcf-variant->coding-dna-hgvs)
-           (filter #(= (:transcript %) (:transcript hgvs)))
+           (mapcat vcf-variant->hgvs)
            distinct)
       (throw (ex-info "The VCF variant is not found."
                       {:type ::invalid-variant
                        :hgvs hgvs})))))
 
 (defmethod find-aliases :ref-gene-entity
-  [hgvs seq-rdr rg]
+  [hgvs seq-rdr rg & {:keys [variant-type] :or {variant-type :coding-dna}}]
   {:pre [(= (:kind hgvs) :coding-dna)]}
   (if-let [variant (h2v/hgvs->vcf-variants hgvs seq-rdr rg)]
-    (->> option-patterns
-         (map #(v2h/vcf-variant->coding-dna-hgvs variant seq-rdr rg %))
-         distinct)
+    (let [vcf-variant->hgvs (case variant-type
+                              :coding-dna v2h/vcf-variant->coding-dna-hgvs
+                              :protein v2h/vcf-variant->protein-hgvs)]
+      (->> option-patterns
+           (map #(vcf-variant->hgvs variant seq-rdr rg %))
+           distinct))
     (throw (ex-info "The VCF variant is not found."
                     {:type ::invalid-variant
                      :hgvs hgvs}))))

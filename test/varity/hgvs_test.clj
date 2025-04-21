@@ -17,10 +17,10 @@
             ref-gene-idx (rg/index ref-genes)
             ref-seq-idx (rg/index ref-seqs)]
         (are [idx hgvs-str expected]
-            (= (->> (vhgvs/find-aliases (hgvs/parse hgvs-str) rdr idx)
-                    (map hgvs/format)
-                    set)
-               expected)
+             (= (->> (vhgvs/find-aliases (hgvs/parse hgvs-str) rdr idx)
+                     (map hgvs/format)
+                     set)
+                expected)
           ;; cf. rs11571587 (+)
           ref-gene-idx "NM_000059:c.162CAA[1]" #{"NM_000059:c.162CAA[1]"
                                                  "NM_000059:c.165_167del"}
@@ -40,17 +40,17 @@
                                                                 "NM_144639:c.1510-121_1510-120insAGAG"}
 
           ref-seq-idx "NM_000059.4:c.162CAA[1]" #{"NM_000059.4:c.162CAA[1]"
-                                                 "NM_000059.4:c.165_167del"}
-          ref-seq-idx "NM_000059.4:c.165_167del" #{"NM_000059.4:c.162CAA[1]"
                                                   "NM_000059.4:c.165_167del"}
+          ref-seq-idx "NM_000059.4:c.165_167del" #{"NM_000059.4:c.162CAA[1]"
+                                                   "NM_000059.4:c.165_167del"}
 
           ref-seq-idx "NM_004333.6:c.-95GCCTCC[3]" #{"NM_004333.6:c.-95GCCTCC[3]"
-                                                    "NM_004333.6:c.-77_-72del"}
+                                                     "NM_004333.6:c.-77_-72del"}
           ref-seq-idx "NM_004333.6:c.-77_-72del" #{"NM_004333.6:c.-95GCCTCC[3]"
-                                                  "NM_004333.6:c.-77_-72del"}
+                                                   "NM_004333.6:c.-77_-72del"}
 
           ref-seq-idx "NM_144639.3:c.1510-122AG[3]" #{"NM_144639.3:c.1510-122AG[3]"
-                                                     "NM_144639.3:c.1510-121_1510-120insAGAG"}
+                                                      "NM_144639.3:c.1510-121_1510-120insAGAG"}
           ref-seq-idx "NM_144639.3:c.1510-121_1510-120insAGAG" #{"NM_144639.3:c.1510-122AG[3]"
                                                                  "NM_144639.3:c.1510-121_1510-120insAGAG"})
         (testing "false coordinate"
@@ -60,6 +60,15 @@
             "NM_001276760:c.559+1G>T" ; actually "NM_001276760:c.560G>T"
             "NM_005228:c.2574-1T>G" ; actually "NM_005228:c.2573T>G"
             ))
+        (testing "protein-alteration aliases"
+          (are [idx hgvs-str expected] (= (->> (vhgvs/find-aliases (hgvs/parse hgvs-str) rdr idx :variant-type :protein)
+                                               (map hgvs/format)
+                                               set)
+                                          expected)
+            ref-gene-idx "NM_000059:c.162CAA[3]" #{"p.Asn56_Tyr57insAsn" "p.Asn54[4]"}
+            ref-gene-idx "NM_000059:c.4389_4390insAAT" #{"p.Asn1463_Ser1464insAsn" "p.Asn1463dup"}
+            ref-seq-idx "NM_000059.4:c.162CAA[1]" #{"p.Asn56del" "p.Asn54[2]"}
+            ref-seq-idx "NM_000059.4:c.4389_4390insAAT" #{"p.Asn1463_Ser1464insAsn" "p.Asn1463dup"}))
         (let [find-rg (fn [refs transcript]
                         (first (filter #(= (:name %) transcript) refs)))]
           (are [refs s transcript expected] (= (->> (vhgvs/find-aliases (hgvs/parse s) rdr (find-rg refs transcript))
@@ -99,4 +108,13 @@
             ref-seqs "NM_144639.3:c.1510-122AG[3]" "NM_144639.3" #{"NM_144639.3:c.1510-122AG[3]"
                                                                    "NM_144639.3:c.1510-121_1510-120insAGAG"}
             ref-seqs "NM_144639.3:c.1510-121_1510-120insAGAG" "NM_144639.3" #{"NM_144639.3:c.1510-122AG[3]"
-                                                                              "NM_144639.3:c.1510-121_1510-120insAGAG"}))))))
+                                                                              "NM_144639.3:c.1510-121_1510-120insAGAG"})
+          (testing "protein-alteration aliases"
+            (are [refs s transcript expected] (= (->> (vhgvs/find-aliases (hgvs/parse s) rdr (find-rg refs transcript) :variant-type :protein)
+                                                      (map hgvs/format)
+                                                      set)
+                                                 expected)
+              ref-genes "NM_000059:c.162CAA[3]" "NM_000059" #{"p.Asn56_Tyr57insAsn" "p.Asn54[4]"}
+              ref-genes "NM_000059:c.4389_4390insAAT" "NM_000059" #{"p.Asn1463_Ser1464insAsn" "p.Asn1463dup"}
+              ref-seqs "NM_000059.4:c.162CAA[1]" "NM_000059.4" #{"p.Asn56del" "p.Asn54[2]"}
+              ref-seqs "NM_000059.4:c.4389_4390insAAT" "NM_000059.4" #{"p.Asn1463_Ser1464insAsn" "p.Asn1463dup"})))))))
