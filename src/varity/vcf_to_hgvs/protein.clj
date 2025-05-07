@@ -478,20 +478,18 @@
                                                                 ref-prot-seq
                                                                 alt-prot-seq*)
           t (cond
+              (and base-ppos (= (first pref) (first palt) \*)) :substitution
               (and ref-include-from-ter-start-and-over-ter-end
                    (not first-diff-aa-is-ter-site)) :frame-shift
-              (= (+ base-ppos offset) (count ref-prot-seq)) (if (and (= "" pref-only palt-only)
-                                                                     (ter-site-same-pos? ref-prot-seq alt-prot-seq*))
-                                                              :no-effect
+              (= (+ base-ppos offset) (count ref-prot-seq)) (if (ter-site-same-pos? ref-prot-seq alt-prot-seq*)
+                                                              :substitution
                                                               :extension)
               (= (+ base-ppos offset) 1) (if (or (= ref-prot-rest alt-prot-rest)
                                                  (and prefer-extension-for-initial-codon-alt?
                                                       (not= (first ref-prot-seq) (first alt-prot-seq*))))
                                            :extension
                                            :frame-shift)
-              (and (pos? npref) (= (first palt-only) \*)) (if (ter-site-same-pos? ref-prot-seq alt-prot-seq*)
-                                                            :no-effect
-                                                            :substitution)
+              (and (pos? npref) (= (first palt-only) \*)) :substitution
               (not= ref-prot-rest alt-prot-rest) (cond
                                                    (or (and (= (first alt-prot-rest) \*)
                                                             (>= nprefo npalto)
@@ -501,9 +499,7 @@
                                                    first-diff-aa-is-ter-site :extension
                                                    :else :frame-shift)
               (or (and (zero? nprefo) (zero? npalto))
-                  (and (= nprefo 1) (= npalto 1))) (if (= pref-only palt-only)
-                                                    :no-effect
-                                                    :substitution)
+                  (and (= nprefo 1) (= npalto 1))) :substitution
               (and ref-include-ter-site (pos? (count pref)) (= (first palt) \*)) :ter-substitution
               (and prefer-deletion? (pos? nprefo) (zero? npalto)) :deletion
               (and prefer-insertion? (zero? nprefo) (pos? npalto)) (if first-diff-aa-is-ter-site
@@ -542,7 +538,9 @@
 
 (defn- protein-substitution
   [ppos pref palt {:keys [ref-prot-seq alt-prot-seq]}]
-  (let [[s-ref s-alt offset _] (diff-bases pref palt)]
+  (let [[s-ref s-alt offset _] (if (and ppos (= (first pref) (first palt) \*))
+                                 ["*" "*" 0 nil]
+                                 (diff-bases pref palt))]
     (cond
       (and (empty? s-ref) (empty? s-alt))
       (mut/protein-substitution (mut/->long-amino-acid (last pref))
@@ -637,7 +635,7 @@
     (cond
       (and (not= ppos 1)
            (ter-site-same-pos? ref-prot-seq alt-prot-seq*))
-      (mut/protein-no-effect)
+      (protein-substitution (count ref-prot-seq) "*" "*" seq-info)
 
       (and (= ppos 1) (not prefer-extension-for-initial-codon-alt?))
       (mut/protein-unknown-mutation)
