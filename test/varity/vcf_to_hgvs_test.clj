@@ -264,8 +264,9 @@
         "chr7" 55191822 "T" "G" '("p.L858R") ; cf. rs121434568
         "chr1" 11796321 "G" "A" '("p.A222V") ; cf. rs1801133
         "chr12" 25245350 "C" "A" '("p.G12V") ; cf. rs121913529 (-)
-        "chr17" 7676147 "G" "A" '("p.=") ; cf. rs786201577 (synonymous)
-        "chr6" 33086236 "TA" "T" '("p.=") ; cf. rs67523850 (deletion in border of UTR)
+        "chr17" 7676147 "G" "A" '("p.A74=" "p.A35=") ; cf. rs786201577 (synonymous)
+        "chr11" 14279340 "G" "A" '("p.F127=" "p.F204=" "p.F169=") ; not actual example (-)
+        "chr3" 149520808 "C" "CTTAA" '("p.*401=") ; not actual example (-)
         "chr7" 152247986 "G" "GT" '("p.Y816*") ; cf. rs150073007 (-, nonsense mutation)
         "chr18" 51048782 "C" "CAGT" '("p.Y117*") ; cf. not actual example (+, inframe nonsense mutation)
         "chr17" 31159027 "TGC" "T" '("p.A75*") ; not actual example (+, nonsense in del case)
@@ -376,12 +377,9 @@
         "chr7" 55181876 "A" "T" '("p.=") ; not actual example (+)
         "chr7" 55181874 "TGAT" "T" '("p.=") ; not actual example (+)
         "chr7" 55181876 "A" "AGGT" '("p.=") ; not actual example (+)
-        "chr3" 149520808 "C" "CTTAA" '("p.=") ; not actual example (-)
         "chr17" 80090386 "CAGCACGTGCATGAACAACACAGGACACACACAGCACGTGCATGAACAACACAGGACACACACA" "C" '("p.=") ; not actural example (+)
-        "chr11" 14279340 "G" "A" '("p.=") ; not actual example (-)
         "chr7" 55019277 "G" "GTC" '("p.=") ; not actual example (+)
         "chr17" 21042835 "T" "TG" '("p.=") ; not actual example (-)
-        "chr13" 24421121 "A" "ATTA" '("p.=") ; not actual example (-)
 
         ;; unknown
         "chr12" 40393453 "G" "A" '("p.?") ; not actual example (+)
@@ -439,6 +437,10 @@
         "chr3" 53495165 "GGAT" "G" {:three-prime-rule {:restrict-cds false} :prefer-insertion? true :prefer-deletion? true} '("p.M7del") ;; not actual example (+)
         "chr13" 24503771 "CACCATCC" "C" {:three-prime-rule {:restrict-cds true} :prefer-insertion? true :prefer-deletion? true} '() ; not actual example(-), affects exon/intron boundary
         "chr13" 24503771 "CACCATCC" "C" {:three-prime-rule {:restrict-cds false} :prefer-insertion? true :prefer-deletion? true} '("p.V2_M3del") ; not actual example(-)
+        "chr6" 33086236 "TA" "T" {:three-prime-rule {:restrict-cds true} :prefer-insertion? true :prefer-deletion? true} '("p.*259=")
+        "chr6" 33086236 "TA" "T" {:three-prime-rule {:restrict-cds false} :prefer-insertion? true :prefer-deletion? true} '("p.=") ; cf. rs67523850 (deletion in border of UTR)
+        "chr13" 24421121 "A" "ATTA" {:three-prime-rule {:restrict-cds true} :prefer-insertion? true :prefer-deletion? true} '("p.*1725=")
+        "chr13" 24421121 "A" "ATTA" {:three-prime-rule {:restrict-cds false} :prefer-insertion? true :prefer-deletion? true} '("p.=") ; not actual example (-)
         )))
 
   (cavia-testing "throws Exception if inputs are illegal"
