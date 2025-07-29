@@ -1,4 +1,4 @@
-(defproject varity "0.11.1-SNAPSHOT"
+(defproject varity "0.12.0"
   :description "Variant translation library for Clojure"
   :url "https://github.com/chrovis/varity"
   :license {:name "Apache License, Version 2.0"
