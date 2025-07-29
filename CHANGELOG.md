@@ -1,5 +1,47 @@
 # Changelog
 
+## [0.12.0] - date TBD
+
+### BREAKING
+
+Dropped support for clojure 1.8 and added support for clojure 1.12 in [#123](https://github.com/chrovis/varity/pull/123).
+
+### Changed
+
+- Refactor and generalize overlap-exon-intron-boundary?. [#93](https://github.com/chrovis/varity/pull/93)
+- Add no-effect branch to protein type determine process. [#98](https://github.com/chrovis/varity/pull/98)
+- Add prefer-extension option for variant affects initial codon. [#101](https://github.com/chrovis/varity/pull/101)
+- Introduce GeneAnnotationIndex as an abstraction of RefGeneIndex. [#102](https://github.com/chrovis/varity/pull/102)
+- Add UTR variant determine process. [#104](https://github.com/chrovis/varity/pull/104)
+- Support uncertain base and amino acid. [#109](https://github.com/chrovis/varity/pull/109)
+- Return unknown when initiation site is affected. [#111](https://github.com/chrovis/varity/pull/111)
+- Update clj-hgvs to 0.5.1. [#112](https://github.com/chrovis/varity/pull/112)
+- Return no-effect when ter site is inserted around ter site and fix extension determine process. [#115](https://github.com/chrovis/varity/pull/115)
+- Add in-frame check process to indel for variant around ter site. [#117](https://github.com/chrovis/varity/pull/117)
+- Add three-prime-rule option to vcf->hgvs. [#118](https://github.com/chrovis/varity/pull/118)
+- Add extension conditional branch to insertion. [#119](https://github.com/chrovis/varity/pull/119)
+- Add prefer-deletion-insertion option to coding-dna. [#120](https://github.com/chrovis/varity/pull/120)
+- Add stop codon substitution conditional branch to protein-variant. [#122](https://github.com/chrovis/varity/pull/122)
+- Add variant-type option and protein aliases to find-aliases. [#127](https://github.com/chrovis/varity/pull/127)
+
+### Fixed
+
+- Fix exon/intron boundary determine process and frameshift that affects initiation site. [#92](https://github.com/chrovis/varity/pull/92)
+- Fix long deletion including stop codon. [#96](https://github.com/chrovis/varity/pull/96)
+- Add extension conditional branch and fix protein-extension. [#99](https://github.com/chrovis/varity/pull/99)
+- Fix initiation codon in protein-frameshift and protein-extension. [#100](https://github.com/chrovis/varity/pull/100)
+- Fix apply-offset for first exon variant. [#103](https://github.com/chrovis/varity/pull/103)
+- Fix read-seq-info and termination site variant condition. [#105](https://github.com/chrovis/varity/pull/105)
+- Fix the dispatcher to check if an arg extends the varity.ref_gene.GeneAnnotationIndex protocol. [#106](https://github.com/chrovis/varity/pull/106)
+- Fix NullPointerException case in vcf-variant->hgvs. [#108](https://github.com/chrovis/varity/pull/108)
+- Fix frameshift processing order. [#110](https://github.com/chrovis/varity/pull/110)
+- Fix substitution for nonsense variant. [#113](https://github.com/chrovis/varity/pull/113)
+- Explicitly install leiningen on ubuntu-latest. [#114](https://github.com/chrovis/varity/pull/114)
+- Fix around ter codon variant. [#116](https://github.com/chrovis/varity/pull/116)
+- Fix ini site affected variant determine process. [#125](https://github.com/chrovis/varity/pull/125)
+- Fix select-variant coord position. [#126](https://github.com/chrovis/varity/pull/126)
+- Revert and fix substitution. [#128](https://github.com/chrovis/varity/pull/128)
+
 ## [0.11.0] - 2024-01-22
 
 ### BREAKING

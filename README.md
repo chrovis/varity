@@ -17,17 +17,21 @@ Variant translation library for Clojure.
 Clojure CLI/deps.edn:
 
 ```clojure
-varity/varity {:mvn/version "0.11.0"}
+varity/varity {:mvn/version "0.12.0"}
 ```
 
 Leiningen/Boot:
 
 ```clojure
-[varity "0.11.0"]
+[varity "0.12.0"]
 ```
 
 To use varity with Clojure 1.8, you must include a dependency on
 [clojure-future-spec](https://github.com/tonsky/clojure-future-spec).
+
+### BREAKING changes in 0.12.0
+
+Dropped support for clojure 1.8 and added support for clojure 1.12.
 
 ## Breaking changes in 0.11.0
 
