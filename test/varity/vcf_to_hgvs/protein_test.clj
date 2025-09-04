@@ -1,5 +1,6 @@
 (ns varity.vcf-to-hgvs.protein-test
-  (:require [clojure.string :as string]
+  (:require [clojure.core.memoize :as memo]
+            [clojure.string :as string]
             [clojure.test :refer :all]
             [cljam.io.sequence :as cseq]
             [clj-hgvs.core :as hgvs]
@@ -9,7 +10,7 @@
 
 (deftest overlap-exon-intron-boundary?-test
   (let [exon-ranges [[123 321] [456 654] [789 987]]]
-    (are [p pos ref alt] (p (#'prot/overlap-exon-intron-boundary? exon-ranges pos ref alt))
+    (are [p pos ref alt] (p (prot/overlap-exon-intron-boundary? exon-ranges pos ref alt))
       false? 454 "X" "Y"
       true? 454 "XXX" "X"
       false? 455 "XX" "X"
@@ -17,6 +18,27 @@
       false? 654 "XX" "X"
       true? 653 "XXX" "X"
       false? 653 "XX" "X")))
+
+(deftest reset-overlap-exon-intron-boundary?!-test
+  (let [old-memoized-fn @@#'prot/overlap-exon-intron-boundary?-impl
+        memoize-factory #(memo/lru % :lru/threshold 2)
+        exon-ranges [[123 321] [456 654] [789 987]]]
+    (try
+      (testing "reset memoized function"
+        (prot/reset-overlap-exon-intron-boundary?! memoize-factory)
+        (is (= (memo/snapshot @@#'prot/overlap-exon-intron-boundary?-impl) {})))
+      (testing "memoization within threshold"
+        (prot/overlap-exon-intron-boundary? exon-ranges 454 "X" "Y")
+        (prot/overlap-exon-intron-boundary? exon-ranges 454 "XXX" "X")
+        (is (= (memo/snapshot @@#'prot/overlap-exon-intron-boundary?-impl)
+               {[[[123 321] [456 654] [789 987]] 454 "X" "Y"] false
+                [[[123 321] [456 654] [789 987]] 454 "XXX" "X"] true})))
+      (testing "memoization with eviction"
+        (prot/overlap-exon-intron-boundary? exon-ranges 455 "XX" "X")
+        {[[[123 321] [456 654] [789 987]] 454 "XXX" "X"] false
+         [[[123 321] [456 654] [789 987]] 455 "XX" "X"] false})
+      (finally
+        (reset! @#'prot/overlap-exon-intron-boundary?-impl old-memoized-fn)))))
 
 (deftest alt-exon-ranges-test
   ;; 1 [2 3 4] 5 6 7 [8 9 10 11] 12 13 14 15
