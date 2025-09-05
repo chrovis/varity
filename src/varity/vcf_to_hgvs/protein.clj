@@ -1,5 +1,6 @@
 (ns varity.vcf-to-hgvs.protein
-  (:require [clojure.pprint :as pp]
+  (:require [clojure.core.memoize :as memo]
+            [clojure.pprint :as pp]
             [clojure.set :as s]
             [clojure.string :as string]
             [clojure.tools.logging :as log]
@@ -30,7 +31,23 @@
                            (and (<= pos e) (< e (+ pos nref -1))))))
                 exon-ranges)))))
 
-(def ^:private overlap-exon-intron-boundary? (memoize overlap-exon-intron-boundary?*))
+(def ^:private default-memoize-threshold 1024)
+
+(defn ^:private default-memoize-factory
+  [f]
+  (memo/lru f :lru/threshold default-memoize-threshold))
+
+(def ^:private overlap-exon-intron-boundary?-impl (atom (default-memoize-factory overlap-exon-intron-boundary?*)))
+
+(defn overlap-exon-intron-boundary?
+  "Returns a boolean whether a variant overlaps boundary of exon/intron or not."
+  [exon-ranges pos ref alt]
+  (@overlap-exon-intron-boundary?-impl exon-ranges pos ref alt))
+
+(defn reset-overlap-exon-intron-boundary?!
+  "Resets the memoized function to change memoization strategy."
+  [memoize-factory]
+  (reset! overlap-exon-intron-boundary?-impl (memoize-factory overlap-exon-intron-boundary?*)))
 
 (defn alt-exon-ranges
   "Returns exon ranges a variant applied."

@@ -5,6 +5,7 @@
             :url "http://www.apache.org/licenses/LICENSE-2.0"}
   :min-lein-version "2.7.0"
   :dependencies [[org.clojure/clojure "1.12.0" :scope "provided"]
+                 [org.clojure/core.memoize "1.1.266"]
                  [org.clojure/tools.logging "1.2.4"]
                  [clj-hgvs "0.5.1"]
                  [cljam "0.8.3"]
