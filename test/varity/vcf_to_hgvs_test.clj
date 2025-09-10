@@ -108,6 +108,7 @@
                                   "NM_001276696:c.98C="
                                   "NM_001276760:c.98C="
                                   "NM_001276761:c.98C=") ; cf. rs1042522
+        "chr1" 115739063 "TA" "AA" '("NM_001232:c.421-728A>T") ; not actual example at intergenic region
 
         ;; Deletion
         "chr1" 963222 "GCG" "G" '("NM_015658:c.-3983_-3982delGC"
