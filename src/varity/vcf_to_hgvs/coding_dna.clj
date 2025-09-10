@@ -101,7 +101,11 @@
 (defn- dna-substitution
   [rg pos ref alt]
   (let [{:keys [strand]} rg
-        type (if (= ref alt) "=" ">")]
+        [ref alt offset _] (if (= 1 (count ref) (count alt))
+                             [ref alt 0 0]
+                             (diff-bases ref alt))
+        type (if (= ref alt) "=" ">")
+        pos (+ pos offset)]
     (mut/dna-substitution (rg/cds-coord pos rg)
                           (cond-> ref (= strand :reverse) util-seq/revcomp)
                           type
