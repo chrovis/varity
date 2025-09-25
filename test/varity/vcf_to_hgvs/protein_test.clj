@@ -334,6 +334,17 @@
         false? 96 "CAAGTTTACG" "C"
         false? 99 "GTTTACGA" "GAT"))))
 
+(deftest deletion-from-five-prime-end-and-first-base?
+  (let [rg {:exon-ranges [[11 20] [31 50] [61 80]] :tx-start 11 :tx-end 80}]
+    (testing "forward strand"
+      (are [pred rg* pos ref alt] (pred (#'prot/deletion-from-five-prime-end-and-first-base? (merge rg rg*) pos ref alt))
+        true? {:strand :forward :cds-start 18 :cds-end 64} 30 "GGTA" "G"
+        false? {:strand :forward :cds-start 17 :cds-end 63} 30 "GGTA" "G"))
+    (testing "reverse strand"
+      (are [pred rg* pos ref alt] (pred (#'prot/deletion-from-five-prime-end-and-first-base? (merge rg rg*) pos ref alt))
+        true? {:strand :reverse :cds-start 17 :cds-end 63} 47 "CGTG" "C"
+        false? {:strand :reverse :cds-start 18 :cds-end 64} 47 "CGTG" "C"))))
+
 (deftest apply-offset-test
   (testing "ref not include exon terminal"
     (let [ref "GCTGACC"

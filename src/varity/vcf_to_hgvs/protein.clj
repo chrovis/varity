@@ -313,6 +313,26 @@
       true
       (multiple-of-3? (- ndel nins)))))
 
+(defn- deletion-from-five-prime-end-and-first-base?
+  "Returns whether deletion starts from first base of codon and 5' end of exon."
+  [{:keys [exon-ranges strand cds-start cds-end] :as rg} pos ref alt]
+  (let [[del ins offset _] (diff-bases ref alt)
+        pos (+ pos offset)
+        ndel (count del)
+        nins (count ins)
+        pos* (if (= strand :forward) pos (dec (+ pos ndel)))
+        cds-pos (:position (rg/cds-coord pos* rg))
+        five-prime-end-positions (->> (if (= strand :forward)
+                                        (map first exon-ranges)
+                                        (map last exon-ranges))
+                                      (filter #(<= cds-start %))
+                                      (filter #(<= % cds-end))
+                                      set)]
+    (boolean (and (pos? ndel) (zero? nins)
+                  (five-prime-end-positions pos*)
+                  (when (number? cds-pos)
+                    (= 1 (rem cds-pos 3)))))))
+
 (defn- apply-offset
   [pos ref alt cds-start cds-end exon-ranges pos*]
   (let [[del _ offset _] (diff-bases ref alt)
@@ -359,7 +379,8 @@
           ref-cds-exon-seq* (cond-> ref-cds-exon-seq
                               (= strand :reverse) util-seq/revcomp)
           alt-cds-exon-seq* (cond-> alt-cds-exon-seq
-                              (= strand :reverse) util-seq/revcomp)]
+                              (= strand :reverse) util-seq/revcomp)
+          deletion-from-five-prime-end-and-first-base (deletion-from-five-prime-end-and-first-base? rg pos ref alt)]
       {:ref-exon-seq ref-cds-exon-seq*
        :ref-prot-seq (codon/amino-acid-sequence ref-cds-exon-seq*)
        :alt-exon-seq alt-cds-exon-seq*
@@ -387,7 +408,8 @@
        :frameshift-within-cds frameshift-within-cds
        :utr-variant (utr-variant? cds-start cds-end pos ref alt)
        :in-frame in-frame
-       :ini-site-affected (ini-site-affected? ref-cds-exon-seq* alt-cds-exon-seq*)})))
+       :ini-site-affected (ini-site-affected? ref-cds-exon-seq* alt-cds-exon-seq*)
+       :deletion-from-five-prime-end-and-first-base deletion-from-five-prime-end-and-first-base})))
 
 (defn- protein-position
   "Converts genomic position to protein position. If pos is outside of CDS,
@@ -439,8 +461,8 @@
 
 (defn- ->protein-variant
   [{:keys [strand] :as rg} pos ref alt
-   {:keys [ref-exon-seq ref-prot-seq alt-exon-seq alt-rg ref-include-ter-site
-           ref-include-from-ter-start-and-over-ter-end utr-variant ini-site-affected] :as seq-info}
+   {:keys [ref-exon-seq ref-prot-seq alt-exon-seq alt-rg ref-include-ter-site deletion-from-five-prime-end-and-first-base
+           ref-include-from-ter-start-and-over-ter-end utr-variant ini-site-affected in-frame] :as seq-info}
    {:keys [prefer-deletion? prefer-insertion? prefer-deletion-insertion?
            prefer-extension-for-initial-codon-alt?]}]
   (cond
@@ -466,10 +488,14 @@
 
     :else
     (let [alt-prot-seq* (format-alt-prot-seq seq-info)
-          ppos (protein-position pos rg)
+          ppos-offset (cond
+                        (and deletion-from-five-prime-end-and-first-base
+                             in-frame) -1
+                        :else 0)
+          ppos (+ (protein-position pos rg) ppos-offset)
           base-ppos (case strand
                       :forward ppos
-                      :reverse (protein-position (+ pos (count ref) -1) rg))
+                      :reverse (+ (protein-position (+ pos (count ref) -1) rg) ppos-offset))
           [_ pref ref-prot-rest] (pstring/split-at
                                   ref-prot-seq
                                   [(dec base-ppos)
@@ -478,10 +504,12 @@
                                      :reverse ppos)])
           [_ palt alt-prot-rest] (pstring/split-at
                                   alt-prot-seq*
-                                  [(min (dec base-ppos) (count alt-prot-seq*))
-                                   (min (case strand
-                                          :forward (protein-position (+ pos (count alt) -1) alt-rg)
-                                          :reverse (protein-position pos alt-rg))
+                                  [(min (dec base-ppos)
+                                        (count alt-prot-seq*))
+                                   (min (+ (case strand
+                                             :forward (protein-position (+ pos (count alt) -1) alt-rg)
+                                             :reverse (protein-position pos alt-rg))
+                                           ppos-offset)
                                         (count alt-prot-seq*))])
           [pref-only palt-only offset _] (diff-bases pref palt)
           npref (count pref)
@@ -514,6 +542,8 @@
                                                        (= (first palt-only) \*)) :fs-ter-substitution
                                                    ref-include-ter-site :indel
                                                    first-diff-aa-is-ter-site :extension
+                                                   (and deletion-from-five-prime-end-and-first-base
+                                                        in-frame) :deletion
                                                    :else :frame-shift)
               (or (and (zero? nprefo) (zero? npalto))
                   (and (= nprefo 1) (= npalto 1))) :substitution
