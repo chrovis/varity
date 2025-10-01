@@ -139,4 +139,4 @@
   [start end blocks-idx]
   (->> (subseq blocks-idx <= end)
        (map second)
-       (filter #(>= (:t-end %) start))))
+       (filter #(> (:t-end %) start))))

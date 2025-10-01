@@ -123,3 +123,21 @@
     (testing "ascending score chain"
       (is (= (#'vcf-lift/calc-new-interval "chr4" 131 191 chain-index)
              {:chr "chr1", :start 101, :end 160, :strand :forward})))))
+
+(deftest several-gaps-chain
+  (let [chain-index (->> "./test-resources/vcf-lift/sample-several-gaps.chain"
+                         ch/load-chain
+                         ch/index)]
+    ;; 12345  67890  12
+    ;; ATGCA--ATTGG--CC
+    ;; AAG-ACGTTT-GACCC
+    ;; 123 456789 01234
+    (is (= {:chr "1", :pos 10, :ref "G", :alt ["T"]}
+           (vcf-lift/liftover-variant*
+            chain-index {:chr "1", :pos 10, :ref "G", :alt ["T"]})))
+    (is (= {:chr "1", :pos 13, :ref "C", :alt ["T"]}
+           (vcf-lift/liftover-variant*
+            chain-index {:chr "1", :pos 11, :ref "C", :alt ["T"]})))
+    (is (= {:chr "1", :pos 14, :ref "C", :alt ["T"]}
+           (vcf-lift/liftover-variant*
+            chain-index {:chr "1", :pos 12, :ref "C", :alt ["T"]})))))

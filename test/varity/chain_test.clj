@@ -27,10 +27,9 @@
          [{:t-start 6, :t-end 10}]))
   (is (= (chain/search-overlap-blocks 4 4 sample-indexed-block)
          [{:t-start 2, :t-end 5}]))
-  (is (= (chain/search-overlap-blocks 5 5 sample-indexed-block)
-         [{:t-start 2, :t-end 5}]))
-  (is (= (chain/search-overlap-blocks 5 5 sample-indexed-block)
-         [{:t-start 2, :t-end 5}]))
+  (is (= (chain/search-overlap-blocks 5 5 sample-indexed-block) []))
+  (is (= (chain/search-overlap-blocks 6 6 sample-indexed-block)
+         [{:t-start 6, :t-end 10}]))
   (is (= (chain/search-overlap-blocks 1 1 sample-indexed-block) []))
   (is (= (chain/search-overlap-blocks 30 31 sample-indexed-block) [])))
 
