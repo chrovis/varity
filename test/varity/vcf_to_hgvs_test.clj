@@ -401,6 +401,10 @@
 
         ;; unknown because variant includes termination site and alternative termination site is not found
         "chr17" 81537074 "GTACTGAGGC" "G" '("p.?") ; not actual example(+)
+
+        ;; in-frame deletion starts from 5' prime end of exon and first base of codon
+        "chr4" 54727415 "GAAACCCATGTATGAAGTACAGTGGAAG" "G" '("p.K550_K558del" "p.K546_K554del") ;; not actual example (+)
+        "chr17" 7674284 "AGCCAAC" "A" '("p.V93_G94del" "p.V66_G67del" "p.V225_G226del" "p.V186_G187del")  ;; not actual example (-)
         )))
 
   (cavia-testing "options"
