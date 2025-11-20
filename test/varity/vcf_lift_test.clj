@@ -10,14 +10,14 @@
    [{:header {:t-name "chr1", :t-start 0, :t-end 540, :t-size 540,
               :q-name "chr1", :q-start 0, :q-end 540, :q-size 540,
               :q-strand :reverse}
-     :data [{:chr "chr1", :size 540, :dt nil, :dq nil}]}]))
+     :data [{:size 540, :dt nil, :dq nil}]}]))
 
 (def small-forward-chains
   (ch/index
    [{:header {:t-name "chr1", :t-start 0, :t-end 540, :t-size 540,
               :q-name "chr1", :q-start 0, :q-end 540, :q-size 540,
               :q-strand :forward}
-     :data [{:chr "chr1", :size 540, :dt nil, :dq nil}]}]))
+     :data [{:size 540, :dt nil, :dq nil}]}]))
 
 (deftest small-new-interval-test
   (testing "reverse"

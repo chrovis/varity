@@ -5,9 +5,9 @@
   (:require [clojure.java.io :as io]
             [clojure.string :as string]
             [cljam.util.chromosome :refer [normalize-chromosome-key]]
+            [cljam.util.intervals :as intervals]
             [proton.core :refer [as-long]]
-            [varity.util :as util])
-  (:import [clojure.lang Sorted]))
+            [varity.util :as util]))
 
 (defn- update-multi
   [m ks f]
@@ -81,7 +81,9 @@
       (recur (->> (assoc d :t-start curr-t-start
                          :q-start curr-q-start
                          :t-end (+ curr-t-start (:size d))
-                         :q-end (+ curr-q-start (:size d)))
+                         :q-end (+ curr-q-start (:size d))
+                         :start curr-t-start
+                         :end (+ curr-t-start (:size d)))
                   (conj! results))
              (first r)
              (next r)
@@ -93,11 +95,11 @@
                (:q-end header))))))
 
 (defn- index-chain [chain]
-  (->> chain
-       cumsum-chain
-       (map (juxt :t-start identity))
-       (into (sorted-map))
-       (assoc chain :data)))
+  (assoc chain
+         :data
+         (-> chain
+             cumsum-chain
+             (intervals/index-intervals {:structure :nclist}))))
 
 (defn index
   "Creates chain index for search."
@@ -109,12 +111,11 @@
                     (mapv index-chain xs)])))))
 
 ;;; Search
-
 (defn- in-block?
-  [pos {:keys [^Sorted data header] :as chain}]
+  [pos {:keys [data header] :as chain}]
   (when (<= (inc (:t-start header)) pos (:t-end header))
-    (when-let [[start m] (first (. data seqFrom pos false))]
-      (when (<= start pos (dec (+ start (:size m))))
+    (when-let [m (first (intervals/find-overlap-intervals data nil pos (inc pos)))]
+      (when (<= (:t-start m) pos (dec (+ (:t-start m) (:size m))))
         (assoc chain :in-block m)))))
 
 (def ^:private normalize-chr (memoize normalize-chromosome-key))
@@ -137,6 +138,4 @@
 (defn search-overlap-blocks
   "Calculates a list of blocks that overlap the given interval."
   [start end blocks-idx]
-  (->> (subseq blocks-idx <= end)
-       (map second)
-       (filter #(> (:t-end %) start))))
+  (intervals/find-overlap-intervals blocks-idx nil (inc start) end))

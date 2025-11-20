@@ -74,8 +74,6 @@
 
 (def test-load-refseq-file "./test-resources/test-refseq.txt")
 
-(def test-gtf-file "./test-resources/gtf_parse_test.gtf")
-
 (def test-large-chain-file "./test-resources/large.chain.gz")
 
 (def test-large-vcf-file "./test-resources/large.vcf.gz")
