@@ -73,3 +73,7 @@
 (def test-load-refgene-file "./test-resources/test-refgene.txt")
 
 (def test-load-refseq-file "./test-resources/test-refseq.txt")
+
+(def test-large-chain-file "./test-resources/large.chain.gz")
+
+(def test-large-vcf-file "./test-resources/large.vcf.gz")
