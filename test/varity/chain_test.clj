@@ -68,7 +68,7 @@
     15 17 [{:t-start 14, :t-end 16}]
     6 7 [{:t-start 6, :t-end 10}]
     4 4 [{:t-start 2, :t-end 5}]
-    5 5 []
+    5 5 [{:t-start 2, :t-end 5}]
     6 6 [{:t-start 6, :t-end 10}]
     1 1 []
     30 31 []))
