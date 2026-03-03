@@ -22,6 +22,44 @@
    "chr2" [{:header {:t-name "chr2", :t-start 0, :t-end 300 :score 1}}]
    "chr3" [{:header {:t-name "chr2", :t-start 0, :t-end 300 :score 1}}]})
 
+(deftest search-chains-test
+  (let [chain [{:header
+                {:t-name "chr1" :q-name "chr1"
+                 :t-start 0 :q-start 0
+                 :t-end 26 :q-end 18
+                 :tsize 26 :q-size 18}
+                :data
+                [{:size 10 :dt 2 :dq 0}
+                 {:size 1 :dt 0 :dq 2}
+                 {:size 1 :dt 4 :dq 0}
+                 {:size 1 :dt 4 :dq 0}
+                 {:size 3}]}]
+        chain-idx (chain/index chain)]
+    (are [pos ans] (= (-> (chain/search-chains "chr1" pos chain-idx)
+                          first
+                          :in-block
+                          (select-keys [:q-start :t-start])
+                          not-empty)
+                      ans)
+      9 {:t-start 1 :q-start 1}
+      10 {:t-start 1 :q-start 1}
+      11 nil
+      12 nil
+      13 {:t-start 13 :q-start 11} ;;gap=+2
+      14 {:t-start 14 :q-start 14} ;;gap=+2-2
+      15  nil
+      16  nil
+      17  nil
+      18  nil
+      19 {:t-start 19 :q-start 15} ;;gap=+2-2+4
+      20  nil
+      21  nil
+      22  nil
+      23  nil
+      24  {:t-start 24 :q-start 16} ;;gap-+2-2+4+4
+      25  {:t-start 24 :q-start 16}
+      26  {:t-start 24 :q-start 16})))
+
 (deftest search-overlap-blocks-test
   (are [start end ans] (= (map #(select-keys % [:t-start :t-end])
                                (chain/search-overlap-blocks start end sample-indexed-block))
