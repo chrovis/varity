@@ -78,12 +78,13 @@
          curr-q-start (inc (:q-start header))]
     (if-not d
       (persistent! results)
-      (recur (->> (assoc d :t-start curr-t-start
+      (recur (->> (assoc d
+                         :t-start curr-t-start
                          :q-start curr-q-start
-                         :t-end (+ curr-t-start (:size d))
-                         :q-end (+ curr-q-start (:size d))
+                         :t-end (dec (+ curr-t-start (:size d)))
+                         :q-end (dec (+ curr-q-start (:size d)))
                          :start curr-t-start
-                         :end (+ curr-t-start (:size d)))
+                         :end (dec (+ curr-t-start (:size d))))
                   (conj! results))
              (first r)
              (next r)
@@ -114,9 +115,9 @@
 (defn- in-block?
   [pos {:keys [data header] :as chain}]
   (when (<= (inc (:t-start header)) pos (:t-end header))
-    (when-let [m (first (intervals/find-overlap-intervals data nil pos (inc pos)))]
-      (when (<= (:t-start m) pos (dec (+ (:t-start m) (:size m))))
-        (assoc chain :in-block m)))))
+    (when-let [m (first (intervals/find-overlap-intervals data nil pos pos))]
+        (assoc chain :in-block m))))
+
 
 (def ^:private normalize-chr (memoize normalize-chromosome-key))
 
@@ -138,4 +139,4 @@
 (defn search-overlap-blocks
   "Calculates a list of blocks that overlap the given interval."
   [start end blocks-idx]
-  (intervals/find-overlap-intervals blocks-idx nil (inc start) end))
+  (intervals/find-overlap-intervals blocks-idx nil start end))
