@@ -98,9 +98,11 @@
 (defn- index-chain [chain]
   (assoc chain
          :data
-         (-> chain
-             cumsum-chain
-             (intervals/index-intervals {:structure :nclist}))))
+         (intervals/index-intervals
+          (->> chain
+               cumsum-chain
+               (filter (fn [{:keys [start end]}] (<= start end))))
+          {:structure :nclist})))
 
 (defn index
   "Creates chain index for search."
@@ -116,8 +118,7 @@
   [pos {:keys [data header] :as chain}]
   (when (<= (inc (:t-start header)) pos (:t-end header))
     (when-let [m (first (intervals/find-overlap-intervals data nil pos pos))]
-        (assoc chain :in-block m))))
-
+      (assoc chain :in-block m))))
 
 (def ^:private normalize-chr (memoize normalize-chromosome-key))
 
