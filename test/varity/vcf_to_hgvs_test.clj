@@ -405,6 +405,12 @@
         ;; in-frame deletion starts from 5' prime end of exon and first base of codon
         "chr4" 54727415 "GAAACCCATGTATGAAGTACAGTGGAAG" "G" '("p.K550_K558del" "p.K546_K554del") ;; not actual example (+)
         "chr17" 7674284 "AGCCAAC" "A" '("p.V93_G94del" "p.V66_G67del" "p.V225_G226del" "p.V186_G187del")  ;; not actual example (-)
+
+        ;; indel around splice acceptor and donor sites
+        "chrX" 15808271 "G" "GC" '("p.=")
+        "chr13" 24443649 "C" "CT" '("p.=")
+        "chrX" 15803687 "G" "GAC" '("p.=")
+        "chr13" 24443730 "T" "TG" '("p.=")
         )))
 
   (cavia-testing "options"
