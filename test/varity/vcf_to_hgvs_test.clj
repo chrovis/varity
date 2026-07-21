@@ -411,6 +411,8 @@
         "chr13" 24443649 "C" "CT" '("p.=")
         "chrX" 15803687 "G" "GAC" '("p.=")
         "chr13" 24443730 "T" "TG" '("p.=")
+        "chrX" 15803686 "AG" "A" '("p.=")
+        "chr13" 24443649 "CC" "C" '("p.M1150*") ; loss of splice acceptor
         )))
 
   (cavia-testing "options"

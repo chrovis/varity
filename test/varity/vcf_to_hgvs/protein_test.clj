@@ -48,7 +48,10 @@
     2 "XX" "X" [[2 3] [7 10]]
     3 "XX" "X" [[2 3] [7 10]]
     6 "XX" "X" [[2 4] [7 10]]
-    9 "XXX" "YYY" [[2 4] [8 11]])
+    9 "XXX" "YYY" [[2 4] [8 11]]
+    1 "X" "XY" [[3 5] [9 12]]
+    7 "X" "XY" [[2 4] [9 12]]
+    7 "X" "XYZ" [[2 4] [10 13]])
   ;; Variants overlapping a boundary of exon/intron
   (are [p r a] (nil? (#'prot/alt-exon-ranges [[2 4] [8 11]] p r a))
     3 "XXX" "YYY"
