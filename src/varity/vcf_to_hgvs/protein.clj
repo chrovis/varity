@@ -67,8 +67,8 @@
            (keep (fn [[s e]]
                    (case typ
                      :ins (cond
-                            (< tpos s) [(+ s d) (+ e d)]
-                            (<= s tpos e) [s (+ e d)]
+                            (<= tpos s) [(+ s d) (+ e d)]
+                            (<= tpos e) [s (+ e d)]
                             :else [s e])
                      :del (let [dels tpos
                                 dele (dec (+ tpos d))]

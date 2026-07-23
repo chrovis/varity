@@ -53,14 +53,18 @@
     {:start-cds-coord start-cds-coord
      :end-cds-coord end-cds-coord}))
 
+(defn- exon-intron-key
+  [cds-coord]
+  [(:region cds-coord) (zero? (:offset cds-coord))])
+
 (defn select-variant
   [var seq-rdr rg & {:keys [three-prime-rule]}]
   (if-let [nvar (normalize-variant var seq-rdr rg)]
     (let [{var-start-cds-coord :start-cds-coord var-end-cds-coord :end-cds-coord} (var->start-end-cds-coord var rg)
           {nvar-start-cds-coord :start-cds-coord nvar-end-cds-coord :end-cds-coord} (var->start-end-cds-coord nvar rg)
           restrict-cds (:restrict-cds three-prime-rule)]
-      (if (or (= (:region var-start-cds-coord) (:region nvar-start-cds-coord)
-                 (:region var-end-cds-coord) (:region nvar-end-cds-coord))
+      (if (or (= (exon-intron-key var-start-cds-coord) (exon-intron-key nvar-start-cds-coord)
+                 (exon-intron-key var-end-cds-coord) (exon-intron-key nvar-end-cds-coord))
               (not restrict-cds))
         nvar
         var))

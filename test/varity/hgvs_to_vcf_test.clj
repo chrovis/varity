@@ -69,6 +69,14 @@
         "NM_001005484:c.477_478insT" '({:chr "chr1", :pos 69567, :ref "A", :alt "AT"})
         "NM_024610:c.1368_1369insTCT" '({:chr "chr3", :pos 122740443, :ref "G", :alt "GAGA"}) ; cf. rs16338 (-)
 
+        ;; insertion at a splice donor and acceptor site
+        "NM_005089:c.438_438+1insC" '({:chr "chrX", :pos 15808271, :ref "G", :alt "GC"})
+        "NM_006437:c.3447_3447+1insA" '({:chr "chr13", :pos 24443649, :ref "C", :alt "CT"})
+        "NM_005089:c.204-1_204insAC" '({:chr "chrX", :pos 15803687, :ref "G", :alt "GAC"})
+        "NM_006437:c.3367-1_3367insC" '({:chr "chr13", :pos 24443730, :ref "T", :alt "TG"})
+        "NM_005089:c.204-1delG" '({:chr "chrX", :pos 15803686, :ref "AG", :alt "A"})
+        "NM_006437:c.3447delG" '({:chr "chr13", :pos 24443649, :ref "CC", :alt "C"})
+
         ;; inversion
         "NM_000179:c.4002-31_4002-8inv" '({:chr "chr2", :pos 47806747, :ref "AAAACTTTTTTTTTTTTTTTTTTAA", :alt "ATTAAAAAAAAAAAAAAAAAAGTTT"}) ; cf. rs267608133 (+)
 
