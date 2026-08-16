@@ -105,19 +105,16 @@
 (defn index
   "Creates chain index for search."
   [chains]
-  (->> (group-by (comp :t-name :header) chains)
-       (into {} (map
-                 (fn [[chr xs]]
-                   [(normalize-chromosome-key chr)
-                    (mapv index-chain xs)])))))
+  (intervals/index-intervals
+   (map (fn [{{:keys [t-name t-start t-end]} :header :as chain}]
+          (assoc (index-chain chain)
+                 :chr (normalize-chromosome-key t-name)
+                 ;; zero-based half-open => one-based closed
+                 :start (inc t-start)
+                 :end t-end)) chains)
+   {:structure :nclist}))
 
 ;;; Search
-(defn- in-block?
-  [pos {:keys [data header] :as chain}]
-  (when (<= (inc (:t-start header)) pos (:t-end header))
-    (when-let [m (first (intervals/find-overlap-intervals data nil pos pos))]
-        (assoc chain :in-block m))))
-
 
 (def ^:private normalize-chr (memoize normalize-chromosome-key))
 
@@ -125,13 +122,19 @@
   "Searches chain entries with chr and pos using the index, returning the
   results as a sequence. See also varity.chain/index."
   [chr pos chain-idx]
-  (->> (chain-idx (normalize-chr chr))
-       (keep (partial in-block? pos))))
+  (->> (intervals/find-overlap-intervals
+        chain-idx (normalize-chr chr) pos pos)
+       (keep
+        (fn [{:keys [data] :as chain}]
+          (when-let [m (first (intervals/find-overlap-intervals
+                               data nil pos pos))]
+            (assoc chain :in-block m))))))
 
 (defn search-containing-chains
   "Calculates a list of chains that contain the given interval."
   [chr start end chain-idx]
-  (->> (chain-idx (normalize-chr chr))
+  (->> (intervals/find-overlap-intervals
+        chain-idx (normalize-chr chr) start end)
        (filter #(and (<= (get-in % [:header :t-start]) start)
                      (<= end (get-in % [:header :t-end]))))
        (sort-by (comp :score :header) >)))
