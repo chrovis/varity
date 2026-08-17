@@ -121,7 +121,7 @@
       (is (= (#'vcf-lift/calc-new-interval "chr1" 191 192 chain-index)
              {:chr "chr1", :start 51, :end 52, :strand :forward})))
     (testing "ascending score chain"
-      (is (= (#'vcf-lift/calc-new-interval "chr4" 131 191 chain-index)
+      (is (= (#'vcf-lift/calc-new-interval "chr4" 132 191 chain-index)
              {:chr "chr1", :start 101, :end 160, :strand :forward})))))
 
 (deftest several-gaps-chain

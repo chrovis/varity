@@ -135,7 +135,9 @@
   [chr start end chain-idx]
   (->> (intervals/find-overlap-intervals
         chain-idx (normalize-chr chr) start end)
-       (filter #(and (<= (get-in % [:header :t-start]) start)
+       ;; header: zero-based half-open
+       ;; start, end: one-based closed
+       (filter #(and (<= (inc (get-in % [:header :t-start])) start)
                      (<= end (get-in % [:header :t-end]))))
        (sort-by (comp :score :header) >)))
 
