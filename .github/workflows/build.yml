@@ -12,12 +12,6 @@ jobs:
     name: Test with Java ${{ matrix.java }} and Clojure ${{ matrix.clojure }}
     steps:
     - uses: actions/checkout@v3
-    - uses: actions/cache@v3
-      with:
-        path: ~/.m2/repository
-        key: ${{ runner.os }}-lein-${{ hashFiles('**/project.clj') }}
-        restore-keys: |
-          ${{ runner.os }}-lein-
     - name: Setup Java
       uses: actions/setup-java@v3
       with:
@@ -37,12 +31,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - uses: actions/cache@v3
-      with:
-        path: ~/.m2/repository
-        key: ${{ runner.os }}-lein-${{ hashFiles('**/project.clj') }}
-        restore-keys: |
-          ${{ runner.os }}-lein-
     - name: Setup Java
       uses: actions/setup-java@v3
       with:
