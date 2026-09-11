@@ -58,10 +58,12 @@
   [(:region cds-coord) (zero? (:offset cds-coord))])
 
 (defn select-variant
-  [var seq-rdr rg & {:keys [three-prime-rule]}]
-  (if-let [nvar (normalize-variant var seq-rdr rg)]
+  [var seq-rdr rg & {:keys [three-prime-rule normalize-fn]
+                     :or {normalize-fn normalize-variant}}]
+  (if-let [nvar (normalize-fn var seq-rdr rg)]
     (let [{var-start-cds-coord :start-cds-coord var-end-cds-coord :end-cds-coord} (var->start-end-cds-coord var rg)
           {nvar-start-cds-coord :start-cds-coord nvar-end-cds-coord :end-cds-coord} (var->start-end-cds-coord nvar rg)
+
           restrict-cds (:restrict-cds three-prime-rule)]
       (if (or (= (exon-intron-key var-start-cds-coord) (exon-intron-key nvar-start-cds-coord)
                  (exon-intron-key var-end-cds-coord) (exon-intron-key nvar-end-cds-coord))
@@ -157,7 +159,9 @@
            (map (fn [rg]
                   (assoc (select-variant {:chr chr, :pos pos, :ref ref, :alt alt}
                                          seq-rdr rg
-                                         :three-prime-rule (:three-prime-rule options))
+                                         :three-prime-rule (:three-prime-rule options)
+                                         :normalize-fn (or (:normalize-fn options)
+                                                           normalize-variant))
                          :rg rg)))
            (map (fn [{:keys [rg] :as m}]
                   (when (:verbose? options)
@@ -174,7 +178,9 @@
     (if (valid-ref? seq-rdr chr pos ref)
       (let [nv (select-variant {:chr chr, :pos pos, :ref ref, :alt alt}
                                seq-rdr rg
-                               :three-prime-rule (:three-prime-rule options))]
+                               :three-prime-rule (:three-prime-rule options)
+                               :normalize-fn (or (:normalize-fn options)
+                                                 normalize-variant))]
         (when (:verbose? options)
           (print-debug-info nv seq-rdr rg))
         (coding-dna/->hgvs (assoc nv :rg rg) seq-rdr rg options))
@@ -234,7 +240,9 @@
            (map (fn [rg]
                   (assoc (select-variant {:chr chr, :pos pos, :ref ref, :alt alt}
                                          seq-rdr rg
-                                         :three-prime-rule (:three-prime-rule options))
+                                         :three-prime-rule (:three-prime-rule options)
+                                         :normalize-fn (or (:normalize-fn options)
+                                                           normalize-variant))
                          :rg rg)))
            (filter #(cds-affected? % (:rg %)))
            (keep (fn [{:keys [rg] :as m}]
@@ -252,7 +260,9 @@
     (if (valid-ref? seq-rdr chr pos ref)
       (let [nv (select-variant {:chr chr, :pos pos, :ref ref, :alt alt}
                                seq-rdr rg
-                               :three-prime-rule (:three-prime-rule options))]
+                               :three-prime-rule (:three-prime-rule options)
+                               :normalize-fn (or (:normalize-fn options)
+                                                 normalize-variant))]
         (when (cds-affected? nv rg)
           (when (:verbose? options)
             (print-debug-info nv seq-rdr rg))
@@ -325,7 +335,9 @@
                         protein-three-prime-rule (get-in options [:three-prime-rule :protein])
                         nv (select-variant {:chr chr, :pos pos, :ref ref, :alt alt}
                                            seq-rdr rg
-                                           :three-prime-rule coding-dna-three-prime-rule)]
+                                           :three-prime-rule coding-dna-three-prime-rule
+                                           :normalize-fn (or (:normalize-fn options)
+                                                             normalize-variant))]
                     {:coding-dna (assoc nv
                                         :rg rg
                                         :type :coding-dna)
@@ -333,7 +345,9 @@
                                        nv
                                        (select-variant {:chr chr, :pos pos, :ref ref, :alt alt}
                                                        seq-rdr rg
-                                                       :three-prime-rule protein-three-prime-rule))
+                                                       :three-prime-rule protein-three-prime-rule
+                                                       :normalize-fn (or (:normalize-fn options)
+                                                                         normalize-variant)))
                                      :rg rg
                                      :type :protein)})))
            (map (fn [{:keys [coding-dna protein]}]
@@ -363,7 +377,9 @@
                          nv
                          (select-variant {:chr chr, :pos pos, :ref ref, :alt alt}
                                          seq-rdr rg
-                                         :three-prime-rule protein-three-prime-rule))
+                                         :three-prime-rule protein-three-prime-rule
+                                         :normalize-fn (or (:normalize-fn options)
+                                                           normalize-variant)))
                        :type :protein)]
         (when (:verbose? options)
           (print-debug-info dnv seq-rdr rg)

@@ -3,7 +3,8 @@
             [cljam.io.util :as io-util]
             [varity.hgvs-to-vcf :as h2v]
             [varity.ref-gene :as rg]
-            [varity.vcf-to-hgvs :as v2h]))
+            [varity.vcf-to-hgvs :as v2h]
+            [varity.vcf-to-hgvs.common :as common]))
 
 (def ^:private option-patterns
   [{:prefer-deletion? false}
@@ -58,12 +59,15 @@
   {:pre [(= (:kind hgvs) :coding-dna)]}
   (let [rgidx* (rg/index (rg/ref-genes (:transcript hgvs) rgidx))
         variants (h2v/hgvs->vcf-variants hgvs seq-rdr rgidx*)
+        normalize-fn (memoize common/normalize-variant)
         vcf-variant->hgvs* (case variant-type
                              :coding-dna v2h/vcf-variant->coding-dna-hgvs
                              :protein v2h/vcf-variant->protein-hgvs)
         vcf-variant->hgvs (fn [variant]
-                            (mapcat #(vcf-variant->hgvs* variant seq-rdr rgidx* %)
-                                    option-patterns))]
+                            (mapcat #(vcf-variant->hgvs*
+                                      variant seq-rdr rgidx*
+                                      (assoc % :normalize-fn normalize-fn))
+                  option-patterns))]
     (if (seq variants)
       (->> variants
            (mapcat vcf-variant->hgvs)
@@ -76,11 +80,13 @@
   [hgvs seq-rdr rg & {:keys [variant-type] :or {variant-type :coding-dna}}]
   {:pre [(= (:kind hgvs) :coding-dna)]}
   (if-let [variant (h2v/hgvs->vcf-variants hgvs seq-rdr rg)]
-    (let [vcf-variant->hgvs (case variant-type
+    (let [normalize-fn (memoize common/normalize-variant)
+          vcf-variant->hgvs (case variant-type
                               :coding-dna v2h/vcf-variant->coding-dna-hgvs
                               :protein v2h/vcf-variant->protein-hgvs)]
       (->> option-patterns
-           (map #(vcf-variant->hgvs variant seq-rdr rg %))
+           (map #(vcf-variant->hgvs variant seq-rdr rg
+                  (assoc % :normalize-fn normalize-fn)))
            distinct))
     (throw (ex-info "The VCF variant is not found."
                     {:type ::invalid-variant
