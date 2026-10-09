@@ -112,27 +112,66 @@
        (remove (fn [[_ r a]] (or (zero? r) (zero? a))))
        (first)))
 
+(def linear-size-step 1000)
+(def geometric-size-ratio 2)
+
+(defn- calc-linear-size
+  [index {:keys [initial-size step]
+          :or {step linear-size-step}}]
+  (+ initial-size (* index step)))
+
+(defn- calc-geometric-size
+  [index {:keys [initial-size ratio]
+          :or {ratio geometric-size-ratio}}]
+  (->> (repeat ratio)
+       (take index)
+       (reduce *)
+       (* initial-size)))
+
+(defn- calc-adaptive-size
+  [index opts]
+  (max (calc-linear-size index opts)
+       (calc-geometric-size index opts)))
+
+(defn- read-sequence-stepwise*
+  [seq-rdr {:keys [chr start end] :as region} step index {:keys [size-fn] :as opts}]
+  (if (>= end start)
+    (lazy-seq
+     (let [size-fn-opts (assoc opts :step step)
+           size (size-fn index size-fn-opts)
+           end* (min (dec (+ start size)) end)]
+       (cons (cseq/read-sequence seq-rdr {:chr chr, :start start, :end end*})
+             (when (< end* end)
+               (read-sequence-stepwise* seq-rdr region step (inc index) opts)))))
+    ()))
+
 ;; ("AGT" "AGTCTG" "AGTCTGAAA" ...)
 (defn read-sequence-stepwise
-  [seq-rdr {:keys [chr start end]} step]
-  (->> (range)
-       (map (fn [i]
-              (let [start* (+ start (* i step))
-                    end* (min (dec (+ start* step)) end)]
-                (if (<= start* end)
-                  (cseq/read-sequence seq-rdr {:chr chr, :start start, :end end*})))))
-       (take-while some?)))
+  ([seq-rdr region step]
+   (read-sequence-stepwise seq-rdr region step {:initial-size step
+                                                :size-fn calc-linear-size}))
+  ([seq-rdr region step opts]
+   (read-sequence-stepwise* seq-rdr region step 0 opts)))
+
+(defn- read-sequence-stepwise-backward*
+  [seq-rdr {:keys [chr start end] :as region} step index {:keys [size-fn] :as opts}]
+  (if (>= end start)
+    (lazy-seq
+     (let [size-fn-opts (assoc opts :step step)
+           size (size-fn index size-fn-opts)
+           start* (max (inc (- end size)) start)]
+       (cons (cseq/read-sequence seq-rdr {:chr chr, :start start*, :end end})
+             (when (> start* start)
+               (read-sequence-stepwise-backward* seq-rdr region step (inc index) opts)))))
+    ()))
 
 ;; ("AGT" "CTGAGT" "AAACTGAGT" ...)
 (defn read-sequence-stepwise-backward
-  [seq-rdr {:keys [chr start end]} step]
-  (->> (range)
-       (map (fn [i]
-              (let [end* (- end (* i step))
-                    start* (max (inc (- end* step)) start)]
-                (if (>= end* start)
-                  (cseq/read-sequence seq-rdr {:chr chr, :start start*, :end end})))))
-       (take-while some?)))
+  ([seq-rdr region step]
+   (read-sequence-stepwise-backward seq-rdr region step {:initial-size step
+                                                         :size-fn calc-linear-size}))
+  ([seq-rdr region step opts]
+   (read-sequence-stepwise-backward* seq-rdr region step 0 opts)))
 
 ;; + ...CAGTAGTAGTC... 7 T TAGT => 13 T TAGT
 ;; + ...CAGTAGTAGTC... 7 TAGT T => 10 TAGT T
@@ -189,15 +228,19 @@
                                {:chr chr
                                 :start pos
                                 :end (+ (:tx-end rg) rg/max-tx-margin)}
-                               normalization-read-sequence-step)
+                               normalization-read-sequence-step
+                               {:initial-size (->> (max (count ref) (count alt))
+                                                   (+ (count ref))
+                                                   (max normalization-read-sequence-step))
+                                :size-fn calc-adaptive-size})
        (keep (fn [seq*]
                (when (>= (count seq*) (count ref))
                  (let [nvar (apply-3'-rule {:pos 1, :ref ref, :alt alt} seq* :forward)]
-                   (if (<= (dec (:pos nvar)) (- (count seq*) (max (count ref) (count alt))))
+                   (when (<= (dec (:pos nvar)) (- (count seq*) (max (count ref) (count alt))))
                      (-> nvar
                          (assoc :chr chr)
                          (update :pos + pos -1)))))))
-       (first)))
+       first))
 
 (defn- normalize-variant-backward
   [{:keys [chr pos ref alt]} seq-rdr rg]
@@ -205,16 +248,20 @@
                                         {:chr chr
                                          :start (- (:tx-start rg) rg/max-tx-margin)
                                          :end (+ pos (count ref) -1)}
-                                        normalization-read-sequence-step)
+                                        normalization-read-sequence-step
+                                        {:initial-size (->> (max (count ref) (count alt))
+                                                            (+ (count ref))
+                                                            (max normalization-read-sequence-step))
+                                         :size-fn calc-adaptive-size})
        (keep (fn [seq*]
                (let [offset (- (count seq*) (count ref))]
                  (when (>= offset 0)
                    (let [nvar (apply-3'-rule {:pos (inc offset), :ref ref, :alt alt} seq* :backward)]
-                     (if (> (:pos nvar) (max (count ref) (count alt)))
+                     (when (> (:pos nvar) (max (count ref) (count alt)))
                        (-> nvar
                            (assoc :chr chr)
                            (update :pos + (- pos offset) -1))))))))
-       (first)))
+       first))
 
 (defn normalize-variant
   "Normalizes the VCF-style variant based on the surrounding sequence and the
