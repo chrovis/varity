@@ -101,7 +101,8 @@
 (defn- dna-substitution
   [rg pos ref alt]
   (let [{:keys [strand]} rg
-        [ref alt offset _] (if (= 1 (count ref) (count alt))
+        [ref alt offset _] (if (or (= ref alt)
+                                   (= 1 (count ref) (count alt)))
                              [ref alt 0 0]
                              (diff-bases ref alt))
         type (if (= ref alt) "=" ">")
